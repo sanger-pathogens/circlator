@@ -33,9 +33,10 @@ If the tests all pass, install:
 Usage
 -----
 
-The input is an assembly in FASTA format and corrected long reads in FASTA format. To run:
+The input is an assembly in FASTA format, corrected long reads in FASTA format and a FASTA
+file of a family of genes to use to choose the start position of contigs (eg dnaA genes). To run:
 
-    circlator all assembly.fasta corrected_reads.fasta output_directory
+    circlator all genes.fasta assembly.fasta corrected_reads.fasta output_directory
 
 
 
