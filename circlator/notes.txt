@@ -1,0 +1,38 @@
+Hi folks
+
+Here is the script to find the dnaA/other break points in contigs. 
+
+Give it two fasta files: one with assembly and the other with genes of your choice. It will reorganise (and optionally rename) the contigs and print  a summary. You can get it to run prodigal if you wish. It will also detect genes that are in the wrong orientation and reverse complement the sequence accordingly.
+
+Still in my directory until installation. Please let me know of any bugs and improvements. Naming software is not my forte - please feel free to suggest.
+
+I have a file with a collection of dnaA sequences if you need it:
+/lustre/scratch108/pathogen/nds/PACBIO_assembly/universal_dnaA/all_dnaA.fa
+
+/lustre/scratch108/pathogen/nds/Git_projects/bio_assembly_refinement/scripts/contig_break_finder -h
+
+usage: contig_break_finder [options]
+
+Find a break point in the contig to be the new start
+
+positional arguments:
+  Input fasta file      Input fasta file
+  Gene sequences        Fasta file with dnaA/refA/refB or other sequences
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --hit_percent_id INT  Minimum acceptable hit percent id [80]
+  --min_hit_length INT  Minimum acceptable hit length expressed as percentage
+                        of gene length [100]
+  --no_random_gene      Will only look for genes given
+  --no_rename           Do not rename contigs to indicate chromosome/plasmid
+  --debug               Keep all temp files
+
+
+Sample usage from modules:
+from bio_assembly_refinement import contig_break_finder 
+…
+break_finder = contig_break_finder.ContigBreakFinder(fasta_file = test_fasta_file,
+                                                    gene_file = test_dnaA_file                                    
+                                                    )   
+break_finder.run()
