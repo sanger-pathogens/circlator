@@ -10,6 +10,7 @@ setup(
     version='0.1.0',
     description='circlator: a tool to circularise bacterial genome assemblies',
     packages = find_packages(),
+    package_data={'circlator': ['data/*']},
     author='Martin Hunt, Nishadi De Silva',
     author_email='path-help@sanger.ac.uk',
     url='https://github.com/sanger-pathogens/circlator',

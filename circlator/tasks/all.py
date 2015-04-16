@@ -42,7 +42,7 @@ def print_message(m, opts):
 def run():
     parser = argparse.ArgumentParser(
         description = 'Run mapreads, bam2reads, assemble, merge',
-        usage = 'circlator map [options] <genes.fasta> <assembly.fasta> <reads.fasta> <output directory>')
+        usage = 'circlator map [options] <assembly.fasta> <reads.fasta> <output directory>')
     parser.add_argument('--no_pair_merge', action='store_true', help='Do not merge pairs of contigs when running merge task')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
@@ -52,7 +52,6 @@ def run():
     parser.add_argument('--merge_opts', action=OptSplitAction, help='merge options', default=[])
     parser.add_argument('--clean_opts', action=OptSplitAction, help='clean options', default=[])
     parser.add_argument('--fixstart_opts', action=OptSplitAction, help='fixstart options', default=[])
-    parser.add_argument('genes_fasta', help='Name of FASTA file of genes to use for changing start positions', metavar='genes.fasta')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA file', metavar='reads.fasta')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
@@ -63,7 +62,6 @@ def run():
 
     original_assembly = os.path.abspath(options.assembly)
     original_reads = os.path.abspath(options.reads)
-    options.genes_fasta = os.path.abspath(options.genes_fasta)
 
     try:
         os.mkdir(options.outdir)
@@ -135,7 +133,7 @@ def run():
     circlator.tasks.clean.run(args=options.clean_opts)
 
 
-    options.fixstart_opts.extend([options.genes_fasta, clean_fasta, fixstart_prefix])
+    options.fixstart_opts.extend([clean_fasta, fixstart_prefix])
     print_message('{:_^79}'.format(' Running fixstart '), options)
     print_message('fixstart options:' + ' '.join(options.fixstart_opts), options)
     circlator.tasks.fixstart.run(args=options.fixstart_opts)
