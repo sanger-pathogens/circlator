@@ -3,19 +3,26 @@ import shutil
 import os
 import sys
 import tempfile
+import circlator
 from bio_assembly_refinement import contig_break_finder 
 
 def run(args=None):
     parser = argparse.ArgumentParser(
-        description = 'Change start point of each circular sequence',
-        usage = 'circlator assemble [options] <genes.fasta> <assembly.fasta> <outprefix>')
+        description = 'Change start point of each sequence in assembly',
+        usage = 'circlator fixstart [options] <assembly.fasta> <outprefix>')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
-    parser.add_argument('genes_fa', help='FASTA file of genes to search for to use as start point', metavar='genes.fasta')
+    parser.add_argument('--genes_fa', help='Absolute path to FASTA file of genes to search for to use as start point', metavar='genes.fasta')
     parser.add_argument('assembly_fa', help='Name of input FASTA file', metavar='assembly.fasta')
     parser.add_argument('outprefix', help='Prefix of output files')
     options = parser.parse_args(args)
 
-    options.genes_fa = os.path.abspath(options.genes_fa)
+    if options.genes_fa is None:
+        d = os.path.abspath(os.path.dirname(circlator.__file__))
+        options.genes_fa = os.path.join(d, 'data', 'dnaA.fasta')
+        assert os.path.exists(options.genes_fa)
+    else:
+        options.genes_fa = os.path.abspath(options.genes_fa)
+
     options.assembly_fa = os.path.abspath(options.assembly_fa)
     options.outprefix = os.path.abspath(options.outprefix)
 

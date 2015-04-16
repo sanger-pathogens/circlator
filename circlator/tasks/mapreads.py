@@ -5,7 +5,7 @@ import circlator
 def run(args=None):
     parser = argparse.ArgumentParser(
         description = 'Map reads using bwa mem',
-        usage = 'circlator assemble [options] <reference.fasta> <reads.fasta> <out.bam>')
+        usage = 'circlator mapreads [options] <reference.fasta> <reads.fasta> <out.bam>')
     parser.add_argument('--bwa_opts', help='BWA options, in quotes [%(default)s]', default='-x pacbio')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1)
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
