@@ -1,0 +1,7 @@
+ref.fa qry.fa
+NUCMER
+
+[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[FRM]	[TAGS]
+61	500	61	500	440	440	100.00	500	500	1	1	ref1	qry1	
+10	50	11	52	51	52	99.42	500	500	1	1	ref1	qry1	
+1	500	1	499	500	499	99.40	500	499	1	1	ref2	qry2	[IDENTITY]

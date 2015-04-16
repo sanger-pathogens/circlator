@@ -1,0 +1,6 @@
+/nfs/users/nfs_m/mh12/sanger-pathogens/circlator.0.00006/circlator/tests/data/merge_test_merge_pair.test3.ref.fa /nfs/users/nfs_m/mh12/sanger-pathogens/circlator.0.00006/circlator/tests/data/merge_test_merge_pair.test3.reassembly.fa
+NUCMER
+
+[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[FRM]	[TAGS]
+541	960	1	420	420	420	100.00	960	840	1	1	ref1	reassembly	[END]
+1	480	361	840	480	480	100.00	1060	840	1	1	ref2	reassembly	[BEGIN]
