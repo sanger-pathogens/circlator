@@ -33,6 +33,12 @@ If the tests all pass, install:
 Usage
 -----
 
+The input is an assembly in FASTA format and corrected long reads in FASTA format. To run:
+
+    circlator all assembly.fasta corrected_reads.fasta output_directory
+
+
+
   [BWA]: http://bio-bwa.sourceforge.net/
   [mummer]: http://mummer.sourceforge.net/
   [samtools]: http://www.htslib.org/
