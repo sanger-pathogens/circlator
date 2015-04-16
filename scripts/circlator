@@ -10,8 +10,8 @@ tasks = {
     'bam2reads': 'Make reads from mapping to be reassembled',
     'assemble': 'Run assembly using reads from bam2reads',
     'merge': 'Merge original assembly and new assembly',
-    'clean': 'TO BE IMPLEMENTED Remove small and completely contained contigs from assembly',
-    'fixstart': 'TO BE IMPLEMENTED Change start position of circular sequences',
+    'clean': 'Remove small and completely contained contigs from assembly',
+    'fixstart': 'Change start position of circular sequences',
     'version': 'Print version and exit',
 }
 
