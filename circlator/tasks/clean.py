@@ -9,7 +9,7 @@ def run(args=None):
     parser = argparse.ArgumentParser(
         description = 'Clean contigs',
         usage = 'circlator clean [options] <in.fasta> <outprefix>')
-    parser.add_argument('--min_length', help='Minimum contig length [%(default)s]', default=20000)
+    parser.add_argument('--min_length', help='Minimum contig length to keep [%(default)s]', default=2000)
     parser.add_argument('--keep', help='File of contigs names to keep in output file')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('fasta_in', help='Name of input FASTA file', metavar='in.fasta')
