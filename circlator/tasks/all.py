@@ -116,16 +116,22 @@ def run():
 
     merge_log = merge_prefix + '.log'
     contigs_to_keep = []
+    contigs_to_not_fix_start = []
     with open(merge_log) as f:
         for line in f:
             name, circularised = line.rstrip().split()
             if circularised == '1': 
                 contigs_to_keep.append(name)
+            else:
+                contigs_to_not_fix_start.append(name)
 
     keep_file = clean_prefix + '.contigs_to_keep'
     with open(keep_file, 'w') as f:
         print('\n'.join(contigs_to_keep), file=f)
         
+    not_fix_start_file = fixstart_prefix + '.contigs_to_not_change'
+    with open(not_fix_start_file, 'w') as f:
+        print('\n'.join(contigs_to_not_fix_start), file=f)
 
     options.clean_opts.extend(['--keep', keep_file, merged_fasta, clean_prefix])
     print_message('{:_^79}'.format(' Running clean '), options)
@@ -133,7 +139,7 @@ def run():
     circlator.tasks.clean.run(args=options.clean_opts)
 
 
-    options.fixstart_opts.extend([clean_fasta, fixstart_prefix])
+    options.fixstart_opts.extend(['--ignore', not_fix_start_file, clean_fasta, fixstart_prefix])
     print_message('{:_^79}'.format(' Running fixstart '), options)
     print_message('fixstart options:' + ' '.join(options.fixstart_opts), options)
     circlator.tasks.fixstart.run(args=options.fixstart_opts)
