@@ -28,6 +28,7 @@ class Merger:
 
         self.original_fasta = original_assembly
         self.reassembly_fasta = reassembly
+        self.reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
         self.reads = reads
         self.outprefix = outprefix
         self.nucmer_min_id = nucmer_min_id
@@ -42,6 +43,8 @@ class Merger:
         pyfastaq.tasks.file_to_dict(self.original_fasta, self.original_contigs)
         pyfastaq.tasks.file_to_dict(self.reassembly_fasta, self.reassembly_contigs)
 
+
+    
 
     def _run_nucmer(self, ref, qry, outfile):
         '''Run nucmer of new assembly vs original assembly'''
@@ -156,7 +159,7 @@ class Merger:
         return hits[i]
 
 
-    def _make_new_contig(self, original_contig, hits):
+    def _make_new_contig_from_nucmer_hits(self, original_contig, hits):
         '''Makes a new contig from the contig with name original_contig, using a list of nucmer hits all with original_contig as the ref_name'''
         hits_by_query = self._hits_hashed_by_query(hits)
         for qry_name, l in hits_by_query.items():
@@ -316,10 +319,42 @@ class Merger:
         pyfastaq.utils.close(f)
 
 
+    def _get_spades_circular_nodes(self, fastg):
+        '''Returns set of names of nodes in SPAdes fastg file that are circular. Names will match those in spades fasta file'''
+        seq_reader = pyfastaq.sequences.file_reader(fastg)
+        names = set([x.id.rstrip(';') for x in seq_reader if ':' in x.id])
+        found_fwd = set()
+        found_rev = set()
+        for name in names:
+            l = name.split(':')
+            if len(l) != 2:
+                continue
+            if l[0] == l[1]:
+                if l[0][-1] == "'":
+                    found_rev.add(l[0][:-1])
+                else:
+                    found_fwd.add(l[0])
+                
+        return found_fwd.intersection(found_rev)
+
+
+    def _make_new_contig_from_nucmer_and_spades(self, original_contig, hits, circular_spades, min_percent=95):
+        '''Tries to make new circularised contig from contig called original_contig. hits = list of nucmer hits, all with ref=original contg. circular_spades=set of query contig names that spades says are circular'''
+        hits_to_circular_contigs = [x for x in hits if x.qry_name in circular_spades]
+        if len(hits_to_circular_contigs) == 0:
+            return None
+
+        for hit in hits_to_circular_contigs:
+            if min_percent <= 100 * (hit.hit_length_qry / hit.qry_length):
+                return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq)
+
+        return None
+
 
     def run(self):
         out_fasta = os.path.abspath(self.outprefix + '.fasta')
         out_log = os.path.abspath(self.outprefix + '.log')
+        circular_spades = self._get_spades_circular_nodes(self.reassembly_fastg)
         merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
 
         self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
@@ -329,21 +364,25 @@ class Merger:
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)
         fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
         log_fh = pyfastaq.utils.open_file_write(out_log)
+        print('#Contig', 'circl_using_nucmer', 'circl_using_spades', sep='\t', file=log_fh)
 
-        for original_name, original_contig in sorted(self.original_contigs.items()):
-            if original_name in nucmer_hits:
-                new_contig = self._make_new_contig(original_name, nucmer_hits[original_name])
-                circularised = 0
-
-                if new_contig is not None:
-                    original_contig = new_contig
-                    circularised = 1
+        for contig_name, contig in sorted(self.original_contigs.items()):
+            nucmer_circularised = 0
+            spades_circularised = 0
+            if contig_name in nucmer_hits:
+                new_contig = self._make_new_contig_from_nucmer_hits(contig_name, nucmer_hits[contig_name])
+                if new_contig is None:
+                    print(contig_name, 'trying spades circularise...')
+                    new_contig = self._make_new_contig_from_nucmer_and_spades(contig_name, nucmer_hits[contig_name], circular_spades)
+                    if new_contig is not None:
+                        contig = new_contig
+                        spades_circularised = 1
+                else:
+                    contig = new_contig
+                    nucmer_circularised = 1
                     
-                print(original_contig, file=fasta_fh)
-                print(original_name, circularised, sep='\t', file=log_fh)
-            else:
-                print(original_contig, file=fasta_fh)
-                print(original_name, 0, sep='\t', file=log_fh)
+            print(contig, file=fasta_fh)
+            print(contig_name, nucmer_circularised, spades_circularised, sep='\t', file=log_fh)
         
         pyfastaq.utils.close(fasta_fh)
         pyfastaq.utils.close(log_fh)
