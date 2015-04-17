@@ -108,8 +108,8 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(self.merger._get_longest_hit(hits), hits[2])
 
 
-    def test_make_new_contig(self):
-        '''test _make_new_contig'''
+    def test_make_new_contig_from_nucmer_hits(self):
+        '''test _make_new_contig_from_nucmer_hits'''
         # FIXME?
         pass
 
@@ -250,6 +250,33 @@ class TestMerge(unittest.TestCase):
         self.merger._contigs_dict_to_file(d, tmpfile)
         self.assertTrue(filecmp.cmp(tmpfile, os.path.join(data_dir, 'merge_test_contigs_dict_to_file.fa'), shallow=False))
         os.unlink(tmpfile)
+
+
+    def test_make_new_contig_from_nucmer_and_spades_not_hit(self):
+        '''test _make_new_contig_from_nucmer_and_spades no hit'''
+        circular = set()
+        #original_contig = pyfastaq.sequences.Fasta('ref', 'ACGT')
+        hits = [
+            '\t'.join(['1', '42', '2', '43', '42', '42', '100.0', '1000', '2000', '1', '-1', 'ref', 'reassembly'])
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular)
+        self.assertEqual(got, None)
+
+
+    def test_make_new_contig_from_nucmer_and_spades_with_hit(self):
+        '''test _make_new_contig_from_nucmer_and_spades with hit'''
+        circular = set(['spades_node'])
+        #original_contig = pyfastaq.sequences.Fasta('original', 'ACGT')
+        spades_node = pyfastaq.sequences.Fasta('spades_node', 'ACGTACGTACG')
+        expected = pyfastaq.sequences.Fasta('contig_name', spades_node.seq)
+        self.merger.reassembly_contigs = {'spades_node': spades_node}
+        hits = [
+            '\t'.join(['21', '30', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node'])
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular, min_percent=90)
+        self.assertEqual(got, expected)
 
 
     def test_get_spades_circular_nodes(self):
