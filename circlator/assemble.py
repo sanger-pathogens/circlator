@@ -48,4 +48,3 @@ class Assembler:
             self.run_spades()
         else:
             raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
-         

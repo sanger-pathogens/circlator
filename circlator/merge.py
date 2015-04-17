@@ -316,6 +316,24 @@ class Merger:
         pyfastaq.utils.close(f)
 
 
+    def _get_spades_circular_nodes(self, fastg):
+        '''Returns set of names of nodes in SPAdes fastg file that are circular. Names will match those in spades fasta file'''
+        seq_reader = pyfastaq.sequences.file_reader(fastg)
+        names = set([x.id.rstrip(';') for x in seq_reader if ':' in x.id])
+        found_fwd = set()
+        found_rev = set()
+        for name in names:
+            l = name.split(':')
+            if len(l) != 2:
+                continue
+            if l[0] == l[1]:
+                if l[0][-1] == "'":
+                    found_rev.add(l[0][:-1])
+                else:
+                    found_fwd.add(l[0])
+                
+        return found_fwd.intersection(found_rev)
+
 
     def run(self):
         out_fasta = os.path.abspath(self.outprefix + '.fasta')

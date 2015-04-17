@@ -250,3 +250,11 @@ class TestMerge(unittest.TestCase):
         self.merger._contigs_dict_to_file(d, tmpfile)
         self.assertTrue(filecmp.cmp(tmpfile, os.path.join(data_dir, 'merge_test_contigs_dict_to_file.fa'), shallow=False))
         os.unlink(tmpfile)
+
+
+    def test_get_spades_circular_nodes(self):
+        fastg = os.path.join(data_dir, 'merge_test_get_spades_circular_nodes.fastg')
+        got = self.merger._get_spades_circular_nodes(fastg)
+        expected = set(['NODE_1_length_5_cov_42.42_ID_1'])
+        self.assertEqual(expected, got)
+       
