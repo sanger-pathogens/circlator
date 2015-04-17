@@ -46,11 +46,11 @@ class TestBamfilter(unittest.TestCase):
 
     def test_break_reads(self):
         '''test _break_reads'''
-        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_break_reads.bam'), 'out', min_read_length=5)
+        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_break_reads.bam'), 'out')
         expected = os.path.join(data_dir, 'bamfilter_test_break_reads.broken_reads.fa')
         tmp = 'tmp.test_break_reads.out.fa'
         f = pyfastaq.utils.open_file_write(tmp) 
-        b._break_reads('contig1', 390, f)
+        b._break_reads('contig1', 390, f, min_read_length=5)
         pyfastaq.utils.close(f)
         self.assertTrue(filecmp.cmp(expected, tmp))
         os.unlink(tmp)
