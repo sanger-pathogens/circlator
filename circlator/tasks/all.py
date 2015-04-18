@@ -71,16 +71,16 @@ def run():
 
     os.chdir(options.outdir)
 
-    bam = '01.map_corrected_reads.bam'
-    filtered_reads_prefix = '02.filtered_reads'
+    bam = '01.mapreads.bam'
+    filtered_reads_prefix = '02.bam2reads'
     filtered_reads =  filtered_reads_prefix + '.fasta'
-    assembly_dir = '03.Assembly'
+    assembly_dir = '03.assemble'
     reassembly = os.path.join(assembly_dir, 'scaffolds.fasta')
     merge_prefix = '04.merge'
     merged_fasta = merge_prefix + '.fasta'
     clean_prefix = '05.clean'
     clean_fasta = clean_prefix + '.fasta'
-    fixstart_prefix = '06.final'
+    fixstart_prefix = '06.fixstart'
     fixstart_fasta = fixstart_prefix + '.fasta'
 
     options.mapreads_opts.extend([original_assembly, original_reads, bam])
