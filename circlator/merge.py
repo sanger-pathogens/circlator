@@ -372,7 +372,6 @@ class Merger:
             if contig_name in nucmer_hits:
                 new_contig = self._make_new_contig_from_nucmer_hits(contig_name, nucmer_hits[contig_name])
                 if new_contig is None:
-                    print(contig_name, 'trying spades circularise...')
                     new_contig = self._make_new_contig_from_nucmer_and_spades(contig_name, nucmer_hits[contig_name], circular_spades)
                     if new_contig is not None:
                         contig = new_contig
