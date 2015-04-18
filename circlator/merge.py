@@ -364,7 +364,7 @@ class Merger:
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)
         fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
         log_fh = pyfastaq.utils.open_file_write(out_log)
-        print('#Contig', 'circl_using_nucmer', 'circl_using_spades', sep='\t', file=log_fh)
+        print('#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised', sep='\t', file=log_fh)
 
         for contig_name, contig in sorted(self.original_contigs.items()):
             nucmer_circularised = 0
@@ -382,7 +382,8 @@ class Merger:
                     nucmer_circularised = 1
                     
             print(contig, file=fasta_fh)
-            print(contig_name, nucmer_circularised, spades_circularised, sep='\t', file=log_fh)
+            circularised = 1 if 1 in [spades_circularised, nucmer_circularised] else 0
+            print(contig_name, nucmer_circularised, spades_circularised, circularised, sep='\t', file=log_fh)
         
         pyfastaq.utils.close(fasta_fh)
         pyfastaq.utils.close(log_fh)
