@@ -6,7 +6,7 @@ import circlator
 def run(args=None):
     parser = argparse.ArgumentParser(
         description = 'Merge original and new assembly',
-        usage = 'circlator merge [options] <original.fasta> <new.fasta> <reads.fasta> <outprefix>'
+        usage = 'circlator merge [options] <original.fasta> <new.fasta> <outprefix>'
     )
     
     parser.add_argument('--min_id', type=float, help='Nucmer minimum percent identity[%(default)s]', metavar='FLOAT', default=99)
