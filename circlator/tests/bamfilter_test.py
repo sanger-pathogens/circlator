@@ -67,3 +67,26 @@ class TestBamfilter(unittest.TestCase):
         self.assertTrue(filecmp.cmp(expected, tmp))
         os.unlink(tmp)
 
+
+    def test_get_region_start(self):
+        '''test _get_region start'''
+        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_get_region_start.bam'), 'out')
+        expected = os.path.join(data_dir, 'bamfilter_test_get_region_start.reads.fa')
+        tmp = 'tmp.test_get_region.out.fa'
+        f = pyfastaq.utils.open_file_write(tmp)
+        b._get_region('1', 0, 64, f, min_length=20)
+        pyfastaq.utils.close(f)
+        self.assertTrue(filecmp.cmp(expected, tmp))
+        os.unlink(tmp)
+
+
+    def test_get_region_end(self):
+        '''test _get_region end'''
+        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_get_region_end.bam'), 'out')
+        expected = os.path.join(data_dir, 'bamfilter_test_get_region_end.reads.fa')
+        tmp = 'tmp.test_get_region.out.fa'
+        f = pyfastaq.utils.open_file_write(tmp)
+        b._get_region('2', 379, 499, f, min_length=20)
+        pyfastaq.utils.close(f)
+        self.assertTrue(filecmp.cmp(expected, tmp))
+        os.unlink(tmp)

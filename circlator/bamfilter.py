@@ -77,24 +77,48 @@ class BamFilter:
                 print(mapping.aligned_read_to_read(read, ignore_quality=True), file=fout)
 
 
+    def _get_region(self, contig, start, end, fout, min_length=250):
+        '''Writes reads mapping to given region of contig, trimming part of read not in the region'''
+        sam_reader = pysam.Samfile(self.bam, "rb")
+        trimming_end = (start == 0)
+        for read in sam_reader.fetch(contig, start, end):
+            read_interval = pyfastaq.intervals.Interval(read.pos, read.reference_end - 1)
+            seq = mapping.aligned_read_to_read(read, ignore_quality=True, revcomp=False)
+
+            if trimming_end:
+                bases_off_start = 0
+                bases_off_end = max(0, read.reference_end - 1 - end)
+                seq.seq = seq.seq[:read.query_alignment_end - bases_off_end]
+            else:
+                bases_off_start = max(0, start - read.pos + 1)
+                seq.seq = seq.seq[bases_off_start  + read.query_alignment_start:]
+
+            if read.is_reverse:
+                seq.revcomp()
+          
+            if len(seq) >= min_length:
+                print(seq, file=fout)
+
+
     def run(self):
         ref_lengths = self._get_ref_lengths()
         assert len(ref_lengths) > 0
         f_log = pyfastaq.utils.open_file_write(self.log)
-        f_fq = pyfastaq.utils.open_file_write(self.reads_fa)
+        f_fa = pyfastaq.utils.open_file_write(self.reads_fa)
+        print('#contig', 'length', 'reads_kept', sep='\t', file=f_log)
 
         for contig in sorted(ref_lengths):
             if ref_lengths[contig] <= self.length_cutoff:
-                self._all_reads_from_contig(contig, f_fq)
+                self._all_reads_from_contig(contig, f_fa)
                 print(contig, ref_lengths[contig], 'keep all reads', sep='\t', file=f_log)
             else:
                 end_bases_keep = int(0.5 * self.length_cutoff)
                 start = end_bases_keep - 1
                 end = max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
-                region_to_remove = pyfastaq.intervals.Interval(start, end)
-                self._exclude_region(contig, region_to_remove.start, region_to_remove.end, f_fq)
-                print(contig, ref_lengths[contig], 'remove region ' + str(region_to_remove.start + 1) +  '-' + str(region_to_remove.end + 1), sep='\t', file=f_log)
+                self._get_region(contig, 0, start, f_fa)
+                self._get_region(contig, end, ref_lengths[contig], f_fa)
+                print(contig, ref_lengths[contig], 'remove region ' + str(start + 1) +  '-' + str(end + 1), sep='\t', file=f_log)
 
-        self._get_all_unmapped_reads(f_fq)
-        pyfastaq.utils.close(f_fq)
+        self._get_all_unmapped_reads(f_fa)
+        pyfastaq.utils.close(f_fa)
         pyfastaq.utils.close(f_log)
