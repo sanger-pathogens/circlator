@@ -4,6 +4,7 @@ import os
 import sys
 import tempfile
 import circlator
+import pyfastaq
 from bio_assembly_refinement import contig_break_finder 
 
 def run(args=None):
@@ -11,6 +12,7 @@ def run(args=None):
         description = 'Change start point of each sequence in assembly',
         usage = 'circlator fixstart [options] <assembly.fasta> <outprefix>')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
+    parser.add_argument('--fastg_circular', help='File of contig names that are circular. Using this option will mean a FASTG file is written', metavar='filename')
     parser.add_argument('--genes_fa', help='Absolute path to FASTA file of genes to search for to use as start point', metavar='filename')
     parser.add_argument('--ignore', help='Absolute path to file of IDs of contigs to not change', metavar='filename')
     parser.add_argument('assembly_fa', help='Name of input FASTA file', metavar='assembly.fasta')
@@ -44,4 +46,11 @@ def run(args=None):
     os.rename(break_finder.summary_file, options.outprefix + '.summary')
     os.chdir(original_dir)
     shutil.rmtree(tmpdir)
+
+    if options.fastg_circular:
+        pyfastaq.tasks.to_fastg(
+            options.outprefix + '.fasta',
+            options.outprefix + '.fastg',
+            circular=options.fastg_circular
+        )
 

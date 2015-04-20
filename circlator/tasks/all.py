@@ -141,7 +141,12 @@ def run():
     circlator.tasks.clean.run(args=options.clean_opts)
 
 
-    options.fixstart_opts.extend(['--ignore', not_fix_start_file, clean_fasta, fixstart_prefix])
+    options.fixstart_opts.extend([
+        '--fastg_circular', keep_file,
+        '--ignore', not_fix_start_file,
+        clean_fasta,
+        fixstart_prefix
+    ])
     print_message('{:_^79}'.format(' Running fixstart '), options)
     print_message('fixstart options:' + ' '.join(options.fixstart_opts), options)
     circlator.tasks.fixstart.run(args=options.fixstart_opts)
