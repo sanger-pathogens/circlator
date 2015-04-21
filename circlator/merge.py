@@ -181,6 +181,9 @@ class Merger:
 
 
     def _remove_redundant_hits(self, start_hits, end_hits):
+        if 0 in [len(start_hits), len(end_hits)]:
+            return start_hits, end_hits
+
         start_hits.sort(key=lambda x: x.qry_coords().start)
         end_hits.sort(key=lambda x: x.qry_coords().start, reverse=True)
         start_to_keep = self._indexes_not_in_common(start_hits, end_hits)
@@ -268,6 +271,7 @@ class Merger:
         reads_prefix = outprefix + '.reads'
         self._contigs_dict_to_file(self.original_contigs, genome_fasta)
         self._contigs_dict_to_file(self.reassembly_contigs, reassembly_fasta)
+        shutil.copyfile(self.reassembly_fasta[:-1] + 'g', reassembly_fastg)
         made_join = True
 
         while made_join:
