@@ -28,7 +28,6 @@ class Merger:
 
         self.original_fasta = original_assembly
         self.reassembly_fasta = reassembly
-        self.reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
         self.reads = reads
         self.outprefix = outprefix
         self.nucmer_min_id = nucmer_min_id
@@ -172,6 +171,25 @@ class Merger:
         return None
 
 
+    def _indexes_not_in_common(self, hits, other_hits):
+        to_keep = {0}
+        for i in range(1, len(hits)):
+            if hits[i] not in other_hits:
+                to_keep.add(i)
+
+        return to_keep
+
+
+    def _remove_redundant_hits(self, start_hits, end_hits):
+        start_hits.sort(key=lambda x: x.qry_coords().start)
+        end_hits.sort(key=lambda x: x.qry_coords().start, reverse=True)
+        start_to_keep = self._indexes_not_in_common(start_hits, end_hits)
+        end_to_keep = self._indexes_not_in_common(end_hits, start_hits)
+        start_hits = [start_hits[i] for i in start_to_keep]
+        end_hits = [end_hits[i] for i in end_to_keep]
+        return start_hits, end_hits
+
+
     def _nucmer_hits_to_potential_join(self, hits, genome_contigs, reassembly_contigs):
         '''Given a list of numcer hits, all to the same query, returns a pair of nucmer hits that could be used to join two of the genome contigs'''
         if len(hits) < 2:
@@ -202,6 +220,8 @@ class Merger:
                    (hit.ref_coords().intersects(ref_end_interval) and not hit.on_same_strand())
             ):
                 hits_at_end.append(hit)
+
+        hits_at_start, hits_at_end = self._remove_redundant_hits(hits_at_start, hits_at_end)
 
         if len(hits_at_start) == len(hits_at_end) == 1 and hits_at_start[0].ref_name != hits_at_end[0].ref_name:
             return hits_at_start[0], hits_at_end[0]
@@ -242,7 +262,8 @@ class Merger:
 
         nucmer_coords = outprefix + '.tmp.coords'
         genome_fasta = outprefix + '.merged.fa'
-        reassembly_fasta = outprefix + '.reassembly.fa'
+        reassembly_fasta = outprefix + '.reassembly.fasta'
+        reassembly_fastg = outprefix + '.reassembly.fastg'
         bam = outprefix + '.bam'
         reads_prefix = outprefix + '.reads'
         self._contigs_dict_to_file(self.original_contigs, genome_fasta)
@@ -273,7 +294,6 @@ class Merger:
                     potential_join_pairs[key].append(hits)
 
             potential_join_pairs = {x:potential_join_pairs[x][0] for x in potential_join_pairs if len(potential_join_pairs[x]) == 1}
-
             if len(potential_join_pairs):
                 ref_seq_counts = {}
                 for qry in potential_join_pairs:
@@ -303,6 +323,7 @@ class Merger:
                         a = circlator.assemble.Assembler(reads_prefix + '.fasta', assembler_dir, threads=self.threads, verbose=self.verbose)
                         a.run()
                         os.rename(os.path.join(assembler_dir, 'scaffolds.fasta'), reassembly_fasta)
+                        os.rename(os.path.join(assembler_dir, 'scaffolds.fastg'), reassembly_fastg)
                         shutil.rmtree(assembler_dir)
                         pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
                         made_join = True
@@ -354,11 +375,11 @@ class Merger:
     def run(self):
         out_fasta = os.path.abspath(self.outprefix + '.fasta')
         out_log = os.path.abspath(self.outprefix + '.log')
-        circular_spades = self._get_spades_circular_nodes(self.reassembly_fastg)
         merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
-
         self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
 
+        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
+        circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
         nucmer_coords = os.path.abspath(self.outprefix + '.coords')
         self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_coords)
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)

@@ -1,5 +1,6 @@
 import unittest
 import filecmp
+import copy
 import os
 import pymummer
 import pyfastaq
@@ -112,6 +113,32 @@ class TestMerge(unittest.TestCase):
         '''test _make_new_contig_from_nucmer_hits'''
         # FIXME?
         pass
+
+
+    def test_remove_redundant_hits(self):
+        '''test _remove_redundant_hits'''
+        hits = [
+            '\t'.join(['1', '100', '3', '105', '100', '112', '100.00', '110', '120', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['2', '101', '4', '106', '101', '113', '100.00', '111', '121', '1', '1', 'ref2', 'qry1']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        start_hits = copy.copy(hits)
+        end_hits = copy.copy(hits)
+        start_expected = [hits[0]]
+        end_expected = [hits[1]]
+        start_got, end_got = self.merger._remove_redundant_hits(start_hits, end_hits)
+        self.assertEqual(start_got, start_expected)
+        self.assertEqual(end_got, end_expected)
+
+
+    def test_indexes_not_in_common(self):
+        '''test _indexes_not_in_common'''
+        list1 = [0, 1, 42, 3]
+        list2 = [0, 4, 42, 64738]
+        expected1 = {0, 1, 3}
+        expected2 = {9, 4, 64738}
+        self.assertEqual(expected1, self.merger._indexes_not_in_common(list1, list2))
+        self.assertEqual(expected1, self.merger._indexes_not_in_common(list2, list1))
 
 
     def test_nucmer_hits_to_potential_join(self):
