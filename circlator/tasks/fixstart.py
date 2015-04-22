@@ -42,7 +42,10 @@ def run(args=None):
     )
     break_finder.run()
 
+
     # move output files and delete tmp dir
+    assert os.path.exists(break_finder.output_file)
+    assert os.path.exists(break_finder.summary_file)
     os.rename(break_finder.output_file, options.outprefix + '.fasta')
     os.rename(break_finder.summary_file, options.outprefix + '.summary')
     os.chdir(original_dir)
