@@ -26,6 +26,9 @@ def run(args=None):
 
     options.assembly_fa = os.path.abspath(options.assembly_fa)
     options.outprefix = os.path.abspath(options.outprefix)
+    
+    if options.ignore:
+        options.ignore = os.path.abspath(options.ignore)
 
     original_dir = os.getcwd()
     tmpdir = tempfile.mkdtemp(prefix=options.outprefix + '.tmp.circlator.fixstart.', dir=os.getcwd())
@@ -35,7 +38,7 @@ def run(args=None):
         fasta_file=options.assembly_fa,
         gene_file=options.genes_fa,
         rename=False,
-        avoid=options.ignore,
+        skip=options.ignore,
     )
     break_finder.run()
 
