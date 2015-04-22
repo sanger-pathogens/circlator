@@ -21,6 +21,7 @@ class Merger:
           qry_end_tolerance=20000,
           verbose=False,
           threads=1,
+          log_prefix='merge',
     ):
         for f in [original_assembly, reassembly]:
             if not os.path.exists(f):
@@ -37,13 +38,13 @@ class Merger:
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
         self.threads = threads
+        self.log_prefix = log_prefix
+        self.merges = []
         self.original_contigs = {}
         self.reassembly_contigs = {}
         pyfastaq.tasks.file_to_dict(self.original_fasta, self.original_contigs)
         pyfastaq.tasks.file_to_dict(self.reassembly_fasta, self.reassembly_contigs)
 
-
-    
 
     def _run_nucmer(self, ref, qry, outfile):
         '''Run nucmer of new assembly vs original assembly'''
@@ -254,7 +255,9 @@ class Merger:
             tmp_seq.revcomp()
             end_seq = tmp_seq.seq
 
-        new_contig = pyfastaq.sequences.Fasta(start_contig.id + '.' + end_contig.id, start_seq + bridge_seq + end_seq)
+        new_id = start_contig.id + '.' + end_contig.id
+        new_contig = pyfastaq.sequences.Fasta(new_id, start_seq + bridge_seq + end_seq)
+        self.merges.append([new_id, start_contig.id, end_contig.id])
         ref_contigs[new_contig.id] = new_contig
 
 
@@ -381,6 +384,9 @@ class Merger:
         out_log = os.path.abspath(self.outprefix + '.log')
         merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
         self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
+        log_fh = pyfastaq.utils.open_file_write(out_log)
+        for l in self.merges:
+            print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
 
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
         circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
@@ -388,8 +394,7 @@ class Merger:
         self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_coords)
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)
         fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
-        log_fh = pyfastaq.utils.open_file_write(out_log)
-        print('#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised', sep='\t', file=log_fh)
+        print('[' + self.log_prefix + ' circularised]', '#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised', sep='\t', file=log_fh)
 
         for contig_name, contig in sorted(self.original_contigs.items()):
             nucmer_circularised = 0
@@ -407,7 +412,7 @@ class Merger:
                     
             print(contig, file=fasta_fh)
             circularised = 1 if 1 in [spades_circularised, nucmer_circularised] else 0
-            print(contig_name, nucmer_circularised, spades_circularised, circularised, sep='\t', file=log_fh)
+            print('[' + self.log_prefix + ' circularised]', contig_name, nucmer_circularised, spades_circularised, circularised, sep='\t', file=log_fh)
         
         pyfastaq.utils.close(fasta_fh)
         pyfastaq.utils.close(log_fh)

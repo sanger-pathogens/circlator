@@ -119,9 +119,9 @@ def run():
     contigs_to_not_fix_start = []
     with open(merge_log) as f:
         for line in f:
-            if line.startswith('#'):
+            if not line.startswith('[merge circularised]\t'):
                 continue
-            name, x, y, circularised = line.rstrip().split('\t')
+            x, name, y, z, circularised = line.rstrip().split('\t')
             if circularised == '1': 
                 contigs_to_keep.append(name)
             else:

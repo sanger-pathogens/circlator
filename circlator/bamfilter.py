@@ -12,6 +12,7 @@ class BamFilter:
              bam,
              outprefix,
              length_cutoff=100000,
+             log_prefix='[bamfilter]',
     ):
         self.bam = os.path.abspath(bam)
         if not os.path.exists(self.bam):
@@ -20,6 +21,7 @@ class BamFilter:
         self.length_cutoff = length_cutoff
         self.reads_fa = os.path.abspath(outprefix + '.fasta')
         self.log = os.path.abspath(outprefix + '.log')
+        self.log_prefix = log_prefix
 
 
     def _get_ref_lengths(self):
@@ -105,19 +107,26 @@ class BamFilter:
         assert len(ref_lengths) > 0
         f_log = pyfastaq.utils.open_file_write(self.log)
         f_fa = pyfastaq.utils.open_file_write(self.reads_fa)
-        print('#contig', 'length', 'reads_kept', sep='\t', file=f_log)
+        print(self.log_prefix, '#contig', 'length', 'reads_kept', sep='\t', file=f_log)
 
         for contig in sorted(ref_lengths):
             if ref_lengths[contig] <= self.length_cutoff:
                 self._all_reads_from_contig(contig, f_fa)
-                print(contig, ref_lengths[contig], 'keep all reads', sep='\t', file=f_log)
+                print(self.log_prefix, contig, ref_lengths[contig], 'all', sep='\t', file=f_log)
             else:
                 end_bases_keep = int(0.5 * self.length_cutoff)
                 start = end_bases_keep - 1
                 end = max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
                 self._get_region(contig, 0, start, f_fa)
                 self._get_region(contig, end, ref_lengths[contig], f_fa)
-                print(contig, ref_lengths[contig], 'remove region ' + str(start + 1) +  '-' + str(end + 1), sep='\t', file=f_log)
+                print(
+                    self.log_prefix,
+                    contig,
+                    ref_lengths[contig],
+                    '1-' + str(start + 1) +  ';' + str(end + 1) + '-' + str(ref_lengths[contig]),
+                    sep='\t',
+                    file=f_log
+                )
 
         self._get_all_unmapped_reads(f_fa)
         pyfastaq.utils.close(f_fa)
