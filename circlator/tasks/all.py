@@ -121,6 +121,9 @@ def run():
         for line in f:
             if not line.startswith('[merge circularised]\t'):
                 continue
+            if line.rstrip() == '\t'.join(['[merge circularised]', '#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised']):
+                continue
+
             x, name, y, z, circularised = line.rstrip().split('\t')
             if circularised == '1': 
                 contigs_to_keep.append(name)
@@ -129,11 +132,13 @@ def run():
 
     keep_file = clean_prefix + '.contigs_to_keep'
     with open(keep_file, 'w') as f:
-        print('\n'.join(contigs_to_keep), file=f)
+        if len(contigs_to_keep) > 0:
+            print('\n'.join(contigs_to_keep), file=f)
         
     not_fix_start_file = fixstart_prefix + '.contigs_to_not_change'
     with open(not_fix_start_file, 'w') as f:
-        print('\n'.join(contigs_to_not_fix_start), file=f)
+        if len(contigs_to_not_fix_start) > 0:
+            print('\n'.join(contigs_to_not_fix_start), file=f)
 
     options.clean_opts.extend(['--keep', keep_file, merged_fasta, clean_prefix])
     print_message('{:_^79}'.format(' Running clean '), options)
