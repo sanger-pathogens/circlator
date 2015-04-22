@@ -28,7 +28,7 @@ def run(args=None):
     ccleaner = contig_cleanup.ContigCleanup(
         options.fasta_in,
         cutoff_contig_length=options.min_length,
-        ids=options.keep,
+        skip=options.keep,
     )
     ccleaner.run()
 
