@@ -280,6 +280,7 @@ class Merger:
         while made_join:
             made_join = False
             self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
+            merged_contigs = set()
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
             all_hits = []
             for l in nucmer_hits_by_ref.values():
@@ -294,23 +295,33 @@ class Merger:
                     self.reassembly_contigs)
 
                 if hits is not None:
-                    assert hits[0].qry_name == hits[1].qry_name
-                    key = hits[0].qry_name
+                    start_hits, end_hits = hits
+                    assert start_hits.qry_name == end_hits.qry_name
+                    key = start_hits.qry_name
                     if key not in potential_join_pairs:
                         potential_join_pairs[key] = []
-                    potential_join_pairs[key].append(hits)
+                    potential_join_pairs[key].append((start_hits, end_hits))
 
             potential_join_pairs = {x:potential_join_pairs[x][0] for x in potential_join_pairs if len(potential_join_pairs[x]) == 1}
             if len(potential_join_pairs):
-                ref_seq_counts = {}
+                ref_seq_start_counts = {}
+                ref_seq_end_counts = {}
                 for qry in potential_join_pairs:
-                    for hit in potential_join_pairs[qry]:
-                        ref_seq_counts[hit.ref_name] = ref_seq_counts.get(hit.ref_name, 0) + 1
+                    start_name = potential_join_pairs[qry][0].ref_name
+                    end_name = potential_join_pairs[qry][1].ref_name
+                    ref_seq_start_counts[start_name] = ref_seq_start_counts.get(start_name, 0) + 1
+                    ref_seq_end_counts[end_name] = ref_seq_end_counts.get(end_name, 0) + 1
 
                 for qry in potential_join_pairs:
                     hits = potential_join_pairs[qry]
                     assert len(hits) == 2
-                    if ref_seq_counts[hits[0].ref_name] == ref_seq_counts[hits[1].ref_name] == 1:
+                    ref_start_name = hits[0].ref_name
+                    ref_end_name = hits[1].ref_name
+                    if (len({ref_start_name, ref_end_name}.intersection(merged_contigs)) == 0
+                        and ref_seq_start_counts[ref_start_name] == ref_seq_end_counts[ref_end_name] == 1
+                    ):
+                        merged_contigs.add(ref_start_name)
+                        merged_contigs.add(ref_end_name)
                         self._merge_pair(hits, self.original_contigs, self.reassembly_contigs)
                         self._contigs_dict_to_file(self.original_contigs, genome_fasta)
                         if os.path.exists(reads_prefix + '.fasta'):
@@ -385,8 +396,10 @@ class Merger:
         merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
         self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
         log_fh = pyfastaq.utils.open_file_write(out_log)
-        for l in self.merges:
-            print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
+        if len(self.merges):
+            print('[' + self.log_prefix + ' contig_merge]', '#new_name', 'previous_contig1', 'previous_contig2', sep='\t', file=log_fh)
+            for l in self.merges:
+                print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
 
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
         circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
