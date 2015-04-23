@@ -33,6 +33,8 @@ def run(args=None):
     ccleaner.run()
 
     # move output files and delete tmp dir
+    assert os.path.exists(ccleaner.output_file)
+    assert os.path.exists(ccleaner.summary_file)
     os.rename(ccleaner.output_file, options.outprefix + '.fasta')
     os.rename(ccleaner.summary_file, options.outprefix + '.summary')
     os.chdir(original_dir)
