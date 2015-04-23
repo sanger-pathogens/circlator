@@ -1,4 +1,6 @@
 import os
+import sys
+import shutil
 import pyfastaq
 from circlator import common, external_progs
 
@@ -9,7 +11,7 @@ class Assembler:
       reads,
       outdir,
       threads=1,
-      spades_kmer=127,
+      spades_kmers=None,
       verbose=False,
     ):
         self.outdir = os.path.abspath(outdir)
@@ -25,22 +27,44 @@ class Assembler:
         self.verbose = verbose
         self.threads = threads
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
-        self.spades_kmer = spades_kmer
+        if spades_kmers is None:
+            self.spades_kmers = spades_kmers=[127,121,111,101,91,81,71]
+        else:
+            self.spades_kmers = sorted(spades_kmers, reverse=True)
         self.assembler = 'spades'
 
 
-    def run_spades(self):
+    def run_spades_once(self, kmer, outdir):
         cmd = ' '.join([
             self.spades.exe(),
             '-s', self.reads,
-            '-k', str(self.spades_kmer),
+            '-k', str(kmer),
             '--careful', 
             '--only-assembler',
             '-t', str(self.threads),
-            '-o', self.outdir,
+            '-o', outdir,
         ])
 
-        common.syscall(cmd, verbose=self.verbose)
+        return common.syscall(cmd, verbose=self.verbose, allow_fail=True)
+
+
+    def run_spades(self):
+        '''Runs spades, starting with biggest kmer. Takes the first result where SPAdes returns success.
+           We do this because sometimes a large kmer makes SPAdes crash because the coverage is too low.
+           Even if you give SPAdes a list of kmers, if one of the kmers doesn't work, then it stops.
+           So need to run separately on each kmer'''
+        spades_errors = []
+
+        for k in self.spades_kmers:
+            ok, errs = self.run_spades_once(k, self.outdir)
+            if ok:
+                return
+
+            shutil.rmtree(self.outdir)
+            spades_errors.append(errs)
+
+        print('Error running SPAdes. Output from all runs follows...', file=sys.stderr)
+        print('\n\n______________________________________________\n\n'.join(spades_errors), file=sys.stderr)
 
 
     def run(self):
