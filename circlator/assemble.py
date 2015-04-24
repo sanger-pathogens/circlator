@@ -65,6 +65,9 @@ class Assembler:
 
         print('Error running SPAdes. Output from all runs follows...', file=sys.stderr)
         print('\n\n______________________________________________\n\n'.join(spades_errors), file=sys.stderr)
+        print('\n\nError running SPAdes, most likely due to low read coverage.', file=sys.stderr)
+        print('Please see above for the output from SPAdes. Cannot continue', file=sys.stderr)
+        sys.exit(1)
 
 
     def run(self):
