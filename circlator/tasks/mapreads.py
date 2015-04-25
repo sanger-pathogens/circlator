@@ -2,7 +2,7 @@ import argparse
 import sys
 import circlator
 
-def run(args=None):
+def run():
     parser = argparse.ArgumentParser(
         description = 'Map reads using bwa mem',
         usage = 'circlator mapreads [options] <reference.fasta> <reads.fasta> <out.bam>')
@@ -12,7 +12,7 @@ def run(args=None):
     parser.add_argument('ref', help='Name of input reference FASTA file', metavar='reference.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA file', metavar='reads.fasta')
     parser.add_argument('bam', help='Name of output BAM file', metavar='out.bam')
-    options = parser.parse_args(args)
+    options = parser.parse_args()
 
     circlator.mapping.bwa_mem(
       options.ref,

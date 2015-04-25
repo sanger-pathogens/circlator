@@ -1,9 +1,7 @@
 import argparse
-import sys
-import pyfastaq
 import circlator
 
-def run(args=None):
+def run():
     parser = argparse.ArgumentParser(
         description = 'Merge original and new assembly',
         usage = 'circlator merge [options] <original.fasta> <new.fasta> <outprefix>'
@@ -20,7 +18,7 @@ def run(args=None):
     parser.add_argument('original_assembly', help='Name of original assembly', metavar='original.fasta')
     parser.add_argument('new_assembly', help='Name of new assembly', metavar='new.fasta')
     parser.add_argument('outprefix', help='Prefix of output files')
-    options = parser.parse_args(args)
+    options = parser.parse_args()
 
     m = circlator.merge.Merger(
         options.original_assembly,

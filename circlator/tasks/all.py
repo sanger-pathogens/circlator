@@ -6,33 +6,6 @@ import circlator
 
 class Error (Exception): pass
 
-class OptSplitAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        print('OptSplitAction:', values)
-        a = values.split(',')
-        if len(a) % 2 != 0:
-            raise Error('Error in options:', a)
-
-        for i in range(0, len(a), 2):
-            if len(a[i]) == 1:
-                a[i] = '-' + a[i]
-            else:
-                a[i] = '--' + a[i]
-        
-        setattr(namespace, self.dest, a)
-
-
-def add_verbose(l, opts):
-    if opts.verbose and '--verbose' not in l:
-        l = ['--verbose'] + l
-    return l
-
-
-def add_threads(l, opts):
-    if opts.threads and '--threads' not in l:
-        l = ['--threads', str(opts.threads)] + l
-    return l
-
 
 def print_message(m, opts):
     if opts.verbose:
@@ -43,19 +16,37 @@ def run():
     parser = argparse.ArgumentParser(
         description = 'Run mapreads, bam2reads, assemble, merge',
         usage = 'circlator map [options] <assembly.fasta> <reads.fasta> <output directory>')
-    parser.add_argument('--no_pair_merge', action='store_true', help='Do not merge pairs of contigs when running merge task')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
-    parser.add_argument('--mapreads_opts', action=OptSplitAction, help='mapreads options', default=[])
-    parser.add_argument('--bam2reads_opts', action=OptSplitAction, help='bam2reads options', default=[])
-    parser.add_argument('--assemble_opts', action=OptSplitAction, help='assemble options (there are none yet)', default=[])
-    parser.add_argument('--merge_opts', action=OptSplitAction, help='merge options', default=[])
-    parser.add_argument('--clean_opts', action=OptSplitAction, help='clean options', default=[])
-    parser.add_argument('--fixstart_opts', action=OptSplitAction, help='fixstart options', default=[])
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA file', metavar='reads.fasta')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
+
+    mapreads_group = parser.add_argument_group('mapreads options')
+    mapreads_group.add_argument('--bwa_opts', help='BWA options, in quotes [%(default)s]', default='-x pacbio', metavar='STRING')
+
+    bam2reads_group = parser.add_argument_group('bam2reads options')
+    bam2reads_group.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
+
+    # no assemble options (yet?)
+    #assemble_group = parser.add_argument_group('assemble_group')
+
+    merge_group = parser.add_argument_group('merge options')
+    merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=99)
+    merge_group.add_argument('--merge_min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=4000)
+    merge_group.add_argument('--merge_breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
+    merge_group.add_argument('--merge_ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
+    merge_group.add_argument('--merge_reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=15000)
+    merge_group.add_argument('--no_pair_merge', action='store_true', help='Do not merge pairs of contigs when running merge task')
+
+    clean_group = parser.add_argument_group('clean options')
+    clean_group.add_argument('--clean_min_length', help='Minimum contig length to keep [%(default)s]', default=2000, metavar='INT')
+
+    fixstart_group = parser.add_argument_group('fixstart options')
+    fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='filename')
+
     options = parser.parse_args()
+
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
     circlator.external_progs.check_all_progs(verbose=options.verbose)
@@ -83,37 +74,65 @@ def run():
     fixstart_prefix = '06.fixstart'
     fixstart_fasta = fixstart_prefix + '.fasta'
 
-    options.mapreads_opts.extend([original_assembly, original_reads, bam])
-    options.mapreads_opts = add_threads(options.mapreads_opts, options)
-    options.mapreads_opts = add_verbose(options.mapreads_opts, options)
+
+    #-------------------------------- mapreads -------------------------------
     print_message('{:_^79}'.format(' Running mapreads '), options)
-    print_message('mapreads options:' + ' '.join(options.mapreads_opts), options)
-    circlator.tasks.mapreads.run(args=options.mapreads_opts)
+    circlator.mapping.bwa_mem(
+      original_assembly,
+      original_reads,
+      bam,
+      threads=options.threads,
+      bwa_options=options.bwa_opts,
+      verbose=options.verbose,
+    )
 
 
-    options.bam2reads_opts.extend([bam, filtered_reads_prefix])
+    #-------------------------------- bam2reads ------------------------------
     print_message('{:_^79}'.format(' Running bam2reads '), options)
-    print_message('bam2reads options:' + ' '.join(options.bam2reads_opts), options)
-    circlator.tasks.bam2reads.run(args=options.bam2reads_opts)
+    bam_filter = circlator.bamfilter.BamFilter(
+        bam,
+        filtered_reads_prefix,
+        length_cutoff=options.b2r_length_cutoff
+    )
+    bam_filter.run()
 
 
-    options.assemble_opts.extend([filtered_reads, assembly_dir])
-    options.assemble_opts = add_threads(options.assemble_opts, options)
-    options.assemble_opts = add_verbose(options.assemble_opts, options)
+    #-------------------------------- assemble -------------------------------
     print_message('{:_^79}'.format(' Running assemble '), options)
-    print_message('assemble options:' + ' '.join(options.assemble_opts), options)
-    circlator.tasks.assemble.run(args=options.assemble_opts)
+    a = circlator.assemble.Assembler(
+        filtered_reads,
+        assembly_dir,
+        threads=options.threads,
+        verbose=options.verbose
+    )
+    a.run()
 
 
-    if not options.no_pair_merge:
-        options.merge_opts.extend(['--reads', filtered_reads])
-    options.merge_opts.extend([original_assembly, reassembly, merge_prefix])
-    options.merge_opts = add_verbose(options.merge_opts, options)
-    options.merge_opts = add_threads(options.merge_opts, options)
+    #-------------------------------- merge ----------------------------------
     print_message('{:_^79}'.format(' Running merge '), options)
-    print_message('merge options:' + ' '.join(options.merge_opts), options)
-    circlator.tasks.merge.run(args=options.merge_opts)
+    if not options.no_pair_merge:
+        merge_reads = filtered_reads
+    else:
+        merge_reads = None
+        options.merge_opts.extend(['--reads', filtered_reads])
 
+    m = circlator.merge.Merger(
+        original_assembly,
+        reassembly,
+        merge_prefix,
+        nucmer_min_id=options.merge_min_id,
+        nucmer_min_length=options.merge_min_length,
+        nucmer_breaklen=options.merge_breaklen,
+        ref_end_tolerance=options.merge_ref_end,
+        qry_end_tolerance=options.merge_reassemble_end,
+        threads=options.threads,
+        verbose=options.verbose,
+        reads=merge_reads
+    )
+    m.run()
+
+
+    #-------------------------------- clean ----------------------------------
     merge_log = merge_prefix + '.log'
     contigs_to_keep = []
     contigs_to_not_fix_start = []
@@ -130,8 +149,8 @@ def run():
             else:
                 contigs_to_not_fix_start.append(name)
 
-    keep_file = clean_prefix + '.contigs_to_keep'
-    with open(keep_file, 'w') as f:
+    clean_keep_file = clean_prefix + '.contigs_to_keep'
+    with open(clean_keep_file, 'w') as f:
         if len(contigs_to_keep) > 0:
             print('\n'.join(contigs_to_keep), file=f)
         
@@ -140,14 +159,23 @@ def run():
         if len(contigs_to_not_fix_start) > 0:
             print('\n'.join(contigs_to_not_fix_start), file=f)
 
-    options.clean_opts.extend(['--keep', keep_file, merged_fasta, clean_prefix])
     print_message('{:_^79}'.format(' Running clean '), options)
-    print_message('clean options:' + ' '.join(options.clean_opts), options)
-    circlator.tasks.clean.run(args=options.clean_opts)
+
+    cleaner = circlator.clean.Cleaner(
+        merged_fasta,
+        clean_prefix,
+        min_length=options.clean_min_length,
+        keepfile=clean_keep_file
+    )
+    cleaner.run()
 
 
-    options.fixstart_opts.extend(['--ignore', not_fix_start_file, clean_fasta, fixstart_prefix])
+    #-------------------------------- fixstart -------------------------------
     print_message('{:_^79}'.format(' Running fixstart '), options)
-    print_message('fixstart options:' + ' '.join(options.fixstart_opts), options)
-    circlator.tasks.fixstart.run(args=options.fixstart_opts)
-
+    fixer = circlator.fixstart.StartFixer(
+        clean_fasta,
+        fixstart_prefix,
+        genes_fa=options.genes_fa,
+        ignore=not_fix_start_file
+    )
+    fixer.run()
