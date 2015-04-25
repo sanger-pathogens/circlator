@@ -4,11 +4,14 @@ from circlator import program
 class Error (Exception): pass
 
 prog_to_env_var = {
+    'bcftools': 'CIRCLATOR_BCFTOOLS',
+    'samtools': 'CIRCLATOR_SAMTOOLS',
     'spades': 'CIRCLATOR_SPADES',
 }
 
 
 prog_to_version_cmd = {
+    'bcftools': ('', re.compile('^Version: ([0-9\.]+)')),
     'bwa': ('', re.compile('^Version: ([0-9\.]+)')),
     'nucmer': ('--version', re.compile('^NUCmer \(NUCleotide MUMmer\) version ([0-9\.]+)')),
     'samtools': ('', re.compile('^Version: ([0-9\.]+)')),
@@ -17,14 +20,16 @@ prog_to_version_cmd = {
 
 
 min_versions = {
+    'bcftools': '1.2',
     'bwa': '0.7.12',
     'nucmer': '3.1',
-    'samtools': '0.1.19',
+    'samtools': '1.2',
     'spades': '3.5.0',
 }
 
 
 prog_name_to_default = {
+    'bcftools': 'bcftools',
     'bwa': 'bwa',
     'nucmer': 'nucmer',
     'spades': 'spades.py',
