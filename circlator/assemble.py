@@ -28,7 +28,7 @@ class Assembler:
         self.threads = threads
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
         if spades_kmers is None:
-            self.spades_kmers = spades_kmers=[127,121,111,101,91,81,71]
+            self.spades_kmers = [127,121,111,101,91,81,71]
         else:
             self.spades_kmers = sorted(spades_kmers, reverse=True)
         self.assembler = 'spades'
