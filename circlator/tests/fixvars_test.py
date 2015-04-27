@@ -79,6 +79,4 @@ class TestVariantFixer(unittest.TestCase):
         self.assertEqual(seq, list('GGCAGC'))
         seq = vf._fix_variant((5, 'C', 'CT'), seq)
         self.assertEqual(seq, list('GGCAGCT'))
-        
-        
-        
+

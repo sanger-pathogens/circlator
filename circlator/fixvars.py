@@ -101,6 +101,6 @@ class VariantFixer:
     def run(self):
         vcf_file = self.outprefix + '.vcf'
         self._make_vcf(vcf_file)
-        variants = self._get_variants_from_vcf(vcf_file)
-        self._fix_variants(variants, self.fasta_in, self.outprefix + '.fasta')
+        snps, indels = self._get_variants_from_vcf(vcf_file)
+        self._fix_variants(snps, indels, self.fasta_in, self.outprefix + '.fasta')
 
