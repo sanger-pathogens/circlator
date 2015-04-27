@@ -34,7 +34,7 @@ class VariantFixer:
             self.bcftools.exe(), 'call -m -v',
             '|',
             self.bcftools.exe(), 'filter',
-            '-i "MIN(DV/DP)>=0.5 & DP>2"',
+            '-i "MIN(DV/DP)>0.5 & DP>3"',
             '-o', outfile
         ])
         common.syscall(cmd, verbose=self.verbose)
@@ -53,6 +53,8 @@ class VariantFixer:
             pos = int(fields[1]) - 1
             ref = fields[3]
             alt = fields[4]
+            if ',' in alt:
+                continue
 
             if len(ref) == len(alt):
                 d = snps
@@ -107,22 +109,29 @@ class VariantFixer:
         return indels
 
 
-    def _fix_variants(self, snps, indels, infile, outfile):
+    def _fix_variants(self, snps, indels, infile, outfile, logfile=None):
         seq_reader = pyfastaq.sequences.file_reader(infile)
-        f_out = pyfastaq.utils.open_file_write(outfile)
+        fasta_fh = pyfastaq.utils.open_file_write(outfile)
+        if logfile is not None:
+            log_fh = pyfastaq.utils.open_file_write(logfile)
+            print('#contig', 'position', 'before', 'after', sep='\t', file=log_fh)
         for seq in seq_reader:
             if seq.id in snps or seq.id in indels:
                 bases = list(seq.seq)
                 for d in snps, indels:
                     if seq.id in d:
                         for variant in d[seq.id]:
+                            if logfile is not None:
+                                print(seq.id, variant[0] + 1, variant[1], variant[2], sep='\t', file=log_fh)
                             bases = self._fix_variant(variant, bases)
 
                 seq.seq = ''.join(bases)
 
-            print(seq, file=f_out)
+            print(seq, file=fasta_fh)
 
-        pyfastaq.utils.close(f_out)
+        pyfastaq.utils.close(fasta_fh)
+        if logfile is not None:
+            pyfastaq.utils.close(log_fh)
 
 
     def _fix_variant(self, variant, sequence):
@@ -143,5 +152,11 @@ class VariantFixer:
         snps, indels = self._get_variants_from_vcf(vcf_file)
         indels = self._remove_overlapping_indels(indels)
         indels = self._remove_indels_overlapping_snps(indels, snps)
-        self._fix_variants(snps, indels, self.fasta_in, self.outprefix + '.fasta')
+        self._fix_variants(
+            snps,
+            indels,
+            self.fasta_in,
+            self.outprefix + '.fasta',
+            logfile=self.outprefix + '.changes.gz'
+        )
 
