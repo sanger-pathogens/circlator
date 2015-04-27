@@ -38,14 +38,13 @@ class TestVariantFixer(unittest.TestCase):
         vf = fixvars.VariantFixer(fa, bam, 'x')
         got_snps, got_indels = vf._get_variants_from_vcf(vcf)
         expected_snps = {
-            '1': [(42, 'A', 'G'), (85, 'T', 'A')],
-            '2': [(10, 'C', 'A')]
+            '1': [(41, 'A', 'G'), (84, 'T', 'A')],
+            '2': [(9, 'C', 'A')]
         }
-        expected_indels = {'1': [(723, 'AGGG', 'AGG')]}
+        expected_indels = {'1': [(722, 'AGGG', 'AGG')]}
         self.assertEqual(got_snps, expected_snps)
         self.assertEqual(got_indels, expected_indels)
          
-
 
     def test_fix_variants(self):
         '''test _fix_variants'''
@@ -54,4 +53,18 @@ class TestVariantFixer(unittest.TestCase):
 
     def test_fix_variant(self):
         '''test _fix_variant'''
-        pass
+        fa = os.path.join(data_dir, 'variant_fixer_test_fix_variant.ref.fa')
+        bam = os.path.join(data_dir, 'variant_fixer_test_fix_variant.bam')
+        vf = fixvars.VariantFixer(fa, bam, 'x')
+        seq = list('AGCAT')
+        seq = vf._fix_variant((0, 'A', 'G'), seq)
+        self.assertEqual(seq, list('GGCAT'))
+        seq = vf._fix_variant((4, 'T', 'C'), seq)
+        self.assertEqual(seq, list('GGCAC'))
+        seq = vf._fix_variant((2, 'CA', 'CAG'), seq)
+        self.assertEqual(seq, list('GGCAGC'))
+        seq = vf._fix_variant((5, 'C', 'CT'), seq)
+        self.assertEqual(seq, list('GGCAGCT'))
+        
+        
+        

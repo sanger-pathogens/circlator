@@ -50,7 +50,7 @@ class VariantFixer:
 
             fields = line.rstrip().split('\t')
             name = fields[0]
-            pos = int(fields[1])
+            pos = int(fields[1]) - 1
             ref = fields[3]
             alt = fields[4]
 
@@ -77,7 +77,11 @@ class VariantFixer:
 
 
     def _fix_variant(self, variant, sequence):
-        pass
+        pos, ref, alt = variant
+        assert pos < len(sequence)
+        assert ''.join(sequence[pos:pos+len(ref)]) == ref
+        sequence = sequence[:pos] + list(alt) + sequence[pos + len(ref):]
+        return sequence
 
 
     def run(self):
