@@ -86,7 +86,23 @@ class VariantFixer:
                     else:
                         previous_end = pos + max(len(ref), len(alt))
 
-            indels[name] = [indels[name][i] for i in range(len(indels[name][i])) if i not in to_delete]
+            indels[name] = [indels[name][i] for i in range(len(indels[name])) if i not in to_delete]
+
+        return indels
+
+
+    def _remove_indels_overlapping_snps(self, indels, snps):
+        for name in indels:
+            if name in snps:
+                snp_positions = set([x[0] for x in snps[name]])
+                to_remove = set()
+                for i in range(len(indels[name])):
+                    pos, ref, alt = indels[name][i]
+                    positions = set(range(pos, pos + max(len(ref), len(alt))))
+                    if len(positions.intersection(snp_positions)):
+                        to_remove.add(i)
+
+                indels[name] = [indels[name][i] for i in range(len(indels[name])) if i not in to_remove]
 
         return indels
 

@@ -60,6 +60,20 @@ class TestVariantFixer(unittest.TestCase):
         }
 
 
+    def test__remove_indels_overlapping_snps(self):
+        '''test _remove_indels_overlapping_snps'''
+        fa = os.path.join(data_dir, 'variant_fixer_test_remove_indels_overlapping_snps.ref.fa')
+        bam = os.path.join(data_dir, 'variant_fixer_test_remove_indels_overlapping_snps.bam')
+        vf = fixvars.VariantFixer(fa, bam, 'x')
+        snps = {'seq1': [(11, 'A', 'G')], 'seq2': [(0, 'A', 'T')]}
+        indels = {
+            'seq1': [(10, 'TG', 'T'), (0, 'AG', 'AGT')]
+        }
+        expected_indels = {'seq1': [(0, 'AG', 'AGT')]}
+        got_indels = vf._remove_indels_overlapping_snps(indels, snps)
+        self.assertEqual(expected_indels, got_indels)
+
+
     def test_fix_variants(self):
         '''test _fix_variants'''
         fa = os.path.join(data_dir, 'variant_fixer_test_fix_variants.in.fa')
