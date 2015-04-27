@@ -12,7 +12,7 @@ def run():
     options = parser.parse_args()
 
     cleaner = circlator.clean.Cleaner(
-        options.infile,
+        options.fasta_in,
         options.outprefix,
         min_length=options.min_length,
         keepfile=options.keep
