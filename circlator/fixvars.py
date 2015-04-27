@@ -141,5 +141,7 @@ class VariantFixer:
         vcf_file = self.outprefix + '.vcf'
         self._make_vcf(vcf_file)
         snps, indels = self._get_variants_from_vcf(vcf_file)
+        indels = self._remove_overlapping_indels(indels)
+        indels = self._remove_indels_overlapping_snps(indels, snps)
         self._fix_variants(snps, indels, self.fasta_in, self.outprefix + '.fasta')
 
