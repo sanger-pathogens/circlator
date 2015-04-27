@@ -1,4 +1,5 @@
 import os
+import pyfastaq
 from circlator import external_progs, common
 
 
@@ -40,7 +41,35 @@ class VariantFixer:
 
 
     def _get_variants_from_vcf(self, infile):
-        pass
+        snps = {}
+        indels = {}
+        f = pyfastaq.utils.open_file_read(infile)
+        for line in f:
+            if line.startswith('#'):
+                continue
+
+            fields = line.rstrip().split('\t')
+            name = fields[0]
+            pos = int(fields[1])
+            ref = fields[3]
+            alt = fields[4]
+
+            if len(ref) == len(alt):
+                d = snps
+            else:
+                d = indels
+
+            if name not in d:
+                d[name] = []
+
+            d[name].append((pos, ref, alt))
+
+        for d in snps, indels:
+            for name in d:
+                d[name].sort()
+
+        pyfastaq.utils.close(f)
+        return snps, indels
 
 
     def _fix_variants(self, variants, infile, outfile):

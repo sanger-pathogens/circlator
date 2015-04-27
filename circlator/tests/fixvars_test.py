@@ -32,7 +32,19 @@ class TestVariantFixer(unittest.TestCase):
 
     def test_get_variants_from_vcf(self):
         '''test _get_variants_from_vcf'''
-        pass
+        fa = os.path.join(data_dir, 'variant_fixer_test_get_variants_from_vcf.ref.fa')
+        bam = os.path.join(data_dir, 'variant_fixer_test_get_variants_from_vcf.bam')
+        vcf = os.path.join(data_dir, 'variant_fixer_test_get_variants_from_vcf.vcf')
+        vf = fixvars.VariantFixer(fa, bam, 'x')
+        got_snps, got_indels = vf._get_variants_from_vcf(vcf)
+        expected_snps = {
+            '1': [(42, 'A', 'G'), (85, 'T', 'A')],
+            '2': [(10, 'C', 'A')]
+        }
+        expected_indels = {'1': [(723, 'AGGG', 'AGG')]}
+        self.assertEqual(got_snps, expected_snps)
+        self.assertEqual(got_indels, expected_indels)
+         
 
 
     def test_fix_variants(self):
