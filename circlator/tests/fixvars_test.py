@@ -45,6 +45,20 @@ class TestVariantFixer(unittest.TestCase):
         self.assertEqual(got_snps, expected_snps)
         self.assertEqual(got_indels, expected_indels)
          
+    
+    def test_remove_overlapping_indels(self):
+        '''test _remove_overlapping_indels'''
+        fa = os.path.join(data_dir, 'variant_fixer_test_remove_overalpping_indels.ref.fa')
+        bam = os.path.join(data_dir, 'variant_fixer_test_remove_overalpping_indels.bam')
+        vf = fixvars.VariantFixer(fa, bam, 'x')
+        indels = {
+            'seq1': [(10, 'TG', 'T'), (1, 'GT', 'ACGT'), (0, 'AG', 'AGT')],
+        }
+        got_indels = vf._remove_overlapping_indels(indels)
+        expected_indels = {
+            'seq1': [(10, 'TG', 'T'), (0, 'AG', 'AGT')]
+        }
+
 
     def test_fix_variants(self):
         '''test _fix_variants'''

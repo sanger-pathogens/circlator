@@ -72,6 +72,25 @@ class VariantFixer:
         return snps, indels
 
 
+    def _remove_overlapping_indels(self, indels):
+        for name in indels:
+            to_delete = set()
+            previous_end = None
+            for i in range(len(indels[name]) - 1, -1, -1):
+                pos, ref, alt = indels[name][i]
+                if previous_end is None:
+                    previous_end = pos
+                else:
+                    if pos <= previous_end:
+                        to_delete.add(i)
+                    else:
+                        previous_end = pos + max(len(ref), len(alt))
+
+            indels[name] = [indels[name][i] for i in range(len(indels[name][i])) if i not in to_delete]
+
+        return indels
+
+
     def _fix_variants(self, snps, indels, infile, outfile):
         seq_reader = pyfastaq.sequences.file_reader(infile)
         f_out = pyfastaq.utils.open_file_write(outfile)
@@ -93,6 +112,10 @@ class VariantFixer:
     def _fix_variant(self, variant, sequence):
         pos, ref, alt = variant
         assert pos < len(sequence)
+        expected = ''.join(sequence[pos:pos+len(ref)])
+        if expected != ref:
+            raise Error('Expected sequence "' + expected + '" but got "' + ref + '" at position ' + str(pos + 1))
+           
         assert ''.join(sequence[pos:pos+len(ref)]) == ref
         sequence = sequence[:pos] + list(alt) + sequence[pos + len(ref):]
         return sequence

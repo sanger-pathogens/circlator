@@ -14,9 +14,9 @@ def run():
     options = parser.parse_args()
 
     fixer = circlator.fixvars.VariantFixer(
-        fasta_in=options.fasta_in
-        bam=options.bam_in
-        outprefix=options.outprefix
+        fasta_in=options.fasta_in,
+        bam_in=options.bam_in,
+        outprefix=options.outprefix,
         verbose=options.verbose
     )
     fixer.run()
