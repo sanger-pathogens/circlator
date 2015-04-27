@@ -66,7 +66,7 @@ class VariantFixer:
 
         for d in snps, indels:
             for name in d:
-                d[name].sort()
+                d[name].sort(reverse=True)
 
         pyfastaq.utils.close(f)
         return snps, indels

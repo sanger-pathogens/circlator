@@ -38,7 +38,7 @@ class TestVariantFixer(unittest.TestCase):
         vf = fixvars.VariantFixer(fa, bam, 'x')
         got_snps, got_indels = vf._get_variants_from_vcf(vcf)
         expected_snps = {
-            '1': [(41, 'A', 'G'), (84, 'T', 'A')],
+            '1': [(84, 'T', 'A'), (41, 'A', 'G')],
             '2': [(9, 'C', 'A')]
         }
         expected_indels = {'1': [(722, 'AGGG', 'AGG')]}
