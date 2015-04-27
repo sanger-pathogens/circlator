@@ -48,7 +48,21 @@ class TestVariantFixer(unittest.TestCase):
 
     def test_fix_variants(self):
         '''test _fix_variants'''
-        pass
+        fa = os.path.join(data_dir, 'variant_fixer_test_fix_variants.in.fa')
+        bam = os.path.join(data_dir, 'variant_fixer_test_fix_variants.bam')
+        expected = os.path.join(data_dir, 'variant_fixer_test_fix_variants.out.fa')
+        tmp_out = 'tmp.test_fix_variants.fa'
+        vf = fixvars.VariantFixer(fa, bam, 'x')
+        snps = {
+            'seq1': [(60, 'T', 'A'), (0, 'T', 'G')],
+            'seq2': [(3, 'A', 'T')]
+        }
+        indels = {
+            'seq1': [(3, 'ATC', 'ATCC')]
+        }
+        vf._fix_variants(snps, indels, fa, tmp_out)
+        self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
+        os.unlink(tmp_out)
 
 
     def test_fix_variant(self):

@@ -72,8 +72,22 @@ class VariantFixer:
         return snps, indels
 
 
-    def _fix_variants(self, variants, infile, outfile):
-        pass
+    def _fix_variants(self, snps, indels, infile, outfile):
+        seq_reader = pyfastaq.sequences.file_reader(infile)
+        f_out = pyfastaq.utils.open_file_write(outfile)
+        for seq in seq_reader:
+            if seq.id in snps or seq.id in indels:
+                bases = list(seq.seq)
+                for d in snps, indels:
+                    if seq.id in d:
+                        for variant in d[seq.id]:
+                            bases = self._fix_variant(variant, bases)
+
+                seq.seq = ''.join(bases)
+
+            print(seq, file=f_out)
+
+        pyfastaq.utils.close(f_out)
 
 
     def _fix_variant(self, variant, sequence):
