@@ -385,7 +385,14 @@ class Merger:
 
         for hit in hits_to_circular_contigs:
             if min_percent <= 100 * (hit.hit_length_qry / hit.qry_length):
-                return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq)
+                # the spades contig hit is long eniugh, but now check that
+                # the input contig is covered by hits from this spades contig
+                hit_intervals = [x.ref_coords() for x in hits_to_circular_contigs if x.qry_name == hit.qry_name]
+
+                if len(hit_intervals) > 0:
+                    pyfastaq.intervals.merge_overlapping_in_list(hit_intervals)
+                    if min_percent <= 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length:
+                        return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq)
 
         return None
 
