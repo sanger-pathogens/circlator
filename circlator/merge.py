@@ -340,8 +340,8 @@ class Merger:
                         assembler_dir = outprefix + '.assembly'
                         a = circlator.assemble.Assembler(reads_prefix + '.fasta', assembler_dir, threads=self.threads, verbose=self.verbose)
                         a.run()
-                        os.rename(os.path.join(assembler_dir, 'scaffolds.fasta'), reassembly_fasta)
-                        os.rename(os.path.join(assembler_dir, 'scaffolds.fastg'), reassembly_fastg)
+                        os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
+                        os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
                         shutil.rmtree(assembler_dir)
                         pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
                         made_join = True

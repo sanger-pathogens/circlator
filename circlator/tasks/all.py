@@ -66,7 +66,7 @@ def run():
     filtered_reads_prefix = '02.bam2reads'
     filtered_reads =  filtered_reads_prefix + '.fasta'
     assembly_dir = '03.assemble'
-    reassembly = os.path.join(assembly_dir, 'scaffolds.fasta')
+    reassembly = os.path.join(assembly_dir, 'contigs.fasta')
     merge_prefix = '04.merge'
     merged_fasta = merge_prefix + '.fasta'
     clean_prefix = '05.clean'
