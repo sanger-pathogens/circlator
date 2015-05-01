@@ -20,7 +20,7 @@ prog_to_version_cmd = {
 min_versions = {
     'bwa': '0.7.12',
     'nucmer': '3.1',
-    'samtools': '1.2',
+    'samtools': '0.1.9',
     'spades': '3.5.0',
 }
 
