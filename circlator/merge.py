@@ -379,6 +379,10 @@ class Merger:
             tmp_seq.revcomp()
             end_seq = tmp_seq.seq
 
+        if self.verbose:
+            print('[' + self.log_prefix + '] Using the following two nucmer hits to merge contigs', hits[0].ref_name, hits[1].ref_name)
+            print('[' + self.log_prefix + ']', hits[0])
+            print('[' + self.log_prefix + ']', hits[1])
         new_id = start_contig.id + '.' + end_contig.id
         new_contig = pyfastaq.sequences.Fasta(new_id, start_seq + bridge_seq + end_seq)
         self.merges.append([new_id, start_contig.id, end_contig.id])
