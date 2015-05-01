@@ -133,7 +133,7 @@ def run():
 
 
     #-------------------------------- clean ----------------------------------
-    merge_log = merge_prefix + '.log'
+    merge_log = merge_prefix + '.circularise.log'
     contigs_to_keep = []
     contigs_to_not_fix_start = []
     with open(merge_log) as f:
@@ -144,7 +144,7 @@ def run():
                 continue
 
             x, name, y, z, circularised = line.rstrip().split('\t')
-            if circularised == '1': 
+            if circularised == '1':
                 contigs_to_keep.append(name)
             else:
                 contigs_to_not_fix_start.append(name)
@@ -153,7 +153,7 @@ def run():
     with open(clean_keep_file, 'w') as f:
         if len(contigs_to_keep) > 0:
             print('\n'.join(contigs_to_keep), file=f)
-        
+
     not_fix_start_file = fixstart_prefix + '.contigs_to_not_change'
     with open(not_fix_start_file, 'w') as f:
         if len(contigs_to_not_fix_start) > 0:
