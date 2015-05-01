@@ -5,7 +5,6 @@ __all__ = [
     'bamfilter',
     'external_progs',
     'fixstart',
-    'fixvars',
     'mapping',
     'merge',
     'program',

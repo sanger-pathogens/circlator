@@ -3,11 +3,6 @@
 import argparse
 import sys
 
-# note: leaving the code in for fixvars in case it is useful
-# in the future. Fixvars doesn't work to correct the output
-# of circlator using corrected reads, because the reads still
-# contain errors. Instead, we must run quiver using the uncorrected reads.
-
 tasks = {
     'all': 'Run map, bam2reads, assemble, merge, clean, fixstart',
     'mapreads': 'Map reads to assembly',
@@ -16,7 +11,6 @@ tasks = {
     'merge': 'Merge original assembly and new assembly',
     'clean': 'Remove small and completely contained contigs from assembly',
     'fixstart': 'Change start position of circular sequences',
-    #'fixvars': 'Fix SNPs and indels',
     'version': 'Print version and exit',
 }
 
@@ -29,7 +23,6 @@ ordered_tasks = [
     'merge',
     'clean',
     'fixstart',
-    #'fixvars',
     'version'
 ]
 
