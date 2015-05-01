@@ -16,7 +16,7 @@ class Merger:
           outprefix,
           reads=None,
           nucmer_min_id=99,
-          nucmer_min_length=5000,
+          nucmer_min_length=4000,
           nucmer_breaklen=500,
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
