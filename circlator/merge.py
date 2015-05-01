@@ -254,7 +254,11 @@ class Merger:
             if ref_name in to_circularise_with_nucmer:
                 continue
 
-            new_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
+            if ref_name in nucmer_hits:
+                new_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
+            else:
+                new_contig = None
+
             if new_contig is not None:
                 assert new_contig.id == ref_name
                 self.original_contigs[new_contig.id] = new_contig
