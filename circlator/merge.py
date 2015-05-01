@@ -1,6 +1,7 @@
 import os
 import copy
 import shutil
+import collections
 import pymummer
 import pyfastaq
 import circlator
@@ -17,8 +18,8 @@ class Merger:
           nucmer_min_id=99,
           nucmer_min_length=5000,
           nucmer_breaklen=500,
-          ref_end_tolerance=20000,
-          qry_end_tolerance=20000,
+          ref_end_tolerance=15000,
+          qry_end_tolerance=1000,
           verbose=False,
           threads=1,
           log_prefix='merge',
@@ -82,49 +83,141 @@ class Merger:
         return d
 
 
-    def _hits_to_new_seq(self, hits):
-        '''Input hits = list of nucmer hits, all with same query and ref names. Tries to make a new circularised reference contig using the hits'''
-        if len(hits) < 2:
+    def _get_longest_hit_by_ref_length(self, nucmer_hits):
+        '''Input: list of nucmer hits, all to same reference. Returns the longest hit, taking hit length on the reference'''
+        if len(nucmer_hits) == 0:
             return None
 
-        ref_hits_at_start = []
-        ref_hits_at_end = []
-        ref_name = hits[0].ref_name
-        ref_length = len(self.original_contigs[ref_name])
-        qry_name = hits[0].qry_name
-        qry_length = len(self.reassembly_contigs[qry_name])
-        ref_start_interval = pyfastaq.intervals.Interval(0, self.ref_end_tolerance - 1)
-        ref_end_interval = pyfastaq.intervals.Interval(ref_length - self.ref_end_tolerance, ref_length - 1)
-        qry_start_interval = pyfastaq.intervals.Interval(0, self.qry_end_tolerance - 1)
-        qry_end_interval = pyfastaq.intervals.Interval(qry_length - self.qry_end_tolerance, qry_length - 1)
-     
-        hits_at_ref_start = [
-            x for x in hits if \
-                x.ref_coords().intersects(ref_start_interval) and (
-                    ( x.qry_coords().intersects(qry_end_interval) and x.on_same_strand() ) or \
-                    ( x.qry_coords().intersects(qry_start_interval) and not x.on_same_strand() )
-                )
-        ]
+        max_length = None
+        longest_hit = None
+        for hit in nucmer_hits:
+            if max_length is None or hit.hit_length_ref > max_length:
+                max_length = hit.hit_length_ref
+                longest_hit = copy.copy(hit)
 
-        hits_at_ref_end = [
-            x for x in hits if \
-                x.ref_coords().intersects(ref_end_interval) and (
-                    ( x.qry_coords().intersects(qry_start_interval) and x.on_same_strand() ) or \
-                    ( x.qry_coords().intersects(qry_end_interval) and not x.on_same_strand() )
-                )
-        ]
+        assert longest_hit is not None
+        return longest_hit
 
-        if len(hits_at_ref_start) == 0 or len(hits_at_ref_end) == 0:
-            return None
 
-        ref_start_hit = self._get_longest_hit(hits_at_ref_start)
-        ref_end_hit = self._get_longest_hit(hits_at_ref_end)
+    def _is_at_ref_start(self, nucmer_hit):
+        '''Returns True iff the hit is "close enough" to the start of the reference sequence'''
+        hit_coords = nucmer_hit.ref_coords()
+        return hit_coords.start < self.ref_end_tolerance
 
-        if ref_start_hit.on_same_strand() != ref_end_hit.on_same_strand():
-            return None
 
+    def _is_at_ref_end(self, nucmer_hit):
+        '''Returns True iff the hit is "close enough" to the end of the reference sequence'''
+        hit_coords = nucmer_hit.ref_coords()
+        return hit_coords.end >= nucmer_hit.ref_length - self.ref_end_tolerance
+
+
+    def _is_at_qry_start(self, nucmer_hit):
+        '''Returns True iff the hit is "close enough" to the start of the query sequence'''
+        hit_coords = nucmer_hit.qry_coords()
+        return hit_coords.start < self.qry_end_tolerance
+
+
+    def _is_at_qry_end(self, nucmer_hit):
+        '''Returns True iff the hit is "close enough" to the end of the query sequence'''
+        hit_coords = nucmer_hit.qry_coords()
+        return hit_coords.end >= nucmer_hit.qry_length - self.qry_end_tolerance
+
+
+    def _get_longest_hit_at_ref_start(self, nucmer_hits):
+        '''Input: list of nucmer hits to the same reference. Returns the longest hit to the start of the reference, or None if there is no such hit'''
+        hits_at_start = [hit for hit in nucmer_hits if self._is_at_ref_start(hit)]
+        return self._get_longest_hit_by_ref_length(hits_at_start)
+
+
+    def _get_longest_hit_at_ref_end(self, nucmer_hits):
+        '''Input: list of nucmer hits to the same reference. Returns the longest hit to the end of the reference, or None if there is no such hit'''
+        hits_at_end = [hit for hit in nucmer_hits if self._is_at_ref_end(hit)]
+        return self._get_longest_hit_by_ref_length(hits_at_end)
+
+
+    def _hits_have_same_query(self, nucmer_hit1, nucmer_hit2):
+        '''Returns True iff the two nucmer hits are to the same query sequence'''
+        return nucmer_hit1.qry_name == nucmer_hit2.qry_name
+
+
+    def _min_qry_hit_length(self, nucmer_hits):
+        '''Returns the minimum query hit length from list of nucmer hits'''
+        return min([hit.hit_length_qry for hit in nucmer_hits])
+
+
+    def _has_qry_hit_longer_than(self, nucmer_hits, min_length, hits_to_exclude=None):
+        '''Returns True iff list of nucmer_hits has a hit longer than min_length, not counting the hits in hits_to_exclude'''
+        if hits_to_exclude is None:
+            to_exclude = set()
+        else:
+            to_exclude = hits_to_exclude
+        long_hits = [hit.hit_length_qry for hit in nucmer_hits if hit not in to_exclude and hit.hit_length_qry > min_length]
+        return len(long_hits) > 0
+
+
+    def _can_circularise(self, start_hit, end_hit):
+        '''Returns true iff the two hits can be used to circularise the reference sequence of the hits'''
+        if not(self._is_at_ref_start(start_hit) or self._is_at_ref_end(end_hit)):
+            return False
+
+        if self._is_at_qry_end(start_hit) \
+          and self._is_at_qry_start(end_hit) \
+          and start_hit.on_same_strand() \
+          and end_hit.on_same_strand():
+            return True
+
+        if self._is_at_qry_start(start_hit) \
+          and self._is_at_qry_end(end_hit) \
+          and (not start_hit.on_same_strand()) \
+          and (not end_hit.on_same_strand()):
+            return True
+
+        return False
+
+
+    def _get_possible_circular_ref_contigs(self, nucmer_hits):
+        '''Returns a dict ref name => tuple(hit at start, hit at end) for each ref sequence in the hash nucmer_hits (each value is a list of nucmer hits)'''
+        maybe_circular = {}
+
+        for ref_name, list_of_hits in nucmer_hits.items():
+            longest_start_hit = self._get_longest_hit_at_ref_start(list_of_hits)
+            longest_end_hit = self._get_longest_hit_at_ref_end(list_of_hits)
+            if (longest_start_hit is not None) \
+              and (longest_end_hit is not None) \
+              and self._hits_have_same_query(longest_start_hit, longest_end_hit):
+                shortest_hit_length = self._min_qry_hit_length([longest_start_hit, longest_end_hit])
+                has_longer_hit = self._has_qry_hit_longer_than(list_of_hits, shortest_hit_length, hits_to_exclude={longest_start_hit, longest_end_hit})
+                if (not has_longer_hit) and self._can_circularise(longest_start_hit, longest_end_hit):
+                    if self.verbose:
+                        print('[' + self.log_prefix + '] Potential nucmer hit pair to circularise:')
+                        print('[' + self.log_prefix + ']', longest_start_hit)
+                        print('[' + self.log_prefix + ']', longest_end_hit)
+                    maybe_circular[ref_name] = (longest_start_hit, longest_end_hit)
+
+        return maybe_circular
+
+
+    def _remove_keys_from_dict_with_nonunique_values(self, d):
+        '''Returns a new dictionary, with keys from input dict removed if their value was not unique'''
+        value_counts = collections.Counter(d.values())
+        return {key:d[key] for key in d if value_counts[d[key]] == 1}
+
+
+    def _make_circularised_contig(self, ref_start_hit, ref_end_hit):
+        '''Given a nucmer ref_start_hit and ref_end_hit, returns a new contig. Assumes that these hits can be used to circularise the reference contig of the hits using the query contig'''
+        assert ref_start_hit.ref_name == ref_end_hit.ref_name
+        assert ref_start_hit.qry_name == ref_end_hit.qry_name
+
+
+        qry_name = ref_start_hit.qry_name
+        ref_name = ref_start_hit.ref_name
         ref_start_coords = ref_start_hit.ref_coords()
         ref_end_coords = ref_end_hit.ref_coords()
+
+        if self.verbose:
+            print('[' + self.log_prefix + '] Using the following two nucmer hits to circularise', ref_name)
+            print('[' + self.log_prefix + ']', ref_start_hit)
+            print('[' + self.log_prefix + ']', ref_end_hit)
 
         if ref_start_coords.intersects(ref_end_coords):
             new_ctg = copy.copy(self.reassembly_contigs[qry_name])
@@ -144,32 +237,59 @@ class Merger:
             tmp_seq.revcomp()
             return pyfastaq.sequences.Fasta(ref_name, self.original_contigs[ref_name][ref_start_coords.end+1:ref_end_coords.start] + tmp_seq.seq)
 
-        return None
 
+    def _circularise_contigs(self, nucmer_hits):
+        to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(nucmer_hits)
+        to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer)
+        spades_circularised = set()
+        for ref_name, (start_hit, end_hit) in to_circularise_with_nucmer.items():
+            assert start_hit.ref_name == end_hit.ref_name == ref_name
+            contig = self._make_circularised_contig(start_hit, end_hit)
+            self.original_contigs[contig.id] = contig
 
-    def _get_longest_hit(self, hits):
-        '''Returns the longest hit from a list of nucmer hits'''
-        max_length = -1
-        max_index = -1
-        for i in range(len(hits)):
-            if hits[i].hit_length_ref > max_length:
-                max_index = i
-                max_length = hits[i].hit_length_ref
-        assert max_length != -1 and max_index != -1
-        return hits[i]
+        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
+        circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
 
-
-    def _make_new_contig_from_nucmer_hits(self, original_contig, hits):
-        '''Makes a new contig from the contig with name original_contig, using a list of nucmer hits all with original_contig as the ref_name'''
-        hits_by_query = self._hits_hashed_by_query(hits)
-        for qry_name, l in hits_by_query.items():
-            new_contig = self._hits_to_new_seq(l)
-            if new_contig is not None:
-                return new_contig
-            else:
+        for ref_name in self.original_contigs:
+            if ref_name in to_circularise_with_nucmer:
                 continue
- 
-        return None
+
+            new_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
+            if new_contig is not None:
+                assert new_contig.id == ref_name
+                self.original_contigs[new_contig.id] = new_contig
+                spades_circularised.add(ref_name)
+
+        out_fasta = os.path.abspath(self.outprefix + '.fasta')
+        fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
+        out_log = os.path.abspath(self.outprefix + '.circularise.log')
+        log_fh = pyfastaq.utils.open_file_write(out_log)
+
+        print(
+            '[' + self.log_prefix + ' circularised]',
+            '#Contig',
+            'circl_using_nucmer',
+            'circl_using_spades',
+            'circularised',
+            sep='\t', file=log_fh
+        )
+
+        for ref_name, contig in self.original_contigs.items():
+            circl_using_nucmer = 1 if ref_name in to_circularise_with_nucmer else 0
+            circl_using_spades = 1 if ref_name in spades_circularised else 0
+            assert circl_using_nucmer * circl_using_spades == 0
+            print(
+                '[' + self.log_prefix + ' circularised]',
+                ref_name,
+                circl_using_nucmer,
+                circl_using_spades,
+                circl_using_nucmer + circl_using_spades,
+                sep='\t', file=log_fh
+            )
+            print(contig, file=fasta_fh)
+
+        pyfastaq.utils.close(log_fh)
+        pyfastaq.utils.close(fasta_fh)
 
 
     def _indexes_not_in_common(self, hits, other_hits):
@@ -203,7 +323,7 @@ class Merger:
         reassembly_contig_length = len(reassembly_contig)
         if reassembly_contig_length < self.nucmer_min_length:
             return None
-        
+
         qry_start_interval = pyfastaq.intervals.Interval(0, self.qry_end_tolerance)
         qry_end_interval = pyfastaq.intervals.Interval(max(0, reassembly_contig_length - self.qry_end_tolerance), reassembly_contig_length)
         hits_at_start = []
@@ -229,7 +349,7 @@ class Merger:
 
         if len(hits_at_start) == len(hits_at_end) == 1 and hits_at_start[0].ref_name != hits_at_end[0].ref_name:
             return hits_at_start[0], hits_at_end[0]
-        
+
 
     def _merge_pair(self, hits, ref_contigs, reassembly_contigs):
         '''Merges two reference contigs together that are bridged by a reassembly contig. Hits between the contigs are in the list "hits" - there should be exactly two of them'''
@@ -373,7 +493,7 @@ class Merger:
                     found_rev.add(l[0][:-1])
                 else:
                     found_fwd.add(l[0])
-                
+
         return found_fwd.intersection(found_rev)
 
 
@@ -385,7 +505,7 @@ class Merger:
 
         for hit in hits_to_circular_contigs:
             if min_percent <= 100 * (hit.hit_length_qry / hit.qry_length):
-                # the spades contig hit is long eniugh, but now check that
+                # the spades contig hit is long enough, but now check that
                 # the input contig is covered by hits from this spades contig
                 hit_intervals = [x.ref_coords() for x in hits_to_circular_contigs if x.qry_name == hit.qry_name]
 
@@ -398,42 +518,16 @@ class Merger:
 
 
     def run(self):
-        out_fasta = os.path.abspath(self.outprefix + '.fasta')
-        out_log = os.path.abspath(self.outprefix + '.log')
+        out_log = os.path.abspath(self.outprefix + '.merge.log')
         merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
         self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
-        log_fh = pyfastaq.utils.open_file_write(out_log)
         if len(self.merges):
+            log_fh = pyfastaq.utils.open_file_write(out_log)
             print('[' + self.log_prefix + ' contig_merge]', '#new_name', 'previous_contig1', 'previous_contig2', sep='\t', file=log_fh)
             for l in self.merges:
                 print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
 
-        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
-        circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
         nucmer_coords = os.path.abspath(self.outprefix + '.coords')
         self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_coords)
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)
-        fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
-        print('[' + self.log_prefix + ' circularised]', '#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised', sep='\t', file=log_fh)
-
-        for contig_name, contig in sorted(self.original_contigs.items()):
-            nucmer_circularised = 0
-            spades_circularised = 0
-            if contig_name in nucmer_hits:
-                new_contig = self._make_new_contig_from_nucmer_hits(contig_name, nucmer_hits[contig_name])
-                if new_contig is None:
-                    new_contig = self._make_new_contig_from_nucmer_and_spades(contig_name, nucmer_hits[contig_name], circular_spades)
-                    if new_contig is not None:
-                        contig = new_contig
-                        spades_circularised = 1
-                else:
-                    contig = new_contig
-                    nucmer_circularised = 1
-                    
-            print(contig, file=fasta_fh)
-            circularised = 1 if 1 in [spades_circularised, nucmer_circularised] else 0
-            print('[' + self.log_prefix + ' circularised]', contig_name, nucmer_circularised, spades_circularised, circularised, sep='\t', file=log_fh)
-        
-        pyfastaq.utils.close(fasta_fh)
-        pyfastaq.utils.close(log_fh)
-
+        self._circularise_contigs(nucmer_hits)
