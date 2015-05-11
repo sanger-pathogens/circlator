@@ -15,8 +15,9 @@ class Merger:
           reassembly,
           outprefix,
           reads=None,
-          nucmer_min_id=99,
-          nucmer_min_length=4000,
+          nucmer_min_id=98,
+          nucmer_min_length=500,
+          nucmer_min_length_for_merges=4000,
           nucmer_breaklen=500,
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
@@ -34,6 +35,7 @@ class Merger:
         self.outprefix = outprefix
         self.nucmer_min_id = nucmer_min_id
         self.nucmer_min_length = nucmer_min_length
+        self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
         self.nucmer_breaklen = nucmer_breaklen
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
@@ -57,6 +59,7 @@ class Merger:
             min_length=self.nucmer_min_length,
             maxmatch=True,
             breaklen=self.nucmer_breaklen,
+            simplify=False,
             verbose=self.verbose
         )
         n.run()
@@ -84,7 +87,7 @@ class Merger:
 
 
     def _get_longest_hit_by_ref_length(self, nucmer_hits):
-        '''Input: list of nucmer hits, all to same reference. Returns the longest hit, taking hit length on the reference'''
+        '''Input: list of nucmer hits. Returns the longest hit, taking hit length on the reference'''
         if len(nucmer_hits) == 0:
             return None
 
@@ -135,9 +138,26 @@ class Merger:
         return self._get_longest_hit_by_ref_length(hits_at_end)
 
 
+    def _get_longest_hit_at_qry_start(self, nucmer_hits):
+        '''Input: list of nucmer hits to the same query. Returns the longest hit to the start of the query, or None if there is no such hit'''
+        hits_at_start = [hit for hit in nucmer_hits if self._is_at_qry_start(hit)]
+        return self._get_longest_hit_by_ref_length(hits_at_start)
+
+
+    def _get_longest_hit_at_qry_end(self, nucmer_hits):
+        '''Input: list of nucmer hits to the same query. Returns the longest hit to the end of the query, or None if there is no such hit'''
+        hits_at_end = [hit for hit in nucmer_hits if self._is_at_qry_end(hit)]
+        return self._get_longest_hit_by_ref_length(hits_at_end)
+
+
     def _hits_have_same_query(self, nucmer_hit1, nucmer_hit2):
         '''Returns True iff the two nucmer hits are to the same query sequence'''
         return nucmer_hit1.qry_name == nucmer_hit2.qry_name
+
+
+    def _hits_have_same_reference(self, nucmer_hit1, nucmer_hit2):
+        '''Returns True iff the two nucmer hits are to the same reference sequence'''
+        return nucmer_hit1.ref_name == nucmer_hit2.ref_name
 
 
     def _min_qry_hit_length(self, nucmer_hits):
@@ -178,20 +198,28 @@ class Merger:
     def _get_possible_circular_ref_contigs(self, nucmer_hits):
         '''Returns a dict ref name => tuple(hit at start, hit at end) for each ref sequence in the hash nucmer_hits (each value is a list of nucmer hits)'''
         maybe_circular = {}
+        all_nucmer_hits = []
+        for l in nucmer_hits.values():
+            all_nucmer_hits.extend(l)
+        nucmer_hits_by_qry = self._hits_hashed_by_query(all_nucmer_hits)
 
         for ref_name, list_of_hits in nucmer_hits.items():
             longest_start_hit = self._get_longest_hit_at_ref_start(list_of_hits)
             longest_end_hit = self._get_longest_hit_at_ref_end(list_of_hits)
-            if (longest_start_hit is not None) \
-              and (longest_end_hit is not None) \
-              and self._hits_have_same_query(longest_start_hit, longest_end_hit):
+            if (
+              longest_start_hit is not None
+              and longest_end_hit is not None
+              and longest_start_hit != longest_end_hit
+              and self._hits_have_same_query(longest_start_hit, longest_end_hit)
+            ):
                 shortest_hit_length = self._min_qry_hit_length([longest_start_hit, longest_end_hit])
-                has_longer_hit = self._has_qry_hit_longer_than(list_of_hits, shortest_hit_length, hits_to_exclude={longest_start_hit, longest_end_hit})
+                has_longer_hit = self._has_qry_hit_longer_than(
+                    nucmer_hits_by_qry[longest_start_hit.qry_name],
+                    shortest_hit_length,
+                    hits_to_exclude={longest_start_hit, longest_end_hit}
+                )
+
                 if (not has_longer_hit) and self._can_circularise(longest_start_hit, longest_end_hit):
-                    if self.verbose:
-                        print('[' + self.log_prefix + '] Potential nucmer hit pair to circularise:')
-                        print('[' + self.log_prefix + ']', longest_start_hit)
-                        print('[' + self.log_prefix + ']', longest_end_hit)
                     maybe_circular[ref_name] = (longest_start_hit, longest_end_hit)
 
         return maybe_circular
@@ -239,7 +267,16 @@ class Merger:
 
 
     def _circularise_contigs(self, nucmer_hits):
-        to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(nucmer_hits)
+        long_nucmer_hits = {}
+        for name, hits in nucmer_hits.items():
+            long_nucmer_hits[name] = [x for x in hits if x.hit_length_qry >= self.nucmer_min_length_for_merges]
+        to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(long_nucmer_hits)
+        if self.verbose:
+            for name, hits in to_circularise_with_nucmer.items():
+                print('[' + self.log_prefix + ']', name, 'maybe_circular:')
+                print('    ', hits[0])
+                print('    ', hits[1])
+
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer)
         spades_circularised = set()
         for ref_name, (start_hit, end_hit) in to_circularise_with_nucmer.items():
@@ -249,20 +286,28 @@ class Merger:
 
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
         circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
+        used_spades_contigs = set()
 
         for ref_name in self.original_contigs:
             if ref_name in to_circularise_with_nucmer:
                 continue
 
             if ref_name in nucmer_hits:
-                new_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
+                new_contig, spades_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
             else:
                 new_contig = None
 
             if new_contig is not None:
                 assert new_contig.id == ref_name
-                self.original_contigs[new_contig.id] = new_contig
-                spades_circularised.add(ref_name)
+                assert spades_contig is not None
+                if spades_contig in used_spades_contigs:
+                    del self.original_contigs[ref_name]
+                    if self.verbose:
+                        print('[' + self.log_prefix + ']', ref_name, 'circular, but duplicate sequence, so deleting it')
+                else:
+                    self.original_contigs[new_contig.id] = new_contig
+                    spades_circularised.add(ref_name)
+                    used_spades_contigs.add(spades_contig)
 
         out_fasta = os.path.abspath(self.outprefix + '.fasta')
         fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
@@ -296,72 +341,96 @@ class Merger:
         pyfastaq.utils.close(fasta_fh)
 
 
-    def _indexes_not_in_common(self, hits, other_hits):
-        to_keep = {0}
-        for i in range(1, len(hits)):
-            if hits[i] not in other_hits:
-                to_keep.add(i)
+    def _orientation_ok_to_bridge_contigs(self, start_hit, end_hit):
+        '''Returns True iff the orientation of the hits means that the query contig of both hits can bridge the reference contigs of the hits'''
+        assert start_hit.qry_name == end_hit.qry_name
+        if start_hit.ref_name == end_hit.ref_name:
+            return False
 
-        return to_keep
+        if (
+            (self._is_at_ref_end(start_hit) and start_hit.on_same_strand())
+            or (self._is_at_ref_start(start_hit) and not start_hit.on_same_strand())
+        ):
+            start_hit_ok = True
+        else:
+            start_hit_ok = False
+
+        if (
+            (self._is_at_ref_start(end_hit) and end_hit.on_same_strand())
+            or (self._is_at_ref_end(end_hit) and not end_hit.on_same_strand())
+        ):
+            end_hit_ok = True
+        else:
+            end_hit_ok = False
+
+        return start_hit_ok and end_hit_ok
 
 
-    def _remove_redundant_hits(self, start_hits, end_hits):
-        if 0 in [len(start_hits), len(end_hits)]:
-            return start_hits, end_hits
+    def _get_possible_query_bridging_contigs(self, nucmer_hits):
+        '''Input is dict qry_name -> list of nucmer hits to that qry. Returns dict qry_name -> tuple(start hit, end hit)'''
+        bridges = {}
 
-        start_hits.sort(key=lambda x: x.qry_coords().start)
-        end_hits.sort(key=lambda x: x.qry_coords().start, reverse=True)
-        start_to_keep = self._indexes_not_in_common(start_hits, end_hits)
-        end_to_keep = self._indexes_not_in_common(end_hits, start_hits)
-        start_hits = [start_hits[i] for i in start_to_keep]
-        end_hits = [end_hits[i] for i in end_to_keep]
-        return start_hits, end_hits
+        for qry_name, hits_to_qry in nucmer_hits.items():
+            if len(hits_to_qry) < 2:
+                continue
 
+            longest_start_hit = self._get_longest_hit_at_qry_start(hits_to_qry)
+            longest_end_hit = self._get_longest_hit_at_qry_end(hits_to_qry)
 
-    def _nucmer_hits_to_potential_join(self, hits, genome_contigs, reassembly_contigs):
-        '''Given a list of numcer hits, all to the same query, returns a pair of nucmer hits that could be used to join two of the genome contigs'''
-        if len(hits) < 2:
-            return None
-
-        reassembly_contig = reassembly_contigs[hits[0].qry_name]
-        reassembly_contig_length = len(reassembly_contig)
-        if reassembly_contig_length < self.nucmer_min_length:
-            return None
-
-        qry_start_interval = pyfastaq.intervals.Interval(0, self.qry_end_tolerance)
-        qry_end_interval = pyfastaq.intervals.Interval(max(0, reassembly_contig_length - self.qry_end_tolerance), reassembly_contig_length)
-        hits_at_start = []
-        hits_at_end = []
-        for hit in hits:
-            ref_len = len(genome_contigs[hit.ref_name])
-            ref_start_interval = pyfastaq.intervals.Interval(0, self.ref_end_tolerance)
-            ref_end_interval = pyfastaq.intervals.Interval(max(0, ref_len - self.ref_end_tolerance), ref_len)
-
-            if hit.qry_coords().intersects(qry_start_interval) and (
-                   (hit.ref_coords().intersects(ref_end_interval) and hit.on_same_strand()) or \
-                   (hit.ref_coords().intersects(ref_start_interval) and not hit.on_same_strand())
+            if (
+                None in (longest_start_hit, longest_end_hit)
+              or longest_start_hit.ref_name == longest_end_hit.ref_name
+              or self._hits_have_same_reference(longest_start_hit, longest_end_hit)
             ):
-                hits_at_start.append(hit)
+                continue
 
-            if hit.qry_coords().intersects(qry_end_interval) and (
-                   (hit.ref_coords().intersects(ref_start_interval) and hit.on_same_strand()) or \
-                   (hit.ref_coords().intersects(ref_end_interval) and not hit.on_same_strand())
-            ):
-                hits_at_end.append(hit)
+            shortest_hit_length = self._min_qry_hit_length([longest_start_hit, longest_end_hit])
+            has_longer_hit = self._has_qry_hit_longer_than(
+                hits_to_qry,
+                shortest_hit_length,
+                hits_to_exclude={longest_start_hit, longest_end_hit}
+            )
 
-        hits_at_start, hits_at_end = self._remove_redundant_hits(hits_at_start, hits_at_end)
+            if self._orientation_ok_to_bridge_contigs(longest_start_hit, longest_end_hit) and not has_longer_hit:
+                bridges[qry_name] = (longest_start_hit, longest_end_hit)
 
-        if len(hits_at_start) == len(hits_at_end) == 1 and hits_at_start[0].ref_name != hits_at_end[0].ref_name:
-            return hits_at_start[0], hits_at_end[0]
+        return bridges
 
 
-    def _merge_pair(self, hits, ref_contigs, reassembly_contigs):
-        '''Merges two reference contigs together that are bridged by a reassembly contig. Hits between the contigs are in the list "hits" - there should be exactly two of them'''
-        assert len(hits) == 2
-        assert hits[0].qry_name == hits[1].qry_name
-        assert hits[0].ref_name != hits[1].ref_name
-        start_hit, end_hit = hits
-        bridging_contig = reassembly_contigs.pop(start_hit.qry_name)
+    def _filter_bridging_contigs(self, bridges):
+        '''Input is dict qry_name -> tuple(start hit, end hit) made by _get_possible_query_bridging_contigs. Removes key/values where the value(==ref contig) has a hit at the start, or at the end, to more than one key(==qry contig)'''
+        ref_hits_start = {}
+        ref_hits_end = {}
+        for qry_name, (start_hit, end_hit) in bridges.items():
+            for hit in start_hit, end_hit:
+                assert self._is_at_ref_start(hit) or self._is_at_ref_end(hit)
+                if self._is_at_ref_start(hit):
+                    ref_hits_start[hit.ref_name] = ref_hits_start.get(hit.ref_name, 0) + 1
+                elif self._is_at_ref_end(hit):
+                    ref_hits_end[hit.ref_name] = ref_hits_end.get(hit.ref_name, 0) + 1
+
+        qry_names_to_remove = set()
+
+        for qry_name, (start_hit, end_hit) in bridges.items():
+            for hit in start_hit, end_hit:
+                remove = False
+                if (
+                  (self._is_at_ref_start(hit) and ref_hits_start.get(hit.ref_name, 0) > 1)
+                  or (self._is_at_ref_end(hit) and ref_hits_end.get(hit.ref_name, 0) > 1)
+                ):
+                    qry_names_to_remove.add(qry_name)
+
+        for name in qry_names_to_remove:
+            del bridges[name]
+
+        return bridges
+
+
+    def _merge_bridged_contig_pair(self, start_hit, end_hit, ref_contigs, qry_contigs):
+        assert start_hit.qry_name == end_hit.qry_name
+        assert start_hit.ref_name != end_hit.ref_name
+        assert self._orientation_ok_to_bridge_contigs(start_hit, end_hit)
+        bridging_contig = qry_contigs[start_hit.qry_name]
         start_contig = ref_contigs.pop(start_hit.ref_name)
         end_contig = ref_contigs.pop(end_hit.ref_name)
         bridge_seq = bridging_contig[start_hit.qry_coords().start:end_hit.qry_coords().end + 1]
@@ -380,101 +449,92 @@ class Merger:
             end_seq = tmp_seq.seq
 
         if self.verbose:
-            print('[' + self.log_prefix + '] Using the following two nucmer hits to merge contigs', hits[0].ref_name, hits[1].ref_name)
-            print('[' + self.log_prefix + ']', hits[0])
-            print('[' + self.log_prefix + ']', hits[1])
+            print('[' + self.log_prefix + '] Using the following two nucmer hits to merge contigs', start_hit.ref_name, end_hit.ref_name)
+            print('[' + self.log_prefix + ']    ', start_hit)
+            print('[' + self.log_prefix + ']    ', end_hit)
         new_id = start_contig.id + '.' + end_contig.id
         new_contig = pyfastaq.sequences.Fasta(new_id, start_seq + bridge_seq + end_seq)
         self.merges.append([new_id, start_contig.id, end_contig.id])
         ref_contigs[new_contig.id] = new_contig
 
 
-    def _merge_contig_pairs(self, outprefix):
-        '''Iteratively merges contig pairs using ovelapping contigs from reassembly, until no more can be merged'''
+    def _merge_all_bridged_contigs(self, nucmer_hits, ref_contigs, qry_contigs):
+        '''Input is dict of nucmer_hits. Makes any possible contig merges.
+           Returns True iff any merges were made'''
+        if len(nucmer_hits) == 0:
+            return
+        all_nucmer_hits = []
+        for l in nucmer_hits.values():
+            all_nucmer_hits.extend(l)
+        nucmer_hits_by_qry = self._hits_hashed_by_query(all_nucmer_hits)
+        bridges = self._get_possible_query_bridging_contigs(nucmer_hits_by_qry)
+        bridges = self._filter_bridging_contigs(bridges)
+        merged = set()
+        made_a_join = False
+
+        for qry_name, (start_hit, end_hit) in bridges.items():
+            if start_hit.ref_name in merged or end_hit.ref_name in merged:
+                continue
+            self._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, qry_contigs)
+            merged.add(start_hit.ref_name)
+            merged.add(end_hit.ref_name)
+            made_a_join = True
+
+        return made_a_join
+
+
+    def _iterative_bridged_contig_pair_merge(self, outprefix):
+        '''Iteratively merges contig pairs using bridging contigs from reassembly, until no more can be merged'''
         if self.reads is None:
             return self.original_fasta, self.reassembly_fasta
 
-        nucmer_coords = outprefix + '.tmp.coords'
-        genome_fasta = outprefix + '.merged.fa'
-        reassembly_fasta = outprefix + '.reassembly.fasta'
-        reassembly_fastg = outprefix + '.reassembly.fastg'
-        bam = outprefix + '.bam'
-        reads_prefix = outprefix + '.reads'
-        self._contigs_dict_to_file(self.original_contigs, genome_fasta)
-        self._contigs_dict_to_file(self.reassembly_contigs, reassembly_fasta)
-        shutil.copyfile(self.reassembly_fasta[:-1] + 'g', reassembly_fastg)
-        made_join = True
+        genome_fasta = self.original_fasta
+        reassembly_fasta = self.reassembly_fasta
+        nucmer_coords = outprefix + '.iter.0.coords'
+        reads_to_map = self.reads
+        made_a_join = True
+        iteration = 0
 
-        while made_join:
-            made_join = False
+        while made_a_join:
+            iteration += 1
             self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
-            merged_contigs = set()
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
-            all_hits = []
-            for l in nucmer_hits_by_ref.values():
-                all_hits.extend(l)
-            nucmer_hits_by_qry = self._hits_hashed_by_query(all_hits)
-            potential_join_pairs = {}
+            made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs)
 
-            for reassemble_contig in nucmer_hits_by_qry:
-                hits = self._nucmer_hits_to_potential_join(
-                    nucmer_hits_by_qry[reassemble_contig],
-                    self.original_contigs,
-                    self.reassembly_contigs)
+            if made_a_join:
+                nucmer_coords = outprefix + '.iter.' + str(iteration) + '.coords'
+                genome_fasta = outprefix + '.iter.' + str(iteration) + '.merged.fasta'
+                reassembly_fasta = outprefix + '.iter.' + str(iteration) + '.reassembly.fasta'
+                reassembly_fastg = outprefix + '.iter.' + str(iteration) + '.reassembly.fastg'
+                self._contigs_dict_to_file(self.original_contigs, genome_fasta)
+                self._contigs_dict_to_file(self.reassembly_contigs, reassembly_fasta)
+                bam = outprefix + '.iter.' + str(iteration) + '.bam'
 
-                if hits is not None:
-                    start_hits, end_hits = hits
-                    assert start_hits.qry_name == end_hits.qry_name
-                    key = start_hits.qry_name
-                    if key not in potential_join_pairs:
-                        potential_join_pairs[key] = []
-                    potential_join_pairs[key].append((start_hits, end_hits))
+                circlator.mapping.bwa_mem(
+                  genome_fasta,
+                  reads_to_map,
+                  bam,
+                  threads=self.threads,
+                  verbose=self.verbose,
+                )
 
-            potential_join_pairs = {x:potential_join_pairs[x][0] for x in potential_join_pairs if len(potential_join_pairs[x]) == 1}
-            if len(potential_join_pairs):
-                ref_seq_start_counts = {}
-                ref_seq_end_counts = {}
-                for qry in potential_join_pairs:
-                    start_name = potential_join_pairs[qry][0].ref_name
-                    end_name = potential_join_pairs[qry][1].ref_name
-                    ref_seq_start_counts[start_name] = ref_seq_start_counts.get(start_name, 0) + 1
-                    ref_seq_end_counts[end_name] = ref_seq_end_counts.get(end_name, 0) + 1
+                reads_prefix = outprefix + '.iter.' + str(iteration) + '.reads'
+                reads_to_map =  reads_prefix + '.fasta'
+                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix)
+                bam_filter.run()
+                assembler_dir = outprefix + '.iter.' + str(iteration) + '.assembly'
+                a = circlator.assemble.Assembler(
+                    reads_prefix + '.fasta',
+                    assembler_dir,
+                    threads=self.threads,
+                    verbose=self.verbose
+                )
+                a.run()
+                os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
+                os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
+                shutil.rmtree(assembler_dir)
+                pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
 
-                for qry in potential_join_pairs:
-                    hits = potential_join_pairs[qry]
-                    assert len(hits) == 2
-                    ref_start_name = hits[0].ref_name
-                    ref_end_name = hits[1].ref_name
-                    if (len({ref_start_name, ref_end_name}.intersection(merged_contigs)) == 0
-                        and ref_seq_start_counts[ref_start_name] == ref_seq_end_counts[ref_end_name] == 1
-                    ):
-                        merged_contigs.add(ref_start_name)
-                        merged_contigs.add(ref_end_name)
-                        self._merge_pair(hits, self.original_contigs, self.reassembly_contigs)
-                        self._contigs_dict_to_file(self.original_contigs, genome_fasta)
-                        if os.path.exists(reads_prefix + '.fasta'):
-                           reads_to_map = reads_prefix + '.fasta'
-                        else:
-                           reads_to_map = self.reads
-                        circlator.mapping.bwa_mem(
-                          genome_fasta,
-                          reads_to_map,
-                          bam,
-                          threads=self.threads,
-                          verbose=self.verbose,
-                        )
-                        bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix)
-                        bam_filter.run()
-                        assembler_dir = outprefix + '.assembly'
-                        a = circlator.assemble.Assembler(reads_prefix + '.fasta', assembler_dir, threads=self.threads, verbose=self.verbose)
-                        a.run()
-                        os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
-                        os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
-                        shutil.rmtree(assembler_dir)
-                        pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
-                        made_join = True
-
-        os.unlink(nucmer_coords)
         return genome_fasta, reassembly_fasta
 
 
@@ -509,32 +569,47 @@ class Merger:
         '''Tries to make new circularised contig from contig called original_contig. hits = list of nucmer hits, all with ref=original contg. circular_spades=set of query contig names that spades says are circular'''
         hits_to_circular_contigs = [x for x in hits if x.qry_name in circular_spades]
         if len(hits_to_circular_contigs) == 0:
-            return None
+            return None, None
+
+        if self.verbose:
+            print('[' + self.log_prefix + '] Hits to spades circular contig', hits[0].qry_name )
+            for hit in hits_to_circular_contigs:
+                print('[' + self.log_prefix + ']    ', hit)
 
         for hit in hits_to_circular_contigs:
-            if min_percent <= 100 * (hit.hit_length_qry / hit.qry_length):
+            percent_query_covered = 100 * (hit.hit_length_qry / hit.qry_length)
+            if self.verbose:
+                print('[' + self.log_prefix + ']     percent query covered:', percent_query_covered)
+
+            if min_percent <= percent_query_covered:
                 # the spades contig hit is long enough, but now check that
                 # the input contig is covered by hits from this spades contig
                 hit_intervals = [x.ref_coords() for x in hits_to_circular_contigs if x.qry_name == hit.qry_name]
+                print([str(x) for x in hit_intervals])
 
                 if len(hit_intervals) > 0:
                     pyfastaq.intervals.merge_overlapping_in_list(hit_intervals)
+                    print([str(x) for x in hit_intervals])
                     if min_percent <= 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length:
-                        return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq)
+                        print('[' + self.log_prefix + ']    ', hit.qry_name, 'is circular')
+                        return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq), hit.qry_name
 
-        return None
+        return None, None
+
+
+    def _write_merge_log(self, filename):
+        if len(self.merges):
+            log_fh = pyfastaq.utils.open_file_write(filename)
+            print('[' + self.log_prefix + ' contig_merge]', '#new_name', 'previous_contig1', 'previous_contig2', sep='\t', file=log_fh)
+            for l in self.merges:
+                print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
+            pyfastaq.utils.close(log_fh)
 
 
     def run(self):
         out_log = os.path.abspath(self.outprefix + '.merge.log')
-        merge_pairs_dir = os.path.abspath(self.outprefix + '.merge_pairs')
-        self.original_fasta, self.reassembly_fasta = self._merge_contig_pairs(merge_pairs_dir)
-        if len(self.merges):
-            log_fh = pyfastaq.utils.open_file_write(out_log)
-            print('[' + self.log_prefix + ' contig_merge]', '#new_name', 'previous_contig1', 'previous_contig2', sep='\t', file=log_fh)
-            for l in self.merges:
-                print('[' + self.log_prefix + ' contig_merge]', '\t'.join(l), sep='\t', file=log_fh)
-
+        self.original_fasta, self.reassembly_fasta = self._iterative_bridged_contig_pair_merge(self.outprefix + '.merge')
+        self._write_merge_log(self.outprefix + '.merge.log')
         nucmer_coords = os.path.abspath(self.outprefix + '.coords')
         self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_coords)
         nucmer_hits = self._load_nucmer_hits(nucmer_coords)
