@@ -244,8 +244,8 @@ class Merger:
 
         if self.verbose:
             print('[' + self.log_prefix + '] Using the following two nucmer hits to circularise', ref_name)
-            print('[' + self.log_prefix + ']', ref_start_hit)
-            print('[' + self.log_prefix + ']', ref_end_hit)
+            print('[' + self.log_prefix + ']    ', ref_start_hit)
+            print('[' + self.log_prefix + ']    ', ref_end_hit)
 
         if ref_start_coords.intersects(ref_end_coords):
             new_ctg = copy.copy(self.reassembly_contigs[qry_name])
@@ -273,12 +273,13 @@ class Merger:
         to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(long_nucmer_hits)
         if self.verbose:
             for name, hits in to_circularise_with_nucmer.items():
-                print('[' + self.log_prefix + ']', name, 'maybe_circular:')
-                print('    ', hits[0])
-                print('    ', hits[1])
+                print('[' + self.log_prefix + ']', name, 'maybe circular:')
+                print('[' + self.log_prefix + ']    ', hits[0])
+                print('[' + self.log_prefix + ']    ', hits[1])
 
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer)
         spades_circularised = set()
+        spades_duplicates = set()
         for ref_name, (start_hit, end_hit) in to_circularise_with_nucmer.items():
             assert start_hit.ref_name == end_hit.ref_name == ref_name
             contig = self._make_circularised_contig(start_hit, end_hit)
@@ -301,9 +302,9 @@ class Merger:
                 assert new_contig.id == ref_name
                 assert spades_contig is not None
                 if spades_contig in used_spades_contigs:
-                    del self.original_contigs[ref_name]
                     if self.verbose:
-                        print('[' + self.log_prefix + ']', ref_name, 'circular, but duplicate sequence, so deleting it')
+                        print('[' + self.log_prefix + ']    ', ref_name, 'is circular, but duplicate sequence, so deleting it')
+                    spades_duplicates.add(ref_name)
                 else:
                     self.original_contigs[new_contig.id] = new_contig
                     spades_circularised.add(ref_name)
@@ -317,6 +318,7 @@ class Merger:
         print(
             '[' + self.log_prefix + ' circularised]',
             '#Contig',
+            'repetitive_deleted',
             'circl_using_nucmer',
             'circl_using_spades',
             'circularised',
@@ -326,16 +328,22 @@ class Merger:
         for ref_name, contig in self.original_contigs.items():
             circl_using_nucmer = 1 if ref_name in to_circularise_with_nucmer else 0
             circl_using_spades = 1 if ref_name in spades_circularised else 0
+            duplicate = 1 if ref_name in spades_duplicates else 0
             assert circl_using_nucmer * circl_using_spades == 0
             print(
                 '[' + self.log_prefix + ' circularised]',
                 ref_name,
+                duplicate,
                 circl_using_nucmer,
                 circl_using_spades,
                 circl_using_nucmer + circl_using_spades,
                 sep='\t', file=log_fh
             )
-            print(contig, file=fasta_fh)
+            if ref_name not in spades_duplicates:
+                print(contig, file=fasta_fh)
+
+        for name in spades_duplicates:
+            del self.original_contigs[ref_name]
 
         pyfastaq.utils.close(log_fh)
         pyfastaq.utils.close(fasta_fh)
@@ -502,6 +510,9 @@ class Merger:
             made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs)
 
             if made_a_join:
+                if self.verbose:
+                    print('[' + self.log_prefix + '] Contig merges were made. Running new read mapping and assembly')
+
                 nucmer_coords = outprefix + '.iter.' + str(iteration) + '.coords'
                 genome_fasta = outprefix + '.iter.' + str(iteration) + '.merged.fasta'
                 reassembly_fasta = outprefix + '.iter.' + str(iteration) + '.reassembly.fasta'
@@ -534,6 +545,8 @@ class Merger:
                 os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
                 shutil.rmtree(assembler_dir)
                 pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
+            elif iteration == 1 and self.verbose:
+                print('[' + self.log_prefix + '] No contig merges were made')
 
         return genome_fasta, reassembly_fasta, nucmer_coords
 
@@ -579,7 +592,7 @@ class Merger:
         for hit in hits_to_circular_contigs:
             percent_query_covered = 100 * (hit.hit_length_qry / hit.qry_length)
             if self.verbose:
-                print('[' + self.log_prefix + ']     percent query covered:', percent_query_covered)
+                print('[' + self.log_prefix + ']     percent query covered:', percent_query_covered, '...', hit)
 
             if min_percent <= percent_query_covered:
                 # the spades contig hit is long enough, but now check that
@@ -589,7 +602,8 @@ class Merger:
                 if len(hit_intervals) > 0:
                     pyfastaq.intervals.merge_overlapping_in_list(hit_intervals)
                     if min_percent <= 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length:
-                        print('[' + self.log_prefix + ']    ', hit.qry_name, 'is circular')
+                        if self.verbose:
+                            print('[' + self.log_prefix + ']    ', hit.ref_name, 'is circular')
                         return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq), hit.qry_name
 
         return None, None
