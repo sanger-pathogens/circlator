@@ -34,6 +34,7 @@ def run():
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=99)
     merge_group.add_argument('--merge_min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=4000)
+    parser.add_argument('--merge_min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
     merge_group.add_argument('--merge_breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
     merge_group.add_argument('--merge_ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     merge_group.add_argument('--merge_reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
@@ -122,6 +123,7 @@ def run():
         merge_prefix,
         nucmer_min_id=options.merge_min_id,
         nucmer_min_length=options.merge_min_length,
+        nucmer_min_length_for_merges=options.merge_min_length_merge,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
         qry_end_tolerance=options.merge_reassemble_end,
@@ -140,10 +142,10 @@ def run():
         for line in f:
             if not line.startswith('[merge circularised]\t'):
                 continue
-            if line.rstrip() == '\t'.join(['[merge circularised]', '#Contig', 'circl_using_nucmer', 'circl_using_spades', 'circularised']):
+            if line.rstrip() == '\t'.join(['[merge circularised]', '#Contig', 'repetitive_deleted', 'circl_using_nucmer', 'circl_using_spades', 'circularised']):
                 continue
 
-            x, name, y, z, circularised = line.rstrip().split('\t')
+            x, name, u, y, z, circularised = line.rstrip().split('\t')
             if circularised == '1':
                 contigs_to_keep.append(name)
             else:
