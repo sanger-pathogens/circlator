@@ -32,9 +32,10 @@ def run():
     #assemble_group = parser.add_argument_group('assemble_group')
 
     merge_group = parser.add_argument_group('merge options')
-    merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=98)
+    merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=95)
     merge_group.add_argument('--merge_min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
-    parser.add_argument('--merge_min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
+    merge_group.add_argument('--merge_min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
+    merge_group.add_argument('--merge_min_spades_circ_pc', type=float, help='Min % of contigs needed to be covered by nucmer hits to spades circular contigs', metavar='FLOAT', default=95)
     merge_group.add_argument('--merge_breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
     merge_group.add_argument('--merge_ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     merge_group.add_argument('--merge_reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
@@ -124,6 +125,7 @@ def run():
         nucmer_min_id=options.merge_min_id,
         nucmer_min_length=options.merge_min_length,
         nucmer_min_length_for_merges=options.merge_min_length_merge,
+        min_spades_circular_percent=options.merge_min_spades_circ_pc,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
         qry_end_tolerance=options.merge_reassemble_end,

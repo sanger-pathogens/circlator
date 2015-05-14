@@ -532,12 +532,12 @@ class TestMerge(unittest.TestCase):
         expected = pyfastaq.sequences.Fasta('contig_name', spades_node.seq), 'spades_node'
         self.merger.reassembly_contigs = {'spades_node': spades_node}
         hits = [
-            '\t'.join(['1', '10', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
-            '\t'.join(['21', '30', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
-            '\t'.join(['11', '20', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['1', '10', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['21', '30', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['11', '20', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
         ]
         hits = [pymummer.alignment.Alignment(x) for x in hits]
-        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular, min_percent=90)
+        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular)
         self.assertEqual(got, expected)
 
 

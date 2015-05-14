@@ -15,10 +15,11 @@ class Merger:
           reassembly,
           outprefix,
           reads=None,
-          nucmer_min_id=98,
+          nucmer_min_id=95,
           nucmer_min_length=500,
           nucmer_min_length_for_merges=4000,
           nucmer_breaklen=500,
+          min_spades_circular_percent=95,
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
@@ -37,6 +38,7 @@ class Merger:
         self.nucmer_min_length = nucmer_min_length
         self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
         self.nucmer_breaklen = nucmer_breaklen
+        self.min_spades_circular_percent = min_spades_circular_percent
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
@@ -578,7 +580,7 @@ class Merger:
         return found_fwd.intersection(found_rev)
 
 
-    def _make_new_contig_from_nucmer_and_spades(self, original_contig, hits, circular_spades, min_percent=95):
+    def _make_new_contig_from_nucmer_and_spades(self, original_contig, hits, circular_spades):
         '''Tries to make new circularised contig from contig called original_contig. hits = list of nucmer hits, all with ref=original contg. circular_spades=set of query contig names that spades says are circular'''
         hits_to_circular_contigs = [x for x in hits if x.qry_name in circular_spades]
         if len(hits_to_circular_contigs) == 0:
@@ -594,14 +596,18 @@ class Merger:
             if self.verbose:
                 print('[' + self.log_prefix + ']     percent query covered:', percent_query_covered, '...', hit)
 
-            if min_percent <= percent_query_covered:
+            if self.min_spades_circular_percent <= percent_query_covered:
                 # the spades contig hit is long enough, but now check that
                 # the input contig is covered by hits from this spades contig
                 hit_intervals = [x.ref_coords() for x in hits_to_circular_contigs if x.qry_name == hit.qry_name]
 
                 if len(hit_intervals) > 0:
                     pyfastaq.intervals.merge_overlapping_in_list(hit_intervals)
-                    if min_percent <= 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length:
+                    percent_covered = 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length
+                    if self.verbose:
+                        print('[' + self.log_prefix + ']       reference bases covered by spades contig:', ', '.join([str(x) for x in hit_intervals]))
+                        print('[' + self.log_prefix + ']      ...which is', percent_covered, 'percent of', hit.ref_length, 'bases')
+                    if self.min_spades_circular_percent <= 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length:
                         if self.verbose:
                             print('[' + self.log_prefix + ']    ', hit.ref_name, 'is circular')
                         return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq), hit.qry_name
