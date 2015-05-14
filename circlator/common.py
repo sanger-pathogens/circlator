@@ -1,7 +1,7 @@
 import sys
 import subprocess
 
-version = '0.10.0'
+version = '0.11.0'
 
 def syscall(cmd, allow_fail=False, verbose=False):
     if verbose:
