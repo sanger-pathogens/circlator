@@ -280,37 +280,46 @@ class Merger:
                 print('[' + self.log_prefix + ']    ', hits[1])
 
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer)
-        spades_circularised = set()
-        spades_duplicates = set()
-        for ref_name, (start_hit, end_hit) in to_circularise_with_nucmer.items():
-            assert start_hit.ref_name == end_hit.ref_name == ref_name
-            contig = self._make_circularised_contig(start_hit, end_hit)
-            self.original_contigs[contig.id] = contig
-
-        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
-        circular_spades = self._get_spades_circular_nodes(reassembly_fastg)
         used_spades_contigs = set()
+        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
+        called_as_circular_by_spades = self._get_spades_circular_nodes(reassembly_fastg)
+        fate_of_contigs = {
+            x: set() for x in [
+                'repetitive_deleted',
+                'circl_using_nucmer',
+                'circl_using_spades',
+            ]
+        }
 
         for ref_name in self.original_contigs:
-            if ref_name in to_circularise_with_nucmer:
-                continue
-
             if ref_name in nucmer_hits:
-                new_contig, spades_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], circular_spades)
+                new_contig, spades_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], called_as_circular_by_spades)
+
+                if new_contig is None:
+                    if ref_name in to_circularise_with_nucmer:
+                        start_hit, end_hit = to_circularise_with_nucmer[ref_name]
+                        assert start_hit.ref_name == end_hit.ref_name == ref_name
+                        new_contig = self._make_circularised_contig(start_hit, end_hit)
+                        fate_of_contigs['circl_using_nucmer'].add(ref_name)
+                else:
+                    assert new_contig.id == ref_name
+                    assert spades_contig is not None
+                    if spades_contig in used_spades_contigs:
+                        if self.verbose:
+                            print('[' + self.log_prefix + ']    ', ref_name, 'is circular, but duplicate sequence, so deleting it')
+                        fate_of_contigs['repetitive_deleted'].add(ref_name)
+                    else:
+                        self.original_contigs[new_contig.id] = new_contig
+                        fate_of_contigs['circl_using_spades'].add(ref_name)
+                        used_spades_contigs.add(spades_contig)
             else:
                 new_contig = None
 
+
             if new_contig is not None:
                 assert new_contig.id == ref_name
-                assert spades_contig is not None
-                if spades_contig in used_spades_contigs:
-                    if self.verbose:
-                        print('[' + self.log_prefix + ']    ', ref_name, 'is circular, but duplicate sequence, so deleting it')
-                    spades_duplicates.add(ref_name)
-                else:
-                    self.original_contigs[new_contig.id] = new_contig
-                    spades_circularised.add(ref_name)
-                    used_spades_contigs.add(spades_contig)
+                self.original_contigs[new_contig.id] = new_contig
+
 
         out_fasta = os.path.abspath(self.outprefix + '.fasta')
         fasta_fh = pyfastaq.utils.open_file_write(out_fasta)
@@ -328,23 +337,23 @@ class Merger:
         )
 
         for ref_name, contig in self.original_contigs.items():
-            circl_using_nucmer = 1 if ref_name in to_circularise_with_nucmer else 0
-            circl_using_spades = 1 if ref_name in spades_circularised else 0
-            duplicate = 1 if ref_name in spades_duplicates else 0
+            circl_using_nucmer = 1 if ref_name in fate_of_contigs['circl_using_nucmer'] else 0
+            circl_using_spades = 1 if ref_name in fate_of_contigs['circl_using_spades'] else 0
+            repetitive_deleted = 1 if ref_name in fate_of_contigs['repetitive_deleted'] else 0
             assert circl_using_nucmer * circl_using_spades == 0
             print(
                 '[' + self.log_prefix + ' circularised]',
                 ref_name,
-                duplicate,
+                repetitive_deleted,
                 circl_using_nucmer,
                 circl_using_spades,
                 circl_using_nucmer + circl_using_spades,
                 sep='\t', file=log_fh
             )
-            if ref_name not in spades_duplicates:
+            if repetitive_deleted == 0:
                 print(contig, file=fasta_fh)
 
-        for name in spades_duplicates:
+        for name in fate_of_contigs['repetitive_deleted']:
             del self.original_contigs[ref_name]
 
         pyfastaq.utils.close(log_fh)
