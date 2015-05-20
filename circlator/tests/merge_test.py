@@ -174,6 +174,29 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(expected, self.merger._get_longest_hit_at_ref_end(hits))
 
 
+    def test_get_longest_hit_at_qry_start(self):
+        '''test _get_longest_hit_at_qry_start'''
+        hits = [
+            '\t'.join(['42', '1042', '1', '1000', '1001', '1001', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['42', '1042', '1', '999', '1000', '1000', '100.00', '20000', '4242', '1', '1', 'ref2', 'qry1']),
+            '\t'.join(['16000', '18000', '2000', '4000', '2000', '2000', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        expected = hits[0]
+        self.assertEqual(expected, self.merger._get_longest_hit_at_qry_start(hits))
+
+
+    def test_get_longest_hit_at_qry_end(self):
+        '''test _get_longest_hit_at_qry_end'''
+        hits = [
+            '\t'.join(['1', '1000', '40000', '42000', '2000', '2000', '100.00', '20000', '42000', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['1', '1001', '39999', '42000', '2001', '2001', '100.00', '20000', '42000', '1', '1', 'ref2', 'qry1']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        expected = hits[1]
+        self.assertEqual(expected, self.merger._get_longest_hit_at_qry_end(hits))
+
+
     def test_hits_have_same_query(self):
         '''test _hits_have_same_query'''
         hits = [
@@ -184,6 +207,18 @@ class TestMerge(unittest.TestCase):
         hits = [pymummer.alignment.Alignment(x) for x in hits]
         self.assertTrue(self.merger._hits_have_same_query(hits[0], hits[1]))
         self.assertFalse(self.merger._hits_have_same_query(hits[0], hits[2]))
+
+
+    def test_hits_have_same_reference(self):
+        '''test _hits_have_same_reference'''
+        hits = [
+            '\t'.join(['42', '43', '42', '43', '2', '2', '100.00', '424242', '4242', '1', '1', 'ref42', 'qry42']),
+            '\t'.join(['42', '43', '42', '43', '2', '2', '100.00', '424242', '4242', '1', '1', 'ref42', 'qry43']),
+            '\t'.join(['42', '43', '42', '43', '2', '2', '100.00', '424242', '4242', '1', '1', 'ref43', 'qry44']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        self.assertTrue(self.merger._hits_have_same_reference(hits[0], hits[1]))
+        self.assertFalse(self.merger._hits_have_same_reference(hits[0], hits[2]))
 
 
     def test_min_qry_hit_length(self):
@@ -311,144 +346,155 @@ class TestMerge(unittest.TestCase):
         self.assertEqual(list(expected_ref_contigs.values())[0].seq, got.seq)
 
 
-    def test_remove_redundant_hits(self):
-        '''test _remove_redundant_hits'''
+    def test_orientation_ok_to_bridge_contigs(self):
+        '''test _orientation_ok_to_bridge_contigs'''
         hits = [
-            '\t'.join(['1', '100', '3', '105', '100', '112', '100.00', '110', '120', '1', '1', 'ref1', 'qry1']),
-            '\t'.join(['2', '101', '4', '106', '101', '113', '100.00', '111', '121', '1', '1', 'ref2', 'qry1']),
+            '\t'.join(['15000', '20000', '1', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry']),
+            '\t'.join(['1', '5000', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry']),
+            '\t'.join(['15000', '20000', '5000', '1', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry']),
+            '\t'.join(['5000', '1', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry']),
+            '\t'.join(['1', '5000', '5000', '1', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry']),
+            '\t'.join(['15000', '20000', '10000', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry']),
         ]
         hits = [pymummer.alignment.Alignment(x) for x in hits]
-        start_hits = copy.copy(hits)
-        end_hits = copy.copy(hits)
-        start_expected = [hits[0]]
-        end_expected = [hits[1]]
-        start_got, end_got = self.merger._remove_redundant_hits(start_hits, end_hits)
-        self.assertEqual(start_got, start_expected)
-        self.assertEqual(end_got, end_expected)
+        self.assertTrue(self.merger._orientation_ok_to_bridge_contigs(hits[0], hits[1]))
+        self.assertFalse(self.merger._orientation_ok_to_bridge_contigs(hits[0], hits[0]))
+        self.assertFalse(self.merger._orientation_ok_to_bridge_contigs(hits[0], hits[2]))
+        self.assertFalse(self.merger._orientation_ok_to_bridge_contigs(hits[0], hits[3]))
+        self.assertTrue(self.merger._orientation_ok_to_bridge_contigs(hits[4], hits[5]))
 
 
-    def test_indexes_not_in_common(self):
-        '''test _indexes_not_in_common'''
-        list1 = [0, 1, 42, 3]
-        list2 = [0, 4, 42, 64738]
-        expected1 = {0, 1, 3}
-        expected2 = {9, 4, 64738}
-        self.assertEqual(expected1, self.merger._indexes_not_in_common(list1, list2))
-        self.assertEqual(expected1, self.merger._indexes_not_in_common(list2, list1))
-
-
-    def test_nucmer_hits_to_potential_join(self):
-        '''test _nucmer_hits_to_potential_join'''
+    def test_get_possible_query_bridging_contigs(self):
+        '''test _get_possible_query_bridging_contigs'''
         hits = [
-            '\t'.join(['721', '999', '5', '283', '279', '279', '100.00', '1000', '753', '1', '1', 'ref1', 'reassembly']),
-            '\t'.join(['1', '420', '324', '743', '420', '420', '100.00', '1000', '753', '1', '1', 'ref2', 'reassembly']),
-            '\t'.join(['200', '420', '324', '543', '420', '420', '100.00', '1000', '753', '1', '1', 'ref3', 'reassembly']),
+            '\t'.join(['15000', '20000', '1', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry1']),
+            '\t'.join(['1', '5000', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry1']),
+            '\t'.join(['1', '5000', '5000', '1', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry2']),
+            '\t'.join(['15000', '20000', '10000', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry2']),
+            '\t'.join(['15500', '20000', '10000', '5500', '4500', '4500', '100.00', '20000', '10000', '1', '-1', 'ref3', 'qry2']),
+            '\t'.join(['15500', '20000', '10000', '5500', '4500', '4500', '100.00', '20000', '10000', '1', '-1', 'ref4', 'qry3']),
         ]
         hits = [pymummer.alignment.Alignment(x) for x in hits]
-        self.merger.nucmer_min_length = 100
-        self.merger.qry_end_tolerance = self.merger.ref_end_tolerance = 30
-
-        ref_fasta = os.path.join(data_dir, 'merge_test_nucmer_hits_to_potential_join.ref.fa')
-        reassembly_fasta = os.path.join(data_dir, 'merge_test_nucmer_hits_to_potential_join.reassembly.fa')
-        ref_contigs = {}
-        pyfastaq.tasks.file_to_dict(ref_fasta, ref_contigs)
-        reassembly_contigs = {}
-        pyfastaq.tasks.file_to_dict(reassembly_fasta, reassembly_contigs)
-        got = self.merger._nucmer_hits_to_potential_join(hits, ref_contigs, reassembly_contigs)
-        expected = hits[0], hits[1]
+        input_hits = {
+            'qry1': [hits[0], hits[1]],
+            'qry2': [hits[2], hits[3], hits[4]],
+            'qry3': [hits[5]]
+        }
+        got = self.merger._get_possible_query_bridging_contigs(input_hits)
+        expected = {
+            'qry1': (hits[0], hits[1]),
+            'qry2': (hits[2], hits[3])
+        }
         self.assertEqual(got, expected)
 
 
-    def test_merge_pair1(self):
-        '''test _merge_pair 1'''
+    def test_filter_bridging_contigs(self):
+        '''test _filter_bridging_contigs'''
+        hits = [
+            '\t'.join(['15000', '20000', '1', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref1', 'qry1']),
+            '\t'.join(['1', '5000', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref2', 'qry1']),
+            '\t'.join(['15000', '20000', '1', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref3', 'qry2']),
+            '\t'.join(['1', '5000', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref4', 'qry2']),
+            '\t'.join(['15000', '20000', '1', '5000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref3', 'qry3']),
+            '\t'.join(['1', '5000', '5000', '10000', '5000', '5000', '100.00', '20000', '10000', '1', '-1', 'ref5', 'qry3']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        input_hits = {
+            'qry1': (hits[0], hits[1]),
+            'qry2': (hits[2], hits[3]),
+            'qry3': (hits[4], hits[5]),
+        }
+        got = self.merger._filter_bridging_contigs(input_hits)
+        expected = {'qry1': (hits[0], hits[1])}
+        self.assertEqual(got, expected)
+
+
+    def test_merge_bridged_contig_pair1(self):
+        '''test _merge_bridged_contig_pair1'''
         # simple case: ref contigs 1 and 2 do not overlap each other and are joined by a reassembly contig
         hits = [
             '\t'.join(['721', '999', '5', '283', '279', '279', '100.00', '1000', '753', '1', '1', 'ref1', 'reassembly']),
             '\t'.join(['1', '420', '324', '743', '420', '420', '100.00', '1000', '753', '1', '1', 'ref2', 'reassembly']),
         ]
-        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        start_hit, end_hit = [pymummer.alignment.Alignment(x) for x in hits]
 
-        ref_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test1.ref.fa')
-        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test1.reassembly.fa')
-        expected_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test1.expected.fa')
+        ref_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test1.ref.fa')
+        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test1.reassembly.fa')
+        expected_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test1.expected.fa')
         ref_contigs = {}
         pyfastaq.tasks.file_to_dict(ref_fasta, ref_contigs)
         reassembly_contigs = {}
         pyfastaq.tasks.file_to_dict(reassembly_fasta, reassembly_contigs)
-        self.merger._merge_pair(hits, ref_contigs, reassembly_contigs)
-        self.assertEqual(len(reassembly_contigs), 0)
+        self.merger._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, reassembly_contigs)
         self.assertEqual(len(ref_contigs), 1)
         expected_ref_contigs = {}
         pyfastaq.tasks.file_to_dict(expected_fasta, expected_ref_contigs)
         self.assertEqual(list(expected_ref_contigs.values())[0].seq, list(ref_contigs.values())[0].seq)
 
 
-    def test_merge_pair2(self):
-        '''test _merge_pair 2'''
-        # same as test_merge_pair1, except reassembly is reverse complemented
+    def test_merge_bridged_contig_pair2(self):
+        '''test _merge_bridged_contig_pair2'''
+        # simple case: ref contigs 1 and 2 do not overlap each other and are joined by a reassembly contig
         hits = [
             '\t'.join(['1', '420', '430', '11', '420', '420', '100.00', '1000', '753', '1', '-1', 'ref2', 'reassembly']),
             '\t'.join(['721', '999', '749', '471', '279', '279', '100.00', '1000', '753', '1', '-1', 'ref1', 'reassembly']),
         ]
-        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        start_hit, end_hit = [pymummer.alignment.Alignment(x) for x in hits]
 
-        ref_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test2.ref.fa')
-        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test2.reassembly.fa')
-        expected_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test2.expected.fa')
+        ref_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test2.ref.fa')
+        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test2.reassembly.fa')
+        expected_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test2.expected.fa')
         ref_contigs = {}
         pyfastaq.tasks.file_to_dict(ref_fasta, ref_contigs)
         reassembly_contigs = {}
         pyfastaq.tasks.file_to_dict(reassembly_fasta, reassembly_contigs)
-        self.merger._merge_pair(hits, ref_contigs, reassembly_contigs)
-        self.assertEqual(len(reassembly_contigs), 0)
+        self.merger._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, reassembly_contigs)
         self.assertEqual(len(ref_contigs), 1)
         expected_ref_contigs = {}
         pyfastaq.tasks.file_to_dict(expected_fasta, expected_ref_contigs)
         self.assertEqual(list(expected_ref_contigs.values())[0].seq, list(ref_contigs.values())[0].seq)
 
 
-    def test_merge_pair3(self):
-        '''test _merge_pair 3'''
-        #  the two reference contigs overlap
+    def test_merge_bridged_contig_pair3(self):
+        '''test _merge_bridged_contig_pair3'''
+        # simple case: ref contigs 1 and 2 do not overlap each other and are joined by a reassembly contig
         hits = [
             '\t'.join(['541', '960', '1', '420', '420', '420', '100.00', '960', '840', '1', '1', 'ref1', 'reassembly']),
             '\t'.join(['1', '480', '361', '840', '480', '480', '100.00', '1060', '840', '1', '1', 'ref2', 'reassembly']),
         ]
-        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        start_hit, end_hit = [pymummer.alignment.Alignment(x) for x in hits]
 
-        ref_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test3.ref.fa')
-        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test3.reassembly.fa')
-        expected_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test3.expected.fa')
+        ref_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test3.ref.fa')
+        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test3.reassembly.fa')
+        expected_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test3.expected.fa')
         ref_contigs = {}
         pyfastaq.tasks.file_to_dict(ref_fasta, ref_contigs)
         reassembly_contigs = {}
         pyfastaq.tasks.file_to_dict(reassembly_fasta, reassembly_contigs)
-        self.merger._merge_pair(hits, ref_contigs, reassembly_contigs)
-        self.assertEqual(len(reassembly_contigs), 0)
+        self.merger._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, reassembly_contigs)
         self.assertEqual(len(ref_contigs), 1)
         expected_ref_contigs = {}
         pyfastaq.tasks.file_to_dict(expected_fasta, expected_ref_contigs)
         self.assertEqual(list(expected_ref_contigs.values())[0].seq, list(ref_contigs.values())[0].seq)
 
 
-    def test_merge_pair4(self):
-        '''test _merge_pair 4'''
-        #  the two reference contigs overlap
+    def test_merge_bridged_contig_pair4(self):
+        '''test _merge_bridged_contig_pair4'''
+        # simple case: ref contigs 1 and 2 do not overlap each other and are joined by a reassembly contig
         hits = [
             '\t'.join(['1', '480', '480', '1', '480', '480', '100.00', '1060', '840', '1', '-1', 'ref2', 'reassembly']),
             '\t'.join(['541', '960', '840', '421', '420', '420', '100.00', '960', '840', '1', '-1', 'ref1', 'reassembly']),
         ]
-        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        start_hit, end_hit = [pymummer.alignment.Alignment(x) for x in hits]
 
-        ref_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test4.ref.fa')
-        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test4.reassembly.fa')
-        expected_fasta = os.path.join(data_dir, 'merge_test_merge_pair.test4.expected.fa')
+        ref_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test4.ref.fa')
+        reassembly_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test4.reassembly.fa')
+        expected_fasta = os.path.join(data_dir, 'merge_test_merge_bridged_contig_pair.test4.expected.fa')
         ref_contigs = {}
         pyfastaq.tasks.file_to_dict(ref_fasta, ref_contigs)
         reassembly_contigs = {}
         pyfastaq.tasks.file_to_dict(reassembly_fasta, reassembly_contigs)
-        self.merger._merge_pair(hits, ref_contigs, reassembly_contigs)
-        self.assertEqual(len(reassembly_contigs), 0)
+        self.merger._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, reassembly_contigs)
         self.assertEqual(len(ref_contigs), 1)
         expected_ref_contigs = {}
         pyfastaq.tasks.file_to_dict(expected_fasta, expected_ref_contigs)
@@ -476,22 +522,22 @@ class TestMerge(unittest.TestCase):
         ]
         hits = [pymummer.alignment.Alignment(x) for x in hits]
         got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular)
-        self.assertEqual(got, None)
+        self.assertEqual(got, (None, None))
 
 
     def test_make_new_contig_from_nucmer_and_spades_with_hit(self):
         '''test _make_new_contig_from_nucmer_and_spades with hit'''
         circular = {'spades_node'}
         spades_node = pyfastaq.sequences.Fasta('spades_node', 'ACGTACGTACG')
-        expected = pyfastaq.sequences.Fasta('contig_name', spades_node.seq)
+        expected = pyfastaq.sequences.Fasta('contig_name', spades_node.seq), 'spades_node'
         self.merger.reassembly_contigs = {'spades_node': spades_node}
         hits = [
-            '\t'.join(['1', '10', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
-            '\t'.join(['21', '30', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
-            '\t'.join(['11', '20', '2', '11', '10', '10', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['1', '10', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['21', '30', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
+            '\t'.join(['11', '20', '1', '11', '11', '11', '100.0', '30', '11', '1', '-1', 'original', 'spades_node']),
         ]
         hits = [pymummer.alignment.Alignment(x) for x in hits]
-        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular, min_percent=90)
+        got = self.merger._make_new_contig_from_nucmer_and_spades('contig_name', hits, circular)
         self.assertEqual(got, expected)
 
 
