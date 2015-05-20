@@ -37,6 +37,9 @@ The input is an assembly in FASTA format and corrected long reads in FASTA or FA
 
     circlator all assembly.fasta corrected_reads.fasta output_directory
 
+The final output file is called
+
+    output_directory/06.fixstart.fasta
 
 
   [BWA]: http://bio-bwa.sourceforge.net/
