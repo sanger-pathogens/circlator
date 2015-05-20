@@ -33,7 +33,7 @@ If the tests all pass, install:
 Usage
 -----
 
-The input is an assembly in FASTA format and corrected long reads in FASTA format. To run:
+The input is an assembly in FASTA format and corrected long reads in FASTA or FASTQ format. To run:
 
     circlator all assembly.fasta corrected_reads.fasta output_directory
 
