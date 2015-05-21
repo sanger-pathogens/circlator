@@ -14,8 +14,8 @@ def print_message(m, opts):
 
 def run():
     parser = argparse.ArgumentParser(
-        description = 'Run mapreads, bam2reads, assemble, merge',
-        usage = 'circlator map [options] <assembly.fasta> <reads.fasta> <output directory>')
+        description = 'Run mapreads, bam2reads, assemble, merge, clean, fixstart',
+        usage = 'circlator all [options] <assembly.fasta> <reads.fasta> <output directory>')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
@@ -35,17 +35,17 @@ def run():
     merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=95)
     merge_group.add_argument('--merge_min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
     merge_group.add_argument('--merge_min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
-    merge_group.add_argument('--merge_min_spades_circ_pc', type=float, help='Min % of contigs needed to be covered by nucmer hits to spades circular contigs', metavar='FLOAT', default=95)
+    merge_group.add_argument('--merge_min_spades_circ_pc', type=float, help='Min percent of contigs needed to be covered by nucmer hits to spades circular contigs [%(default)s]', metavar='FLOAT', default=95)
     merge_group.add_argument('--merge_breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
     merge_group.add_argument('--merge_ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     merge_group.add_argument('--merge_reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
     merge_group.add_argument('--no_pair_merge', action='store_true', help='Do not merge pairs of contigs when running merge task')
 
     clean_group = parser.add_argument_group('clean options')
-    clean_group.add_argument('--clean_min_length', help='Minimum contig length to keep [%(default)s]', default=2000, metavar='INT')
+    clean_group.add_argument('--clean_min_length', type=int, help='Minimum contig length to keep [%(default)s]', default=2000, metavar='INT')
 
     fixstart_group = parser.add_argument_group('fixstart options')
-    fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='filename')
+    fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='FILENAME')
 
     options = parser.parse_args()
 
