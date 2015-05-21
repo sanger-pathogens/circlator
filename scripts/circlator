@@ -4,11 +4,11 @@ import argparse
 import sys
 
 tasks = {
-    'all': 'Run map, bam2reads, assemble, merge, clean, fixstart',
+    'all': 'Run mapreads, bam2reads, assemble, merge, clean, fixstart',
     'mapreads': 'Map reads to assembly',
     'bam2reads': 'Make reads from mapping to be reassembled',
     'assemble': 'Run assembly using reads from bam2reads',
-    'merge': 'Merge original assembly and new assembly',
+    'merge': 'Merge original assembly and new assembly made by assemble',
     'clean': 'Remove small and completely contained contigs from assembly',
     'fixstart': 'Change start position of circular sequences',
     'version': 'Print version and exit',
