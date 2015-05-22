@@ -1,9 +1,9 @@
 circlator
 =========
 
-A tool to circularise bacterial genome assemblies
+A tool to circularise bacterial genome assemblies.
 
-
+For how to use Circlator, please see the [Circlator wiki page] [circlator wiki].
 
 
 Installation
@@ -34,19 +34,13 @@ If the tests all pass, install:
 Usage
 -----
 
-The input is an assembly in FASTA format and corrected long reads in FASTA or FASTQ format. To run:
-
-    circlator all assembly.fasta corrected_reads.fasta output_directory
-
-The final output file is called
-
-    output_directory/06.fixstart.fasta
+Please read the [Circlator wiki page] [circlator wiki] for usage instructions.
 
 
   [BWA]: http://bio-bwa.sourceforge.net/
+  [circlator wiki]: https://github.com/sanger-pathogens/circlator/wiki
   [mummer]: http://mummer.sourceforge.net/
   [prodigal]: http://prodigal.ornl.gov/
   [samtools]: http://www.htslib.org/
   [spades]: http://bioinf.spbau.ru/spades
-
 
