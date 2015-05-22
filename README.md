@@ -11,6 +11,7 @@ Installation
 
 circlator has the following dependencies, which need to be installed:
   * [BWA] [BWA] version >= 0.7.12
+  * [prodigal] [prodigal] >= 2.6
   * [samtools] [samtools] (version 0.1.9 or 1.2)
   * [MUMmer] [mummer] version >= 3.23
   * [SPAdes] [spades] version >= 3.5.0
@@ -44,6 +45,7 @@ The final output file is called
 
   [BWA]: http://bio-bwa.sourceforge.net/
   [mummer]: http://mummer.sourceforge.net/
+  [prodigal]: http://prodigal.ornl.gov/
   [samtools]: http://www.htslib.org/
   [spades]: http://bioinf.spbau.ru/spades
 
