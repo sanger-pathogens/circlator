@@ -7,6 +7,7 @@ def run():
         usage = 'circlator merge [options] <original.fasta> <new.fasta> <outprefix>'
     )
 
+    parser.add_argument('--diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
     parser.add_argument('--min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=95)
     parser.add_argument('--min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
     parser.add_argument('--min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
@@ -26,6 +27,7 @@ def run():
         options.original_assembly,
         options.new_assembly,
         options.outprefix,
+        nucmer_diagdiff=options.diagdiff,
         nucmer_min_id=options.min_id,
         nucmer_min_length=options.min_length,
         nucmer_min_length_for_merges=options.min_length_merge,
