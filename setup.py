@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='circlator',
-    version='0.12.1',
+    version='0.13.0',
     description='circlator: a tool to circularise bacterial genome assemblies',
     packages = find_packages(),
     package_data={'circlator': ['data/*']},
@@ -21,8 +21,8 @@ setup(
         'openpyxl',
         'pyfastaq >= 3.5.0',
         'pysam >= 0.8.1',
-        'pymummer>=0.2.0',
-        'bio_assembly_refinement>=0.1.0',
+        'pymummer>=0.4.0',
+        'bio_assembly_refinement>=0.3.2',
     ],
     license='GPLv3',
     classifiers=[

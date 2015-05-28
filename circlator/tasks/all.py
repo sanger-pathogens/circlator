@@ -32,6 +32,7 @@ def run():
     #assemble_group = parser.add_argument_group('assemble_group')
 
     merge_group = parser.add_argument_group('merge options')
+    merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
     merge_group.add_argument('--merge_min_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=95)
     merge_group.add_argument('--merge_min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
     merge_group.add_argument('--merge_min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
@@ -122,6 +123,7 @@ def run():
         original_assembly,
         reassembly,
         merge_prefix,
+        nucmer_diagdiff=options.merge_diagdiff,
         nucmer_min_id=options.merge_min_id,
         nucmer_min_length=options.merge_min_length,
         nucmer_min_length_for_merges=options.merge_min_length_merge,

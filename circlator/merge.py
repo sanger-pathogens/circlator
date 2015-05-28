@@ -15,6 +15,7 @@ class Merger:
           reassembly,
           outprefix,
           reads=None,
+          nucmer_diagdiff=25,
           nucmer_min_id=95,
           nucmer_min_length=500,
           nucmer_min_length_for_merges=4000,
@@ -34,6 +35,7 @@ class Merger:
         self.reassembly_fasta = reassembly
         self.reads = reads
         self.outprefix = outprefix
+        self.nucmer_diagdiff = nucmer_diagdiff
         self.nucmer_min_id = nucmer_min_id
         self.nucmer_min_length = nucmer_min_length
         self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
@@ -59,6 +61,7 @@ class Merger:
             outfile,
             min_id=self.nucmer_min_id,
             min_length=self.nucmer_min_length,
+            diagdiff=self.nucmer_diagdiff,
             maxmatch=True,
             breaklen=self.nucmer_breaklen,
             simplify=False,
