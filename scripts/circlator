@@ -11,6 +11,7 @@ tasks = {
     'merge': 'Merge original assembly and new assembly made by assemble',
     'clean': 'Remove small and completely contained contigs from assembly',
     'fixstart': 'Change start position of circular sequences',
+    'minimus2': 'Run the minimus2 based circularisation pipeline',
     'version': 'Print version and exit',
 }
 
@@ -23,6 +24,7 @@ ordered_tasks = [
     'merge',
     'clean',
     'fixstart',
+    'minimus2',
     'version'
 ]
 

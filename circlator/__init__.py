@@ -7,6 +7,7 @@ __all__ = [
     'fixstart',
     'mapping',
     'merge',
+    'minimus2',
     'program',
     'tasks',
 ]
