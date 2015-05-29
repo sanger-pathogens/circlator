@@ -144,8 +144,8 @@ class Merger:
             print('Error running merge. Going to use original contigs. Minimus2 errors follow...\n', file=sys.stderr)
             print(errors, file=sys.stderr)
             print('... end of Minimus2 output.\n\n', file=sys.stderr)
-            logging.info('Number of original contigs: ' + strlen(original_contigs))
-            logging.info('Number of singleton contigs: ', 'NA')
+            logging.info('Number of original contigs: ' + str(len(original_contigs)))
+            logging.info('Number of singleton contigs: NA')
             logging.info('Number of contigs that were merged: NA')
             logging.info('Merged contigs: NA')
             return infile
