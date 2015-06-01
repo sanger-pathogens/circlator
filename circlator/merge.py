@@ -131,15 +131,37 @@ class Merger:
         return hit_coords.end >= nucmer_hit.qry_length - self.qry_end_tolerance
 
 
-    def _get_longest_hit_at_ref_start(self, nucmer_hits):
+    def _get_hit_nearest_ref_start(self, hits):
+        '''Returns the hit nearest to the start of the ref sequence from the input list of hits'''
+        nearest_to_start = hits[0]
+        for hit in hits[1:]:
+            if hit.ref_coords().start < nearest_to_start.ref_coords().start:
+                nearest_to_start = hit
+        return nearest_to_start
+
+
+    def _get_hit_nearest_ref_end(self, hits):
+        '''Returns the hit nearest to the end of the ref sequence from the input list of hits'''
+        nearest_to_end = hits[0]
+        for hit in hits[1:]:
+            if hit.ref_coords().end > nearest_to_end.ref_coords().end:
+                nearest_to_end = hit
+        return nearest_to_end
+
+
+    def _get_longest_hit_at_ref_start(self, nucmer_hits, hits_to_exclude=None):
         '''Input: list of nucmer hits to the same reference. Returns the longest hit to the start of the reference, or None if there is no such hit'''
-        hits_at_start = [hit for hit in nucmer_hits if self._is_at_ref_start(hit)]
+        if hits_to_exclude is None:
+            hits_to_exclude = set()
+        hits_at_start = [hit for hit in nucmer_hits if self._is_at_ref_start(hit) and hit not in hits_to_exclude]
         return self._get_longest_hit_by_ref_length(hits_at_start)
 
 
-    def _get_longest_hit_at_ref_end(self, nucmer_hits):
+    def _get_longest_hit_at_ref_end(self, nucmer_hits, hits_to_exclude=None):
         '''Input: list of nucmer hits to the same reference. Returns the longest hit to the end of the reference, or None if there is no such hit'''
-        hits_at_end = [hit for hit in nucmer_hits if self._is_at_ref_end(hit)]
+        if hits_to_exclude is None:
+            hits_to_exclude = set()
+        hits_at_end = [hit for hit in nucmer_hits if self._is_at_ref_end(hit) and hit not in hits_to_exclude]
         return self._get_longest_hit_by_ref_length(hits_at_end)
 
 
@@ -211,6 +233,14 @@ class Merger:
         for ref_name, list_of_hits in nucmer_hits.items():
             longest_start_hit = self._get_longest_hit_at_ref_start(list_of_hits)
             longest_end_hit = self._get_longest_hit_at_ref_end(list_of_hits)
+            if longest_start_hit == longest_end_hit:
+                second_longest_start_hit = self._get_longest_hit_at_ref_start(list_of_hits, hits_to_exclude={longest_start_hit})
+                second_longest_end_hit = self._get_longest_hit_at_ref_end(list_of_hits, hits_to_exclude={longest_end_hit})
+                if second_longest_start_hit is not None:
+                    longest_start_hit = self._get_hit_nearest_ref_start([longest_start_hit, second_longest_start_hit])
+                if second_longest_end_hit is not None:
+                    longest_end_hit = self._get_hit_nearest_ref_end([longest_end_hit, second_longest_end_hit])
+
             if (
               longest_start_hit is not None
               and longest_end_hit is not None
