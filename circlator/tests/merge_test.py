@@ -150,6 +150,30 @@ class TestMerge(unittest.TestCase):
             self.assertFalse(self.merger._is_at_qry_end(hit))
 
 
+    def test_get_hit_nearest_ref_start(self):
+        '''test _get_hit_nearest_ref_start'''
+        hits = [
+            '\t'.join(['42', '1042', '1', '1000', '1001', '1001', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['1', '1000', '1000', '2000', '1000', '1000', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['16000', '18000', '2000', '4000', '2000', '2000', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        expected = hits[1]
+        self.assertEqual(expected, self.merger._get_hit_nearest_ref_start(hits))
+
+
+    def test_get_hit_nearest_ref_end(self):
+        '''test _get_hit_nearest_ref_end'''
+        hits = [
+            '\t'.join(['42', '1042', '1', '1000', '1001', '1001', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['16000', '18000', '2000', '4000', '2000', '2000', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+            '\t'.join(['1', '1000', '1000', '2000', '1000', '1000', '100.00', '20000', '4242', '1', '1', 'ref1', 'qry1']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        expected = hits[1]
+        self.assertEqual(expected, self.merger._get_hit_nearest_ref_end(hits))
+
+
     def test_get_longest_hit_at_ref_start(self):
         '''test _get_longest_hit_at_ref_start'''
         hits = [
@@ -293,6 +317,19 @@ class TestMerge(unittest.TestCase):
             'ref43': (hits[3], hits[4]),
         }
 
+        got = self.merger._get_possible_circular_ref_contigs(all_hits)
+        self.assertEqual(expected, got)
+
+
+    def test_get_possible_circular_ref_contigs_same_best_hits(self):
+        '''test _get_possible_circular_ref_contigs same best hits'''
+        hits = [
+            '\t'.join(['1', '37978', '37978', '1', '37978', '37978', '99.98', '2177527', '68234', '1', '1', 'ref', 'qry']),
+            '\t'.join(['2137113', '2177527', '68234', '27820', '40415', '40415', '99.95', '2177527', '68234', '1', '1', 'ref', 'qry']),
+        ]
+        hits = [pymummer.alignment.Alignment(x) for x in hits]
+        all_hits = {'ref': hits}
+        expected = {'ref': (hits[0], hits[1])}
         got = self.merger._get_possible_circular_ref_contigs(all_hits)
         self.assertEqual(expected, got)
 
