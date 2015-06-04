@@ -23,15 +23,27 @@ class Assembler:
         self.reads = os.path.abspath(reads)
         if not os.path.exists(self.reads):
             raise Error('Reads file not found:' + self.reads)
- 
+
         self.verbose = verbose
         self.threads = threads
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
-        if spades_kmers is None:
-            self.spades_kmers = [127,121,111,101,91,81,71]
-        else:
-            self.spades_kmers = sorted(spades_kmers, reverse=True)
+        self.spades_kmers = self._build_spades_kmers(spades_kmers)
         self.assembler = 'spades'
+
+
+    def _build_spades_kmers(self, kmers):
+        if kmers is None:
+            return [127,121,111,101,95,91,85,81,75,71]
+        elif type(kmers) == str:
+            try:
+                kmer_list = [int(k) for k in kmers.split(',')]
+            except:
+                raise Error('Error getting list of kmers from:' + str(kmers))
+            return kmer_list
+        elif type(kmers) == list:
+            return kmers
+        else:
+            raise Error('Error getting list of kmers from:' + str(kmers))
 
 
     def run_spades_once(self, kmer, outdir):
@@ -39,7 +51,7 @@ class Assembler:
             self.spades.exe(),
             '-s', self.reads,
             '-k', str(kmer),
-            '--careful', 
+            '--careful',
             '--only-assembler',
             '-t', str(self.threads),
             '-o', outdir,

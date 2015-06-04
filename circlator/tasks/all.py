@@ -28,8 +28,8 @@ def run():
     bam2reads_group = parser.add_argument_group('bam2reads options')
     bam2reads_group.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
 
-    # no assemble options (yet?)
-    #assemble_group = parser.add_argument_group('assemble_group')
+    assemble_group = parser.add_argument_group('assemble options')
+    assemble_group.add_argument('--assemble_spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,121,111,101,95,91,85,81,75,71', metavar='k1,k2,k3,...')
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
@@ -49,7 +49,6 @@ def run():
     fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='FILENAME')
 
     options = parser.parse_args()
-
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
     circlator.external_progs.check_all_progs(verbose=options.verbose)
@@ -106,6 +105,7 @@ def run():
         filtered_reads,
         assembly_dir,
         threads=options.threads,
+        spades_kmers=options.assemble_spades_k,
         verbose=options.verbose
     )
     a.run()
