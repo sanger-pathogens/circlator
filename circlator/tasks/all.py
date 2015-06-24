@@ -43,7 +43,12 @@ def run():
     merge_group.add_argument('--no_pair_merge', action='store_true', help='Do not merge pairs of contigs when running merge task')
 
     clean_group = parser.add_argument_group('clean options')
-    clean_group.add_argument('--clean_min_length', type=int, help='Minimum contig length to keep [%(default)s]', default=2000, metavar='INT')
+    clean_group.add_argument('--clean_min_contig_length', type=int, help='Contigs shorter than this are discarded (unless specified using --keep) [%(default)s]', default=2000, metavar='INT')
+    clean_group.add_argument('--clean_min_contig_percent', type=int, help='If length of nucmer hit is at least this percentage of length of contig, then contig is removed. (unless specified using --keep) [%(default)s]', default=95, metavar='FLOAT')
+    clean_group.add_argument('--clean_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
+    clean_group.add_argument('--clean_min_nucmer_id', type=float, help='Nucmer minimum percent identity [%(default)s]', metavar='FLOAT', default=95)
+    clean_group.add_argument('--clean_min_nucmer_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
+    clean_group.add_argument('--clean_breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
 
     fixstart_group = parser.add_argument_group('fixstart options')
     fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='FILENAME')
@@ -170,8 +175,14 @@ def run():
     cleaner = circlator.clean.Cleaner(
         merged_fasta,
         clean_prefix,
-        min_length=options.clean_min_length,
-        keepfile=clean_keep_file
+        min_contig_length=options.clean_min_contig_length,
+        min_contig_percent_match=options.clean_min_contig_percent,
+        nucmer_diagdiff=options.clean_diagdiff,
+        nucmer_min_id=options.clean_min_nucmer_id,
+        nucmer_min_length=options.clean_min_nucmer_length,
+        nucmer_breaklen=options.clean_breaklen,
+        keepfile=clean_keep_file,
+        verbose=options.verbose
     )
     cleaner.run()
 
