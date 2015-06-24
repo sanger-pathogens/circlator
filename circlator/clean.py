@@ -286,7 +286,7 @@ class Cleaner:
         self._run_nucmer(removed_small_file, nucmer_coords_file)
         contig_lengths, nucmer_hits = self._load_nucmer_hits(nucmer_coords_file)
         containing_contigs = self._get_containing_contigs(nucmer_hits)
-        if self.verbose:
+        if self.verbose and len(containing_contigs) > 0:
             print('\nContig\tContained in')
             for x in containing_contigs:
                 print(x, containing_contigs[x])
