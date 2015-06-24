@@ -19,7 +19,7 @@ class TestClean(unittest.TestCase):
 
     def test_remove_small_contigs(self):
         '''test _remove_small_contigs'''
-        cleaner = clean.Cleaner('infile', 'outprefix', min_length=2)
+        cleaner = clean.Cleaner('infile', 'outprefix', min_contig_length=2)
         infile = os.path.join(data_dir, 'clean_test_remove_small_contigs.in.fa')
         expected_out = os.path.join(data_dir, 'clean_test_remove_small_contigs.out.fa')
         expected_removed = {'contig1'}

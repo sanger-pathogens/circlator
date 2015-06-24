@@ -16,8 +16,8 @@ setup(
     url='https://github.com/sanger-pathogens/circlator',
     scripts=glob.glob('scripts/*'),
     test_suite='nose.collector',
+    tests_require=['nose >= 1.3'],
     install_requires=[
-        'nose >= 1.3',
         'openpyxl',
         'pyfastaq >= 3.5.0',
         'pysam >= 0.8.1',
