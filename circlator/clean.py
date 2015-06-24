@@ -294,6 +294,6 @@ class Cleaner:
 
         containing_contigs = self._expand_containing_using_transitivity(containing_contigs)
         containing_contigs, replaced_contigs = self._remove_identical_contigs(containing_contigs, contig_lengths)
-        self._clean_contigs(removed_small_file, self.outprefix + '.fa', containing_contigs, replaced_contigs)
+        self._clean_contigs(removed_small_file, self.outprefix + '.fasta', containing_contigs, replaced_contigs)
         self._write_log(self.outprefix + '.log', '[clean]', names_all, names_small, containing_contigs, replaced_contigs)
 
