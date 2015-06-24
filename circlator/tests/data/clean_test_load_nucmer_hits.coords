@@ -1,0 +1,10 @@
+/path/to/contigs.fa /path/to/contigs.fa
+NUCMER
+
+[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[FRM]	[TAGS]
+1	1000	1	1000	1000	1000	100.00	1000	1000	1	1	contig1	contig1	[IDENTITY]
+1	410	1	410	410	410	100.00	1000	960	1	1	contig1	contig3
+1	1000	1	1000	1000	1000	100.00	1002	1002	1	1	contig2	contig2	[IDENTITY]
+481	960	481	960	480	480	100.00	1002	960	1	1	contig2	contig3
+481	780	241	540	300	300	100.00	1002	540	1	1	contig2	contig4
+1	410	1	410	410	410	100.00	960	1000	1	1	contig3	contig1
