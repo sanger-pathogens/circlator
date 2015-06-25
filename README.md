@@ -1,7 +1,7 @@
-circlator
+Circlator
 =========
 
-A tool to circularise bacterial genome assemblies.
+A tool to circularize bacterial genome assemblies.
 
 For how to use Circlator, please see the [Circlator wiki page] [circlator wiki].
 
@@ -9,15 +9,15 @@ For how to use Circlator, please see the [Circlator wiki page] [circlator wiki].
 Installation
 ------------
 
-circlator has the following dependencies, which need to be installed:
+Circlator has the following dependencies, which need to be installed:
   * [BWA] [BWA] version >= 0.7.12
-  * [prodigal] [prodigal] >= 2.6
+  * [prodigal] [prodigal] version >= 2.6
   * [SAMtools] [samtools] (version 0.1.9 or 1.2)
   * [MUMmer] [mummer] version >= 3.23
   * [SPAdes] [spades] version >= 3.5.0
 
 
-Once the dependencies are installed, install circlator using pip3:
+Once the dependencies are installed, install Circlator using pip3:
 
     pip3 install circlator
 
