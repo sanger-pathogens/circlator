@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Circlator : A tool to circularize bacterial genome assemblies">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Circlator</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/sanger-pathogens/circlator">View on GitHub</a>
+
+          <h1 id="project_title">Circlator</h1>
+          <h2 id="project_tagline">A tool to circularize bacterial genome assemblies</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/sanger-pathogens/circlator/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/sanger-pathogens/circlator/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="circlator" class="anchor" href="#circlator" aria-hidden="true"><span class="octicon octicon-link"></span></a>Circlator</h1>
+
+<p>A tool to circularize bacterial genome assemblies.</p>
+
+<p>For how to use Circlator, please see the <a href="https://github.com/sanger-pathogens/circlator/wiki">Circlator wiki page</a>.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>Circlator has the following dependencies, which need to be installed:</p>
+
+<ul>
+<li>
+<a href="http://bio-bwa.sourceforge.net/">BWA</a> version &gt;= 0.7.12</li>
+<li>
+<a href="http://prodigal.ornl.gov/">prodigal</a> version &gt;= 2.6</li>
+<li>
+<a href="http://www.htslib.org/">SAMtools</a> (version 0.1.9 or 1.2)</li>
+<li>
+<a href="http://mummer.sourceforge.net/">MUMmer</a> version &gt;= 3.23</li>
+<li>
+<a href="http://bioinf.spbau.ru/spades">SPAdes</a> version &gt;= 3.5.0</li>
+</ul>
+
+<p>Once the dependencies are installed, install Circlator using pip3:</p>
+
+<pre><code>pip3 install circlator
+</code></pre>
+
+<p>Alternatively, you can download the latest release from this github repository,
+or clone the repository. Then run the tests:</p>
+
+<pre><code>python3 setup.py test
+</code></pre>
+
+<p>If the tests all pass, install:</p>
+
+<pre><code>python3 setup.py install
+</code></pre>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p>Please read the <a href="https://github.com/sanger-pathogens/circlator/wiki">Circlator wiki page</a> for usage instructions.</p>
+
+<h2>
+<a id="references" class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
+
+<p><a href="http://arxiv.org/abs/1303.3997">BWA</a>: Li, H et al. Aligning sequence reads, clone sequences and assembly contigs with BWA-MEM. arXiv:1303.3997.</p>
+
+<p><a href="http://genomebiology.com/content/5/2/R12">MUMmer</a>: Kurtz, S. et al. Versatile and open software for comparing large genomes. Genome Biol. 5, R12 (2004).</p>
+
+<p><a href="http://www.biomedcentral.com/1471-2105/11/119">Prodigal</a>: Hyatt, D. et al. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11, 119 (2010).</p>
+
+<p><a href="http://bioinformatics.oxfordjournals.org/content/25/16/2078.abstract">SAMtools</a>: Li, H. et al. The Sequence Alignment/Map format and SAMtools. Bioinformatics 25, 2078–9 (2009).</p>
+
+<p><a href="http://online.liebertpub.com/doi/abs/10.1089/cmb.2012.0021">SPAdes</a>: Bankevich, A. et al. SPAdes: a new genome assembly algorithm and its applications to single-cell sequencing. J. Comput. Biol. 19, 455–77 (2012).</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Circlator maintained by <a href="https://github.com/sanger-pathogens">sanger-pathogens</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-64654778-1");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+
+  </body>
+</html>
