@@ -16,6 +16,9 @@ Circlator has the following dependencies, which need to be installed:
   * [MUMmer] [mummer] version >= 3.23
   * [SPAdes] [spades] version >= 3.5.0
 
+The easiest way to install these is with [HomeBrew](http://brew.sh) or [LinuxBrew](http://brew.sh/linuxbrew):
+
+	brew install python3 bwa prodigal samtools mummer spades
 
 Once the dependencies are installed, install Circlator using pip3:
 
