@@ -37,7 +37,7 @@ def print_usage_and_exit():
     max_task_length = max([len(x) for x in list(tasks.keys())]) + 1
     for task in ordered_tasks:
         print('{{0: <{}}}'.format(max_task_length).format(task), tasks[task], sep=' ', file=sys.stderr)
-    sys.exit(1)
+    sys.exit(0)
 
 if len(sys.argv) == 1 or sys.argv[1] in ['-h', '-help', '--help']:
     print_usage_and_exit()
