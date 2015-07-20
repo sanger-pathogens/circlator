@@ -1,7 +1,7 @@
 Circlator
 =========
 
-A tool to circularize bacterial genome assemblies.
+A tool to circularize genome assemblies.
 
 For how to use Circlator, please see the [Circlator wiki page] [circlator wiki].
 
