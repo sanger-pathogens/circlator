@@ -25,7 +25,7 @@ class BamFilter:
         self.reads_fa = os.path.abspath(outprefix + '.fasta')
         self.log = os.path.abspath(outprefix + '.log')
         self.log_prefix = log_prefix
-        self.contigs_to_use = contigs_to_use
+        self.contigs_to_use = self._get_contigs_to_use(contigs_to_use)
         self.discard_unmapped = discard_unmapped
         self.min_read_length = min_read_length
 
@@ -34,6 +34,20 @@ class BamFilter:
         '''Gets the length of each reference sequence from the header of the bam. Returns dict name => length'''
         sam_reader = pysam.Samfile(self.bam, "rb")
         return dict(zip(sam_reader.references, sam_reader.lengths))
+
+
+    def _get_contigs_to_use(self, contigs_to_use):
+        '''If contigs_to_use is a set, returns that set. If it's None, returns an empty set.
+        Otherwise, assumes it's a file name, and gets names from the file'''
+        if type(contigs_to_use) == set:
+            return contigs_to_use
+        elif contigs_to_use is None:
+            return set()
+        else:
+            f = pyfastaq.utils.open_file_read(contigs_to_use)
+            contigs_to_use = set([line.rstrip() for line in f])
+            pyfastaq.utils.close(f)
+            return contigs_to_use
 
 
     def _check_contigs_to_use(self, ref_dict):

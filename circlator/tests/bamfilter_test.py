@@ -20,6 +20,15 @@ class TestBamfilter(unittest.TestCase):
         self.assertEqual(expected, b._get_ref_lengths())
 
 
+    def test_get_contigs_to_use(self):
+        '''test _get_contigs_to_use'''
+        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_get_contigs_to_use.bam'), 'out')
+        test_file = os.path.join(data_dir, 'bamfilter_test_get_contigs_to_use.infile')
+        self.assertEqual(b._get_contigs_to_use(test_file), {'contig42', 'contig4444244'})
+        self.assertEqual(b._get_contigs_to_use(None), set())
+        self.assertEqual(b._get_contigs_to_use({'42', '43'}), {'42', '43'})
+
+
     def test_check_contigs_to_use(self):
         '''test _check_contigs_to_use'''
         input_bam = os.path.join(data_dir, 'bamfilter_test_check_contigs_to_use.bam')
