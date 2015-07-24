@@ -12,7 +12,9 @@ class BamFilter:
              bam,
              outprefix,
              length_cutoff=100000,
+             min_read_length=250,
              contigs_to_use=None,
+             discard_unmapped=False,
              log_prefix='[bamfilter]',
     ):
         self.bam = os.path.abspath(bam)
@@ -24,6 +26,8 @@ class BamFilter:
         self.log = os.path.abspath(outprefix + '.log')
         self.log_prefix = log_prefix
         self.contigs_to_use = contigs_to_use
+        self.discard_unmapped = discard_unmapped
+        self.min_read_length = min_read_length
 
 
     def _get_ref_lengths(self):
@@ -125,6 +129,10 @@ class BamFilter:
         print(self.log_prefix, '#contig', 'length', 'reads_kept', sep='\t', file=f_log)
 
         for contig in sorted(ref_lengths):
+            if self.contigs_to_use is not None and contig not in self.contigs_to_use:
+                print(self.log_prefix, contig, ref_lengths[contig], 'skipping', sep='\t', file=f_log)
+                continue
+
             if ref_lengths[contig] <= self.length_cutoff:
                 self._all_reads_from_contig(contig, f_fa)
                 print(self.log_prefix, contig, ref_lengths[contig], 'all', sep='\t', file=f_log)
@@ -132,8 +140,8 @@ class BamFilter:
                 end_bases_keep = int(0.5 * self.length_cutoff)
                 start = end_bases_keep - 1
                 end = max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
-                self._get_region(contig, 0, start, f_fa)
-                self._get_region(contig, end, ref_lengths[contig], f_fa)
+                self._get_region(contig, 0, start, f_fa, min_length=self.min_read_length)
+                self._get_region(contig, end, ref_lengths[contig], f_fa, min_length=self.min_read_length)
                 print(
                     self.log_prefix,
                     contig,
@@ -143,6 +151,8 @@ class BamFilter:
                     file=f_log
                 )
 
-        self._get_all_unmapped_reads(f_fa)
+        if not self.discard_unmapped:
+            self._get_all_unmapped_reads(f_fa)
+
         pyfastaq.utils.close(f_fa)
         pyfastaq.utils.close(f_log)
