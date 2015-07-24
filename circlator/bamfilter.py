@@ -12,6 +12,7 @@ class BamFilter:
              bam,
              outprefix,
              length_cutoff=100000,
+             contigs_to_use=None,
              log_prefix='[bamfilter]',
     ):
         self.bam = os.path.abspath(bam)
@@ -22,12 +23,26 @@ class BamFilter:
         self.reads_fa = os.path.abspath(outprefix + '.fasta')
         self.log = os.path.abspath(outprefix + '.log')
         self.log_prefix = log_prefix
+        self.contigs_to_use = contigs_to_use
 
 
     def _get_ref_lengths(self):
         '''Gets the length of each reference sequence from the header of the bam. Returns dict name => length'''
         sam_reader = pysam.Samfile(self.bam, "rb")
         return dict(zip(sam_reader.references, sam_reader.lengths))
+
+
+    def _check_contigs_to_use(self, ref_dict):
+        '''Checks that the set of contigs to use are all in the reference
+        fasta lengths dict made by self._get_ref_lengths()'''
+        if self.contigs_to_use is None:
+            return True
+
+        for contig in self.contigs_to_use:
+            if contig not in ref_dict:
+                raise Error('Requested to use contig "' + contig + '", but not found in input BAM file "' + self.bam + '"')
+
+        return True
 
 
     def _all_reads_from_contig(self, contig, fout):
@@ -97,7 +112,7 @@ class BamFilter:
 
             if read.is_reverse:
                 seq.revcomp()
-          
+
             if len(seq) >= min_length:
                 print(seq, file=fout)
 
