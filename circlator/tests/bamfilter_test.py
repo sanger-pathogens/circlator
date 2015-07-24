@@ -108,3 +108,39 @@ class TestBamfilter(unittest.TestCase):
         pyfastaq.utils.close(f)
         self.assertTrue(filecmp.cmp(expected, tmp))
         os.unlink(tmp)
+
+
+    def test_run_keep_unmapped(self):
+        '''test run keep unmapped'''
+        outprefix = 'tmp.bamfilter_run'
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            outprefix,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'}
+        )
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
+        os.unlink(outprefix + '.log')
+
+
+    def test_run_discard_unmapped(self):
+        '''test run keep unmapped'''
+        outprefix = 'tmp.bamfilter_run'
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            outprefix,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'},
+            discard_unmapped=True
+        )
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_discard_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
+        os.unlink(outprefix + '.log')
+
