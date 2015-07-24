@@ -70,7 +70,7 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._break_reads('contig1', 390, f, min_read_length=5)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -82,7 +82,7 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._exclude_region('1', 500, 700, f)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -94,7 +94,7 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._get_region('1', 0, 64, f, min_length=20)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -106,7 +106,7 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._get_region('2', 379, 499, f, min_length=20)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
