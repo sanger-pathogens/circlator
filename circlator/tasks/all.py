@@ -61,11 +61,19 @@ def run():
     print_message('{:_^79}'.format(' Checking external programs '), options)
     circlator.external_progs.check_all_progs(verbose=options.verbose)
 
+    files_to_check = [options.assembly, options.reads]
+    if options.b2r_only_contigs:
+        files_to_check.append(options.b2r_only_contigs)
+        options.b2r_only_contigs = os.path.abspath(options.b2r_only_contigs)
+
+    if options.genes_fa:
+        files_to_check.append(options.genes_fa)
+
+    circlator.common.check_files_exist(files_to_check)
+
     original_assembly = os.path.abspath(options.assembly)
     original_reads = os.path.abspath(options.reads)
 
-    if options.b2r_only_contigs:
-        options.b2r_only_contigs = os.path.abspath(options.b2r_only_contigs)
 
     try:
         os.mkdir(options.outdir)
