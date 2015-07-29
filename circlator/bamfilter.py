@@ -143,7 +143,7 @@ class BamFilter:
         print(self.log_prefix, '#contig', 'length', 'reads_kept', sep='\t', file=f_log)
 
         for contig in sorted(ref_lengths):
-            if self.contigs_to_use is not None and contig not in self.contigs_to_use:
+            if len(self.contigs_to_use) > 0 and contig not in self.contigs_to_use:
                 print(self.log_prefix, contig, ref_lengths[contig], 'skipping', sep='\t', file=f_log)
                 continue
 

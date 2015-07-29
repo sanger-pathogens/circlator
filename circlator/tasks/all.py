@@ -26,7 +26,10 @@ def run():
     mapreads_group.add_argument('--bwa_opts', help='BWA options, in quotes [%(default)s]', default='-x pacbio', metavar='STRING')
 
     bam2reads_group = parser.add_argument_group('bam2reads options')
+    bam2reads_group.add_argument('--b2r_discard_unmapped', action='store_true', help='Use this to not keep unmapped reads')
+    bam2reads_group.add_argument('--b2r_only_contigs', help='File of contig names (one per line). Only reads that map to these contigs are kept (and unmapped reads, unless --b2r_discard_unmapped is used). Note: the whole assembly is still used as a reference when mapping', metavar='FILENAME')
     bam2reads_group.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
+    bam2reads_group.add_argument('--b2r_min_read_length', type=int, help='Minimum length of read to output [%(default)s]', default=250, metavar='INT')
 
     assemble_group = parser.add_argument_group('assemble options')
     assemble_group.add_argument('--assemble_spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,121,111,101,95,91,85,81,75,71', metavar='k1,k2,k3,...')
@@ -60,6 +63,9 @@ def run():
 
     original_assembly = os.path.abspath(options.assembly)
     original_reads = os.path.abspath(options.reads)
+
+    if options.b2r_only_contigs:
+        options.b2r_only_contigs = os.path.abspath(options.b2r_only_contigs)
 
     try:
         os.mkdir(options.outdir)
@@ -99,7 +105,10 @@ def run():
     bam_filter = circlator.bamfilter.BamFilter(
         bam,
         filtered_reads_prefix,
-        length_cutoff=options.b2r_length_cutoff
+        length_cutoff=options.b2r_length_cutoff,
+        min_read_length=options.b2r_min_read_length,
+        contigs_to_use=options.b2r_only_contigs,
+        discard_unmapped=options.b2r_discard_unmapped,
     )
     bam_filter.run()
 
@@ -116,6 +125,15 @@ def run():
     a.run()
 
 
+    #------------------------------ filter original assembly -----------------
+    if options.b2r_only_contigs:
+        print_message('{:_^79}'.format(' --b2r_only_contigs used - filering contigs '), options)
+        assembly_to_use = merge_prefix + '.00.filtered_assembly.fa'
+        pyfastaq.tasks.filter(original_assembly, assembly_to_use, ids_file=options.b2r_only_contigs)
+    else:
+        assembly_to_use = original_assembly
+
+
     #-------------------------------- merge ----------------------------------
     print_message('{:_^79}'.format(' Running merge '), options)
     if not options.no_pair_merge:
@@ -125,7 +143,7 @@ def run():
         options.merge_opts.extend(['--reads', filtered_reads])
 
     m = circlator.merge.Merger(
-        original_assembly,
+        assembly_to_use,
         reassembly,
         merge_prefix,
         nucmer_diagdiff=options.merge_diagdiff,
