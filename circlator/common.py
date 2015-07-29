@@ -43,6 +43,8 @@ def decode(x):
 
 def check_files_exist(filenames):
     '''Dies if any files in the list of filenames does not exist'''
-    for filename in filenames:
-        if not os.path.exists(filename):
-            raise Error('File not found: "' + filename + '"')
+    files_not_found = [x for x in filenames if not os.path.exists(x)]
+    if len(files_not_found):
+        for filename in files_not_found:
+            print('File not found: "', filename, '"', sep='', file=sys.stderr)
+        raise Error('File(s) not found. Cannot continue')
