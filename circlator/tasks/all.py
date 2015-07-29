@@ -83,6 +83,7 @@ def run():
 
     os.chdir(options.outdir)
 
+    original_assembly_renamed = '00.input_assembly.fasta'
     bam = '01.mapreads.bam'
     filtered_reads_prefix = '02.bam2reads'
     filtered_reads =  filtered_reads_prefix + '.fasta'
@@ -95,11 +96,17 @@ def run():
     fixstart_prefix = '06.fixstart'
     fixstart_fasta = fixstart_prefix + '.fasta'
 
+    pyfastaq.tasks.to_fasta(
+        original_assembly,
+        original_assembly_renamed,
+        strip_after_first_whitespace=True,
+        check_unique=True
+    )
 
     #-------------------------------- mapreads -------------------------------
     print_message('{:_^79}'.format(' Running mapreads '), options)
     circlator.mapping.bwa_mem(
-      original_assembly,
+      original_assembly_renamed,
       original_reads,
       bam,
       threads=options.threads,
@@ -137,9 +144,9 @@ def run():
     if options.b2r_only_contigs:
         print_message('{:_^79}'.format(' --b2r_only_contigs used - filering contigs '), options)
         assembly_to_use = merge_prefix + '.00.filtered_assembly.fa'
-        pyfastaq.tasks.filter(original_assembly, assembly_to_use, ids_file=options.b2r_only_contigs)
+        pyfastaq.tasks.filter(original_assembly_renamed, assembly_to_use, ids_file=options.b2r_only_contigs)
     else:
-        assembly_to_use = original_assembly
+        assembly_to_use = original_assembly_renamed
 
 
     #-------------------------------- merge ----------------------------------
