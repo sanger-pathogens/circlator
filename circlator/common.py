@@ -1,5 +1,8 @@
 import sys
+import os
 import subprocess
+
+class Error (Exception): pass
 
 version = '0.14.1'
 
@@ -36,3 +39,10 @@ def decode(x):
     except:
         return x
     return s
+
+
+def check_files_exist(filenames):
+    '''Dies if any files in the list of filenames does not exist'''
+    for filename in filenames:
+        if not os.path.exists(filename):
+            raise Error('File not found: "' + filename + '"')
