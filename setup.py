@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='circlator',
-    version='0.14.2',
+    version='0.15.0',
     description='circlator: a tool to circularise genome assemblies',
     packages = find_packages(),
     package_data={'circlator': ['data/*']},
@@ -19,7 +19,7 @@ setup(
     tests_require=['nose >= 1.3'],
     install_requires=[
         'openpyxl',
-        'pyfastaq >= 3.5.0',
+        'pyfastaq >= 3.6.0',
         'pysam >= 0.8.1',
         'pymummer>=0.4.0',
         'bio_assembly_refinement>=0.3.2',

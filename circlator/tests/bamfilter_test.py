@@ -1,7 +1,7 @@
 import unittest
 import filecmp
 import os
-import pyfastaq 
+import pyfastaq
 from circlator import bamfilter
 
 modules_dir = os.path.dirname(os.path.abspath(bamfilter.__file__))
@@ -20,11 +20,38 @@ class TestBamfilter(unittest.TestCase):
         self.assertEqual(expected, b._get_ref_lengths())
 
 
+    def test_get_contigs_to_use(self):
+        '''test _get_contigs_to_use'''
+        b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_get_contigs_to_use.bam'), 'out')
+        test_file = os.path.join(data_dir, 'bamfilter_test_get_contigs_to_use.infile')
+        self.assertEqual(b._get_contigs_to_use(test_file), {'contig42', 'contig4444244'})
+        self.assertEqual(b._get_contigs_to_use(None), set())
+        self.assertEqual(b._get_contigs_to_use({'42', '43'}), {'42', '43'})
+
+
+    def test_check_contigs_to_use(self):
+        '''test _check_contigs_to_use'''
+        input_bam = os.path.join(data_dir, 'bamfilter_test_check_contigs_to_use.bam')
+        b = bamfilter.BamFilter(input_bam, 'out')
+        ref_lengths = b._get_ref_lengths()
+        self.assertTrue(b._check_contigs_to_use(ref_lengths))
+
+        b = bamfilter.BamFilter(input_bam, 'out', contigs_to_use={'1'})
+        self.assertTrue(b._check_contigs_to_use(ref_lengths))
+
+        b = bamfilter.BamFilter(input_bam, 'out', contigs_to_use={'1', '2'})
+        self.assertTrue(b._check_contigs_to_use(ref_lengths))
+
+        with self.assertRaises(bamfilter.Error):
+            b = bamfilter.BamFilter(input_bam, 'out', contigs_to_use={'42'})
+            self.assertTrue(b._check_contigs_to_use(ref_lengths))
+
+
     def test_all_reads_from_contig(self):
         '''test _all_reads_from_contig'''
         b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_all_reads_from_contig.bam'), 'out')
         tmp = 'tmp.test_all_reads_from_contig.out.fa'
-        f = pyfastaq.utils.open_file_write(tmp) 
+        f = pyfastaq.utils.open_file_write(tmp)
         expected = os.path.join(data_dir, 'bamfilter_test_all_reads_from_contig.reads.fa')
         b._all_reads_from_contig('1', f)
         pyfastaq.utils.close(f)
@@ -37,7 +64,7 @@ class TestBamfilter(unittest.TestCase):
         b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_get_all_unmapped_reads.bam'), 'out')
         expected = os.path.join(data_dir, 'bamfilter_test_get_all_unmapped_reads.reads.fa')
         tmp = 'tmp.test_get_all_unmapped_reads.out.fa'
-        f = pyfastaq.utils.open_file_write(tmp) 
+        f = pyfastaq.utils.open_file_write(tmp)
         b._get_all_unmapped_reads(f)
         pyfastaq.utils.close(f)
         self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
@@ -49,10 +76,10 @@ class TestBamfilter(unittest.TestCase):
         b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_break_reads.bam'), 'out')
         expected = os.path.join(data_dir, 'bamfilter_test_break_reads.broken_reads.fa')
         tmp = 'tmp.test_break_reads.out.fa'
-        f = pyfastaq.utils.open_file_write(tmp) 
+        f = pyfastaq.utils.open_file_write(tmp)
         b._break_reads('contig1', 390, f, min_read_length=5)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -61,10 +88,10 @@ class TestBamfilter(unittest.TestCase):
         b = bamfilter.BamFilter(os.path.join(data_dir, 'bamfilter_test_exclude_region.bam'), 'out')
         expected = os.path.join(data_dir, 'bamfilter_test_exclude_region.reads.fa')
         tmp = 'tmp.test_exclude_reads.out.fa'
-        f = pyfastaq.utils.open_file_write(tmp) 
+        f = pyfastaq.utils.open_file_write(tmp)
         b._exclude_region('1', 500, 700, f)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -76,7 +103,7 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._get_region('1', 0, 64, f, min_length=20)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
 
 
@@ -88,5 +115,41 @@ class TestBamfilter(unittest.TestCase):
         f = pyfastaq.utils.open_file_write(tmp)
         b._get_region('2', 379, 499, f, min_length=20)
         pyfastaq.utils.close(f)
-        self.assertTrue(filecmp.cmp(expected, tmp))
+        self.assertTrue(filecmp.cmp(expected, tmp, shallow=False))
         os.unlink(tmp)
+
+
+    def test_run_keep_unmapped(self):
+        '''test run keep unmapped'''
+        outprefix = 'tmp.bamfilter_run'
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            outprefix,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'}
+        )
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
+        os.unlink(outprefix + '.log')
+
+
+    def test_run_discard_unmapped(self):
+        '''test run keep unmapped'''
+        outprefix = 'tmp.bamfilter_run'
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            outprefix,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'},
+            discard_unmapped=True
+        )
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_discard_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
+        os.unlink(outprefix + '.log')
+

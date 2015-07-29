@@ -1,7 +1,10 @@
 import sys
+import os
 import subprocess
 
-version = '0.14.1'
+class Error (Exception): pass
+
+version = '0.15.0'
 
 def syscall(cmd, allow_fail=False, verbose=False):
     if verbose:
@@ -36,3 +39,12 @@ def decode(x):
     except:
         return x
     return s
+
+
+def check_files_exist(filenames):
+    '''Dies if any files in the list of filenames does not exist'''
+    files_not_found = [x for x in filenames if not os.path.exists(x)]
+    if len(files_not_found):
+        for filename in files_not_found:
+            print('File not found: "', filename, '"', sep='', file=sys.stderr)
+        raise Error('File(s) not found. Cannot continue')
