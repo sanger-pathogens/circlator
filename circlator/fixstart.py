@@ -2,7 +2,7 @@ import os
 import shutil
 import tempfile
 import circlator
-from bio_assembly_refinement import contig_break_finder 
+from bio_assembly_refinement import contig_break_finder
 
 class Error (Exception): pass
 
@@ -22,8 +22,10 @@ class StartFixer:
 
         self.assembly_fa = os.path.abspath(assembly_fa)
         self.outprefix = os.path.abspath(outprefix)
-    
-        if ignore is not None:
+
+        if ignore is None:
+            self.ignore = None
+        else:
             self.ignore = os.path.abspath(ignore)
 
 
