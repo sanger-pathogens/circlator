@@ -10,6 +10,7 @@ class StartFixer:
     def __init__(self,
         assembly_fa,
         outprefix,
+        min_percent_identity=70,
         genes_fa=None,
         ignore=None,
     ):
@@ -20,6 +21,7 @@ class StartFixer:
         else:
             self.genes_fa = os.path.abspath(genes_fa)
 
+        self.min_percent_identity = min_percent_identity
         self.assembly_fa = os.path.abspath(assembly_fa)
         self.outprefix = os.path.abspath(outprefix)
 
@@ -37,6 +39,7 @@ class StartFixer:
         break_finder = contig_break_finder.ContigBreakFinder(
             fasta_file=self.assembly_fa,
             gene_file=self.genes_fa,
+            hit_percent_id=self.min_percent_identity,
             skip=self.ignore,
             rename=False,
         )
