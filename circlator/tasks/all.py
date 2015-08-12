@@ -72,7 +72,9 @@ def run():
 
     circlator.common.check_files_exist(files_to_check)
 
-    options.genes_fa = os.path.abspath(options.genes_fa)
+    if options.genes_fa:
+        options.genes_fa = os.path.abspath(options.genes_fa)
+
     original_assembly = os.path.abspath(options.assembly)
     original_reads = os.path.abspath(options.reads)
 
