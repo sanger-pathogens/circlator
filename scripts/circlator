@@ -5,6 +5,7 @@ import sys
 
 tasks = {
     'all': 'Run mapreads, bam2reads, assemble, merge, clean, fixstart',
+    'progcheck': 'Checks dependencies are installed',
     'mapreads': 'Map reads to assembly',
     'bam2reads': 'Make reads from mapping to be reassembled',
     'assemble': 'Run assembly using reads from bam2reads',
@@ -27,6 +28,7 @@ ordered_tasks = [
     'fixstart',
     'minimus2',
     'get_dnaa',
+    'progcheck',
     'version'
 ]
 
