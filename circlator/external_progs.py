@@ -22,7 +22,7 @@ min_versions = {
     'bwa': '0.7.12',
     'nucmer': '3.1',
     'prodigal': '2.6',
-    'samtools': '0.1.9',
+    'samtools': '0.1.19',
     'spades': '3.5.0',
 }
 
