@@ -1,9 +1,9 @@
 __all__ = [
     'assemble',
+    'bamfilter',
     'clean',
     'common',
     'dnaa',
-    'bamfilter',
     'external_progs',
     'fixstart',
     'mapping',

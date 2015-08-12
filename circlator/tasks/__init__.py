@@ -4,8 +4,11 @@ __all__ = [
     'bam2reads',
     'clean',
     'fixstart',
+    'get_dnaa',
     'mapreads',
     'merge',
+    'minimus2',
+    'progcheck',
     'version',
 ]
 
