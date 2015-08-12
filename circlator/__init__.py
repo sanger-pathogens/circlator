@@ -2,6 +2,7 @@ __all__ = [
     'assemble',
     'clean',
     'common',
+    'dnaa',
     'bamfilter',
     'external_progs',
     'fixstart',
