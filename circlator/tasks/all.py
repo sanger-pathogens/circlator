@@ -55,6 +55,7 @@ def run():
 
     fixstart_group = parser.add_argument_group('fixstart options')
     fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point', metavar='FILENAME')
+    fixstart_group.add_argument('--fixstart_min_id', type=float, help='Minimum percent identity of promer match to dnaA gene [%(default)s]', default=70, metavar='FLOAT')
 
     options = parser.parse_args()
 
@@ -225,6 +226,7 @@ def run():
     fixer = circlator.fixstart.StartFixer(
         clean_fasta,
         fixstart_prefix,
+        min_percent_identity=options.fixstart_min_id,
         genes_fa=options.genes_fa,
         ignore=not_fix_start_file
     )
