@@ -6,7 +6,7 @@ addons:
     - libncurses5-dev
 cache:
   directories:
-  - "prototype/build"
+  - "build"
   - "$HOME/.cache/pip"
 python:
   - "3.4"
