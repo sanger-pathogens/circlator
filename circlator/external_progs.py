@@ -5,7 +5,7 @@ import shutil
 class Error (Exception): pass
 
 
-# Travis is using python3.4, and actaully "pytohn" in travis means
+# Travis is using python3.4, and actually "python" in travis means
 # python3.4, not python2. SPAdes throws an error about not being
 # compatible with python3.4.
 # This means we need to explicitly run SPAdes with python2.
