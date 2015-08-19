@@ -49,7 +49,9 @@ make
 # --------------- prodigal -----------------
 cd $build_dir
 prodigal_dir="$build_dir/prodigal-${PRODIGAL_VERSION}"
-mkdir $prodigal_dir
+if [ ! -d "$prodigal_dir" ]; then
+  mkdir $prodigal_dir
+fi
 cd $prodigal_dir
 download $PRODIGAL_DOWNLOAD_URL prodigal
 chmod 755 prodigal
