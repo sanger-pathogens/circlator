@@ -7,4 +7,4 @@ For how to install Circlator, please see the [Circlator website](http://sanger-p
 
 For how to use Circlator, please see the [Circlator wiki page](https://github.com/sanger-pathogens/circlator/wiki).
 
-[![Build Status](https://travis-ci.org/sanger-pathogens/circlator.svg?branch=master)](https://travis-ci.org/sanger-pathogens/circlator)
+Build status: [![Build Status](https://travis-ci.org/sanger-pathogens/circlator.svg?branch=master)](https://travis-ci.org/sanger-pathogens/circlator)
