@@ -1,0 +1,17 @@
+language: python
+addons:
+  apt:
+    packages:
+    - zlib1g-dev
+    - libncurses5-dev
+cache:
+  directories:
+  - "build"
+  - "$HOME/.cache/pip"
+python:
+  - "3.4"
+sudo: false
+install:
+  - "source ./install_dependencies.sh"
+script:
+  - "python setup.py test"

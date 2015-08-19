@@ -1,7 +1,18 @@
 import re
 from circlator import program
+import shutil
 
 class Error (Exception): pass
+
+
+# Travis is using python3.4, and actually "python" in travis means
+# python3.4, not python2. SPAdes throws an error about not being
+# compatible with python3.4.
+# This means we need to explicitly run SPAdes with python2.
+class Spades(program.Program):
+    def exe(self):
+        return 'python2 ' + shutil.which(self.path)
+
 
 prog_to_env_var = {
     'samtools': 'CIRCLATOR_SAMTOOLS',
@@ -36,6 +47,11 @@ prog_name_to_default = {
 }
 
 
+prog_builders = {
+    'spades': Spades
+}
+
+
 def handle_error(message, raise_error=True):
     if raise_error:
         raise Error(message + ' Cannot continue')
@@ -44,7 +60,8 @@ def handle_error(message, raise_error=True):
 
 
 def make_and_check_prog(name, verbose=False, raise_error=True):
-    p = program.Program(
+    builder = prog_builders.get(name, program.Program)
+    p = builder(
         prog_name_to_default[name],
         prog_to_version_cmd[name][0],
         prog_to_version_cmd[name][1],
@@ -56,6 +73,7 @@ def make_and_check_prog(name, verbose=False, raise_error=True):
         return p
 
     version = p.version()
+
     if version is None:
         handle_error('Found ' + name + " but couldn't get version.", raise_error=raise_error)
         return p
