@@ -13,7 +13,7 @@ tasks = {
     'clean': 'Remove small and completely contained contigs from assembly',
     'fixstart': 'Change start position of circular sequences',
     'minimus2': 'Run the minimus2 based circularisation pipeline',
-    'get_dnaa': 'Download file of dnaA genes',
+    'get_dnaa': 'Download file of dnaA (or other of user\'s choice) genes',
     'version': 'Print version and exit',
 }
 

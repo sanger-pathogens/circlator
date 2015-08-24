@@ -19,6 +19,36 @@ class TestDnaa(unittest.TestCase):
         self.assertEqual(downloader._header_to_genus_species(bad_header), None)
 
 
+    def test_get_uniprot_url(self):
+        '''test _get_uniprot_url'''
+        tests = [
+            ('dnaa', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=dnaa&force=no&format=fasta'),
+            ('spam eggs', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=spam+eggs&force=no&format=fasta'),
+            ('  blue yellow   green  ', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=blue+yellow+green&force=no&format=fasta'),
+        ]
+
+        for search_term, expected in tests:
+            downloader = dnaa.UniprotDownloader(uniprot_search=search_term)
+            self.assertEqual(downloader._get_uniprot_url(), expected)
+
+
+    def test_header_matches_regex(self):
+        '''test _header_matches_regex'''
+        tests = [
+            ('dnaa', 'foo dnaa spam eggs', True, True),
+            ('Dnaa', 'foo dnaa spam eggs', True, True),
+            ('Dnaa', 'foo dnaa spam eggs', False, False),
+            ('dnaa', 'foo DNAA spam eggs', True, True),
+            ('dnaa', 'foo spam eggs', True, False),
+            ('SPAM', 'foo spam eggs', True, True),
+        ]
+
+        for regex, sequence_name, ignorecase, expected in tests:
+            downloader = dnaa.UniprotDownloader(header_regex=regex, header_regex_ignorecase=ignorecase)
+            seq = pyfastaq.sequences.Fasta(sequence_name, 'ACGT')
+            self.assertEqual(downloader._header_matches_regex(seq), expected)
+
+
     def test_check_sequence(self):
         '''test _check_sequence'''
         downloader = dnaa.UniprotDownloader(min_gene_length=3, max_gene_length=6)
@@ -32,7 +62,7 @@ class TestDnaa(unittest.TestCase):
             (pyfastaq.sequences.Fasta('dnaa OS=genus3 species1 foo', 'MA'), (False, 'Too long or short')),
             (pyfastaq.sequences.Fasta('dnaa OS=genus3 species2 foo', 'MABCDEF'), (False, 'Too long or short')),
             (pyfastaq.sequences.Fasta('dnaa OS=genus3 species3 foo', 'XABC'), (False, 'Does not start with M')),
-            (pyfastaq.sequences.Fasta('x OS=genus3 species4 foo', 'MABC'), (False, 'No match to dnaA in name')),
+            (pyfastaq.sequences.Fasta('x OS=genus3 species4 foo', 'MABC'), (False, 'No match to regex in name')),
             (pyfastaq.sequences.Fasta('dnaa foo', 'MABC'), (False, 'Error getting genus species')),
             (pyfastaq.sequences.Fasta('dnaa OS=genus1 species1 foo', 'MABC'), (False, "Duplicate genus species ('genus1', 'species1')")),
         ]
