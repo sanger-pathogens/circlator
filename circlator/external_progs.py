@@ -1,6 +1,8 @@
 import re
-from circlator import program
+import sys
+from circlator import program, common
 import shutil
+import pyfastaq
 
 class Error (Exception): pass
 
@@ -59,7 +61,7 @@ def handle_error(message, raise_error=True):
         print(message)
 
 
-def make_and_check_prog(name, verbose=False, raise_error=True):
+def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
     builder = prog_builders.get(name, program.Program)
     p = builder(
         prog_name_to_default[name],
@@ -85,9 +87,16 @@ def make_and_check_prog(name, verbose=False, raise_error=True):
     if verbose:
         print('Using', name, 'version', p.version())
 
+    if filehandle:
+        print('Using', name, 'version', p.version(), file=filehandle)
+
     return p
 
 
-def check_all_progs(verbose=False, raise_error=False):
+def check_all_progs(verbose=False, raise_error=False, filehandle=None):
+    if filehandle is not None:
+        print(sys.argv[0], 'version', common.version, file=filehandle)
+
     for prog in sorted(prog_name_to_default):
-        make_and_check_prog(prog, verbose=verbose, raise_error=raise_error)
+        make_and_check_prog(prog, verbose=verbose, raise_error=raise_error, filehandle=filehandle)
+

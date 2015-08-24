@@ -87,6 +87,10 @@ def run():
 
     os.chdir(options.outdir)
 
+    with open('00.info.txt', 'w') as f:
+        print(sys.argv[0], 'all', ' '.join(sys.argv[1:]), file=f)
+        circlator.external_progs.check_all_progs(filehandle=f)
+
     original_assembly_renamed = '00.input_assembly.fasta'
     bam = '01.mapreads.bam'
     filtered_reads_prefix = '02.bam2reads'
