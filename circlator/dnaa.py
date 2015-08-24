@@ -12,17 +12,22 @@ for nucleotide, aa in pyfastaq.genetic_codes.codes[genetic_code].items():
 
 
 class UniprotDownloader:
-    def __init__(self, min_gene_length=333, max_gene_length=500, header_regex='dnaa', header_regex_ignorecase=True):
+    def __init__(self, min_gene_length=333, max_gene_length=500, uniprot_search='dnaa', header_regex='dnaa', header_regex_ignorecase=True):
         self.min_gene_length = min_gene_length
         self.max_gene_length = max_gene_length
+        self.uniprot_search = re.sub('\s+', '+', uniprot_search.strip())
         if header_regex_ignorecase:
             self.header_regex = re.compile(header_regex, re.IGNORECASE)
         else:
             self.header_regex = re.compile(header_regex)
 
 
+    def _get_uniprot_url(self):
+        return 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=' + self.uniprot_search + '&force=no&format=fasta'
+
+
     def _download_from_uniprot(self, outfile):
-        pyfastaq.utils.syscall('wget -O ' + outfile + r''' "http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=dnaa&force=no&format=fasta"''')
+        pyfastaq.utils.syscall('wget -O ' + outfile + ' "' + self._get_uniprot_url() + '"')
 
 
     def _header_to_genus_species(self, header):

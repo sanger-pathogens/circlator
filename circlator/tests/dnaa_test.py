@@ -19,6 +19,19 @@ class TestDnaa(unittest.TestCase):
         self.assertEqual(downloader._header_to_genus_species(bad_header), None)
 
 
+    def test_get_uniprot_url(self):
+        '''test _get_uniprot_url'''
+        tests = [
+            ('dnaa', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=dnaa&force=no&format=fasta'),
+            ('spam eggs', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=spam+eggs&force=no&format=fasta'),
+            ('  blue yellow   green  ', 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=blue+yellow+green&force=no&format=fasta'),
+        ]
+
+        for search_term, expected in tests:
+            downloader = dnaa.UniprotDownloader(uniprot_search=search_term)
+            self.assertEqual(downloader._get_uniprot_url(), expected)
+
+
     def test_header_matches_regex(self):
         '''test _header_matches_regex'''
         tests = [
