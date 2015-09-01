@@ -60,7 +60,7 @@ def run():
     options = parser.parse_args()
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
-    circlator.external_progs.check_all_progs(verbose=options.verbose)
+    circlator.external_progs.check_all_progs(verbose=options.verbose, raise_error=True)
 
     files_to_check = [options.assembly, options.reads]
     if options.b2r_only_contigs:
@@ -89,7 +89,7 @@ def run():
 
     with open('00.info.txt', 'w') as f:
         print(sys.argv[0], 'all', ' '.join(sys.argv[1:]), file=f)
-        circlator.external_progs.check_all_progs(filehandle=f)
+        circlator.external_progs.check_all_progs(filehandle=f, raise_error=True)
 
     original_assembly_renamed = '00.input_assembly.fasta'
     bam = '01.mapreads.bam'
