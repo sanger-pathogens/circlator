@@ -85,10 +85,10 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         return p
 
     if verbose:
-        print('Using', name, 'version', p.version())
+        print('Using', name, 'version', p.version(), 'as', p.full_path)
 
     if filehandle:
-        print('Using', name, 'version', p.version(), file=filehandle)
+        print('Using', name, 'version', p.version(), 'as', p.full_path, file=filehandle)
 
     return p
 

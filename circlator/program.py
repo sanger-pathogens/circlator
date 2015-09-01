@@ -17,6 +17,7 @@ class Program:
 
         self.version_cmd = version_cmd
         self.version_regex = version_regex
+        self.full_path = shutil.which(self.path)
 
 
     def in_path(self):
@@ -43,7 +44,7 @@ class Program:
         v = self.version()
         if v is None:
             return None
-        return LooseVersion(v) >= LooseVersion(min_version) 
+        return LooseVersion(v) >= LooseVersion(min_version)
 
 
     def exe(self):
