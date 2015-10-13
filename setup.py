@@ -19,7 +19,7 @@ setup(
     tests_require=['nose >= 1.3'],
     install_requires=[
         'openpyxl',
-        'pyfastaq >= 3.6.1',
+        'pyfastaq >= 3.8.0',
         'pysam >= 0.8.1',
         'pymummer>=0.4.0',
         'bio_assembly_refinement>=0.3.3',
