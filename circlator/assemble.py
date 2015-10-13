@@ -14,6 +14,7 @@ class Assembler:
       threads=1,
       spades_kmers=None,
       verbose=False,
+      spades_use_first_success=False,
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -24,13 +25,14 @@ class Assembler:
         self.threads = threads
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
         self.spades_kmers = self._build_spades_kmers(spades_kmers)
+        self.spades_use_first_success = spades_use_first_success
         self.samtools = external_progs.make_and_check_prog('samtools', verbose=self.verbose)
         self.assembler = 'spades'
 
 
     def _build_spades_kmers(self, kmers):
         if kmers is None:
-            return [127,121,111,101,95,91,85,81,75,71]
+            return [127,117,107,97,87,77]
         elif type(kmers) == str:
             try:
                 kmer_list = [int(k) for k in kmers.split(',')]
@@ -105,6 +107,6 @@ class Assembler:
 
     def run(self):
         if self.assembler == 'spades':
-            self.run_spades()
+            self.run_spades(stop_at_first_success=self.spades_use_first_success)
         else:
             raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
