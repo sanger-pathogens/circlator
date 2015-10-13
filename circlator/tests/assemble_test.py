@@ -38,6 +38,3 @@ class TestAssemble(unittest.TestCase):
         with self.assertRaises(assemble.Error):
             self.assembler._build_spades_kmers('41,spam')
 
-
-    def tearDown(self):
-        shutil.rmtree(self.tmp_assemble_dir)
