@@ -418,13 +418,17 @@ class Merger:
         return start_hit_ok and end_hit_ok
 
 
-    def _get_possible_query_bridging_contigs(self, nucmer_hits):
+    def _get_possible_query_bridging_contigs(self, nucmer_hits, log_fh=None, log_outprefix=None):
         '''Input is dict qry_name -> list of nucmer hits to that qry. Returns dict qry_name -> tuple(start hit, end hit)'''
         bridges = {}
+        writing_log_file = None not in [log_fh, log_outprefix]
 
         for qry_name, hits_to_qry in nucmer_hits.items():
             if len(hits_to_qry) < 2:
                 continue
+
+            if writing_log_file:
+                print(log_outprefix, '\t', qry_name, ': checking nucmer matches', sep='', file=log_fh)
 
             longest_start_hit = self._get_longest_hit_at_qry_start(hits_to_qry)
             longest_end_hit = self._get_longest_hit_at_qry_end(hits_to_qry)
@@ -436,6 +440,11 @@ class Merger:
             ):
                 continue
 
+            if writing_log_file:
+                print(log_outprefix, '\t', qry_name, ': potential pair of hits to merge contigs...', sep='', file=log_fh)
+                print(log_outprefix, '\t', qry_name, ':    ', longest_start_hit, sep='', file=log_fh)
+                print(log_outprefix, '\t', qry_name, ':    ', longest_end_hit, sep='', file=log_fh)
+
             shortest_hit_length = self._min_qry_hit_length([longest_start_hit, longest_end_hit])
             has_longer_hit = self._has_qry_hit_longer_than(
                 hits_to_qry,
@@ -443,7 +452,17 @@ class Merger:
                 hits_to_exclude={longest_start_hit, longest_end_hit}
             )
 
-            if self._orientation_ok_to_bridge_contigs(longest_start_hit, longest_end_hit) and not has_longer_hit:
+            if has_longer_hit and writing_log_file:
+                print(log_outprefix, '\t', qry_name, ':    rejected - there is a longer hit to elsewhere', sep='', file=log_fh)
+
+            orientation_ok = self._orientation_ok_to_bridge_contigs(longest_start_hit, longest_end_hit)
+
+            if writing_log_file and not orientation_ok:
+                print(log_outprefix, '\t', qry_name, ':    rejected - orientation/distance from ends not correct to make a merge', sep='', file=log_fh)
+
+            if orientation_ok and not has_longer_hit:
+                if writing_log_file:
+                    print(log_outprefix, '\t', qry_name, ':    might be used - no longer hits elsewhere and orientation/distance to ends OK', sep='', file=log_fh)
                 bridges[qry_name] = (longest_start_hit, longest_end_hit)
 
         return bridges
@@ -478,7 +497,8 @@ class Merger:
         return bridges
 
 
-    def _merge_bridged_contig_pair(self, start_hit, end_hit, ref_contigs, qry_contigs):
+    def _merge_bridged_contig_pair(self, start_hit, end_hit, ref_contigs, qry_contigs, log_fh=None, log_outprefix=None):
+        writing_log_file = None not in [log_fh, log_outprefix]
         assert start_hit.qry_name == end_hit.qry_name
         assert start_hit.ref_name != end_hit.ref_name
         assert self._orientation_ok_to_bridge_contigs(start_hit, end_hit)
@@ -500,6 +520,11 @@ class Merger:
             tmp_seq.revcomp()
             end_seq = tmp_seq.seq
 
+        if writing_log_file:
+            print(log_outprefix, '\tMerging contigs ', start_hit.ref_name, ' and ', end_hit.ref_name, ' using these two hits:', sep='', file=log_fh)
+            print(log_outprefix, start_hit, sep='\t\t', file=log_fh)
+            print(log_outprefix, end_hit, sep='\t\t', file=log_fh)
+
         if self.verbose:
             print('[' + self.log_prefix + '] Using the following two nucmer hits to merge contigs', start_hit.ref_name, end_hit.ref_name)
             print('[' + self.log_prefix + ']    ', start_hit)
@@ -510,24 +535,34 @@ class Merger:
         ref_contigs[new_contig.id] = new_contig
 
 
-    def _merge_all_bridged_contigs(self, nucmer_hits, ref_contigs, qry_contigs):
+    def _merge_all_bridged_contigs(self, nucmer_hits, ref_contigs, qry_contigs, log_fh=None, log_outprefix=None):
         '''Input is dict of nucmer_hits. Makes any possible contig merges.
            Returns True iff any merges were made'''
+        writing_log_file = None not in [log_fh, log_outprefix]
+
         if len(nucmer_hits) == 0:
+            if writing_log_file:
+                print(log_outprefix, 'No nucmer hits, so will not make any merges', sep='\t', file=log_fh)
             return
+
         all_nucmer_hits = []
         for l in nucmer_hits.values():
             all_nucmer_hits.extend(l)
         nucmer_hits_by_qry = self._hits_hashed_by_query(all_nucmer_hits)
-        bridges = self._get_possible_query_bridging_contigs(nucmer_hits_by_qry)
+        bridges = self._get_possible_query_bridging_contigs(nucmer_hits_by_qry, log_fh=log_fh, log_outprefix=log_outprefix)
+        if writing_log_file:
+            print(log_outprefix, '\tPotential contigs to use for merging: ', ' '.join(sorted(bridges.keys())), sep='', file=log_fh)
         bridges = self._filter_bridging_contigs(bridges)
+        if writing_log_file:
+            print(log_outprefix, '\tContigs to use for merging after uniqueness filtering: ', ' '.join(sorted(bridges.keys())), sep='', file=log_fh)
+
         merged = set()
         made_a_join = False
 
         for qry_name, (start_hit, end_hit) in bridges.items():
             if start_hit.ref_name in merged or end_hit.ref_name in merged:
                 continue
-            self._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, qry_contigs)
+            self._merge_bridged_contig_pair(start_hit, end_hit, ref_contigs, qry_contigs, log_fh=log_fh, log_outprefix=log_outprefix)
             merged.add(start_hit.ref_name)
             merged.add(end_hit.ref_name)
             made_a_join = True
@@ -572,6 +607,8 @@ class Merger:
         if self.reads is None:
             return self.original_fasta, self.reassembly_fasta, None
 
+        log_file = outprefix + '.iterations.log'
+        log_fh = pyfastaq.utils.open_file_write(log_file)
         genome_fasta = self.original_fasta
         reassembly_fasta = self.reassembly_fasta
         nucmer_coords = outprefix + '.iter.0.coords'
@@ -581,11 +618,14 @@ class Merger:
 
         while made_a_join:
             iteration += 1
+            this_log_prefix = '[' + self.log_prefix + ' iterative_merge ' + str(iteration) + ']'
+            print(this_log_prefix, '\tUsing nucmer matches from ', nucmer_coords, sep='', file=log_fh)
             self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
-            made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs)
+            made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs, log_fh, this_log_prefix)
 
             if made_a_join:
+                print(this_log_prefix, '\tMade at least one merge. Remapping reads and reassembling',sep='', file=log_fh)
                 if self.verbose:
                     print('[' + self.log_prefix + '] Contig merges were made. Running new read mapping and assembly')
 
@@ -621,9 +661,12 @@ class Merger:
                 os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
                 shutil.rmtree(assembler_dir)
                 pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
-            elif iteration == 1 and self.verbose:
-                print('[' + self.log_prefix + '] No contig merges were made')
+            elif iteration == 1:
+                print(this_log_prefix, '\tNo contig merges were made',sep='', file=log_fh)
+                if self.verbose:
+                    print('[' + self.log_prefix + '] No contig merges were made')
 
+        pyfastaq.utils.close(log_fh)
         return genome_fasta, reassembly_fasta, nucmer_coords
 
 
