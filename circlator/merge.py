@@ -535,6 +535,38 @@ class Merger:
         return made_a_join
 
 
+    def _index_fasta(self, infile):
+        fai = infile + '.fai'
+        if not os.path.exists(fai):
+            circlator.common.syscall('samtools faidx ' + infile, verbose=self.verbose)
+
+
+    def _write_act_files(self, ref_fasta, qry_fasta, coords_file, outprefix):
+        '''Writes crunch file and shell script to start up ACT, showing comparison of ref and qry'''
+        if self.verbose:
+            print('Making ACT files from', ref_fasta, qry_fasta, coords)
+        ref_fasta = os.path.relpath(ref_fasta)
+        qry_fasta = os.path.relpath(qry_fasta)
+        coords_file = os.path.relpath(coords_file)
+        outprefix = os.path.relpath(outprefix)
+        self._index_fasta(ref_fasta)
+        self._index_fasta(qry_fasta)
+        crunch_file = outprefix + '.crunch'
+        pymummer.coords_file.convert_to_msp_crunch(
+            coords_file,
+            crunch_file,
+            ref_fai=ref_fasta + '.fai',
+            qry_fai=qry_fasta + '.fai'
+        )
+
+        bash_script = outprefix + '.start_act.sh'
+        with open(bash_script, 'w') as f:
+            print('#!/usr/bin/env bash', file=f)
+            print('act', ref_fasta, crunch_file, qry_fasta, file=f)
+
+        pyfastaq.utils.syscall('chmod +x ' + bash_script)
+
+
     def _iterative_bridged_contig_pair_merge(self, outprefix):
         '''Iteratively merges contig pairs using bridging contigs from reassembly, until no more can be merged'''
         if self.reads is None:

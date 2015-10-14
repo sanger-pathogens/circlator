@@ -1,4 +1,5 @@
 import unittest
+import shutil
 import filecmp
 import copy
 import os
@@ -536,6 +537,45 @@ class TestMerge(unittest.TestCase):
         expected_ref_contigs = {}
         pyfastaq.tasks.file_to_dict(expected_fasta, expected_ref_contigs)
         self.assertEqual(list(expected_ref_contigs.values())[0].seq, list(ref_contigs.values())[0].seq)
+
+
+    def test_index_fasta(self):
+        '''test _index_fasta'''
+        fasta_file = os.path.join(data_dir, 'merge_test_index_fasta.fa')
+        expected_fai = os.path.join(data_dir, 'merge_test_index_fasta.fa.fai')
+        test_fa = 'tmp.test_index_fasta.fa'
+        test_fai = test_fa + '.fai'
+        shutil.copyfile(fasta_file, test_fa)
+        self.merger._index_fasta(test_fa)
+        self.assertTrue(os.path.exists(test_fai))
+        self.assertTrue(filecmp.cmp(expected_fai, test_fai, shallow=False))
+        os.unlink(test_fa)
+        os.unlink(test_fai)
+
+
+    def test_write_act_files(self):
+        '''test _write_act_files'''
+        original_ref_fasta = os.path.join(data_dir, 'merge_test_write_act_files.ref.fa')
+        original_qry_fasta = os.path.join(data_dir, 'merge_test_write_act_files.qry.fa')
+        original_coords_file = os.path.join(data_dir, 'merge_test_write_act_files.coords')
+        ref_fasta = 'tmp.test_write_act_files.ref.fa'
+        qry_fasta = 'tmp.test_write_act_files.qry.fa'
+        coords_file = 'tmp.test_write_act_files.coords'
+        shutil.copyfile(original_ref_fasta, ref_fasta)
+        shutil.copyfile(original_qry_fasta, qry_fasta)
+        shutil.copyfile(original_coords_file, coords_file)
+
+        expected_bash_script = os.path.join(data_dir, 'merge_test_write_act_files.expected.sh')
+        expected_crunch_file = os.path.join(data_dir, 'merge_test_write_act_files.expected.crunch')
+        outprefix = 'tmp.test_write_act_files.out'
+        got_bash_script = outprefix + '.start_act.sh'
+        got_crunch_file = outprefix + '.crunch'
+
+        self.merger._write_act_files(ref_fasta, qry_fasta, coords_file, outprefix)
+        self.assertTrue(filecmp.cmp(expected_bash_script, got_bash_script, shallow=False))
+        self.assertTrue(filecmp.cmp(expected_crunch_file, got_crunch_file, shallow=False))
+        for f in [ref_fasta, ref_fasta + '.fai', qry_fasta, qry_fasta + '.fai', coords_file, got_bash_script, got_crunch_file]:
+            os.unlink(f)
 
 
     def test_contigs_dict_to_file(self):
