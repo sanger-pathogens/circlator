@@ -226,8 +226,9 @@ class Merger:
         return False
 
 
-    def _get_possible_circular_ref_contigs(self, nucmer_hits):
+    def _get_possible_circular_ref_contigs(self, nucmer_hits, log_fh=None, log_outprefix=None):
         '''Returns a dict ref name => tuple(hit at start, hit at end) for each ref sequence in the hash nucmer_hits (each value is a list of nucmer hits)'''
+        writing_log_file = None not in [log_fh, log_outprefix]
         maybe_circular = {}
         all_nucmer_hits = []
         for l in nucmer_hits.values():
@@ -235,6 +236,9 @@ class Merger:
         nucmer_hits_by_qry = self._hits_hashed_by_query(all_nucmer_hits)
 
         for ref_name, list_of_hits in nucmer_hits.items():
+            if writing_log_file:
+                print(log_outprefix, ref_name, 'Checking ' + str(len(list_of_hits)) + ' nucmer hits', sep='\t', file=log_fh)
+
             longest_start_hit = self._get_longest_hit_at_ref_start(list_of_hits)
             longest_end_hit = self._get_longest_hit_at_ref_end(list_of_hits)
             if longest_start_hit == longest_end_hit:
@@ -251,6 +255,11 @@ class Merger:
               and longest_start_hit != longest_end_hit
               and self._hits_have_same_query(longest_start_hit, longest_end_hit)
             ):
+                if writing_log_file:
+                    print(log_outprefix, ref_name, 'potential pair of nucmer hits for circularization:', sep='\t', file=log_fh)
+                    print(log_outprefix, ref_name, '', longest_start_hit, sep='\t', file=log_fh)
+                    print(log_outprefix, ref_name, '', longest_end_hit, sep='\t', file=log_fh)
+
                 shortest_hit_length = self._min_qry_hit_length([longest_start_hit, longest_end_hit])
                 has_longer_hit = self._has_qry_hit_longer_than(
                     nucmer_hits_by_qry[longest_start_hit.qry_name],
@@ -258,7 +267,16 @@ class Merger:
                     hits_to_exclude={longest_start_hit, longest_end_hit}
                 )
 
-                if (not has_longer_hit) and self._can_circularise(longest_start_hit, longest_end_hit):
+                if writing_log_file and has_longer_hit:
+                    print(log_outprefix, ref_name, 'cannot use this pair because longer match was found', sep='\t', file=log_fh)
+
+                can_circularise = self._can_circularise(longest_start_hit, longest_end_hit)
+
+                if writing_log_file and not can_circularise:
+                    print(log_outprefix, ref_name, 'cannot use this pair because positions/orientations of matches no good', sep='\t', file=log_fh)
+
+                if (not has_longer_hit) and can_circularise:
+                    print(log_outprefix, ref_name, 'can use this pair of hits', sep='\t', file=log_fh)
                     maybe_circular[ref_name] = (longest_start_hit, longest_end_hit)
 
         return maybe_circular
@@ -316,12 +334,7 @@ class Merger:
         long_nucmer_hits = {}
         for name, hits in nucmer_hits.items():
             long_nucmer_hits[name] = [x for x in hits if x.hit_length_qry >= self.nucmer_min_length_for_merges]
-        to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(long_nucmer_hits)
-        for name, hits in to_circularise_with_nucmer.items():
-            print(log_outprefix, '\t', name, ' maybe circular:', sep='', file=log_fh)
-            print(log_outprefix, '', hits[0], sep='\t\t', file=log_fh)
-            print(log_outprefix, '', hits[1], sep='\t\t',  file=log_fh)
-
+        to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(long_nucmer_hits, log_fh=log_fh, log_outprefix=log_outprefix)
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer, log_fh=log_fh, log_outprefix=log_outprefix)
         used_spades_contigs = set()
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
@@ -337,40 +350,47 @@ class Merger:
         }
 
         for ref_name in self.original_contigs:
+            print(log_outprefix, sep='\t', file=log_fh)
+
             if ref_name in nucmer_hits:
-                print(log_outprefix, '\tTrying to circularize ', ref_name, '. Has nucmer hits to check...', sep='', file=log_fh)
+                print(log_outprefix, ref_name, 'Trying to circularize. Has nucmer hits to check...', sep='\t', file=log_fh)
                 new_contig, spades_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], called_as_circular_by_spades, log_fh=log_fh, log_outprefix=log_outprefix)
 
                 if new_contig is None:
-                    print(log_outprefix, '\tCould not circularize ', ref_name, ' using matches to SPAdes circular contigs', sep='', file=log_fh)
+                    print(log_outprefix, ref_name, 'Could not circularize using matches to SPAdes circular contigs', sep='\t', file=log_fh)
 
                     if ref_name in to_circularise_with_nucmer:
                         start_hit, end_hit = to_circularise_with_nucmer[ref_name]
                         assert start_hit.ref_name == end_hit.ref_name == ref_name
-                        print(log_outprefix, '\tCircularizing ', ref_name, ' using pair of nucmer matches to SPAdes contig', sep='', file=log_fh)
-                        print(log_outprefix, start_hit, sep='\t\t', file=log_fh)
-                        print(log_outprefix, end_hit, sep='\t\t', file=log_fh)
+                        print(log_outprefix, ref_name, 'Circularizing using this pair of nucmer matches to SPAdes contig:', sep='\t', file=log_fh)
+                        print(log_outprefix, '\t', ref_name, '\t\t', start_hit, sep='', file=log_fh)
+                        print(log_outprefix, '\t', ref_name, '\t\t', end_hit, sep='', file=log_fh)
                         new_contig = self._make_circularised_contig(start_hit, end_hit)
                         fate_of_contigs['circl_using_nucmer'].add(ref_name)
+                    else:
+                        print(log_outprefix, ref_name, 'Cannot circularize: no suitable nucmer hits', sep='\t', file=log_fh)
                 else:
                     assert new_contig.id == ref_name
                     assert spades_contig is not None
                     if spades_contig in used_spades_contigs:
-                        print(log_outprefix, '\t', ref_name, ' is circular, but duplicate sequence, so deleting it', sep='', file=log_fh)
+                        print(log_outprefix, ref_name, 'Is circular, but duplicate sequence, so deleting it', sep='\t', file=log_fh)
                         fate_of_contigs['repetitive_deleted'].add(ref_name)
                     else:
                         self.original_contigs[new_contig.id] = new_contig
                         fate_of_contigs['circl_using_spades'].add(ref_name)
-                        print(log_outprefix, '\tCircularized ', ref_name, ' using matches to SPAdes circular contigs', sep='', file=log_fh)
+                        print(log_outprefix, ref_name, 'Circularized using matches to SPAdes circular contigs', sep='\t', file=log_fh)
                         used_spades_contigs.add(spades_contig)
             else:
-                print(log_outprefix, '\tTrying to circularize ', ref_name, '. Cannot circularize: no nucmer hits', sep='', file=log_fh)
+                print(log_outprefix, ref_name, 'Cannot circularize: no nucmer hits', sep='\t', file=log_fh)
                 new_contig = None
 
 
-            if new_contig is not None:
+            if new_contig is None:
+                print(log_outprefix, ref_name, 'Circularized: no', sep='\t', file=log_fh)
+            else:
                 assert new_contig.id == ref_name
                 self.original_contigs[new_contig.id] = new_contig
+                print(log_outprefix, ref_name, 'Circularized: yes', sep='\t', file=log_fh)
 
         pyfastaq.utils.close(log_fh)
         out_fasta = os.path.abspath(self.outprefix + '.fasta')
@@ -544,10 +564,6 @@ class Merger:
             print(log_outprefix, start_hit, sep='\t\t', file=log_fh)
             print(log_outprefix, end_hit, sep='\t\t', file=log_fh)
 
-        if self.verbose:
-            print('[' + self.log_prefix + '] Using the following two nucmer hits to merge contigs', start_hit.ref_name, end_hit.ref_name)
-            print('[' + self.log_prefix + ']    ', start_hit)
-            print('[' + self.log_prefix + ']    ', end_hit)
         new_id = start_contig.id + '.' + end_contig.id
         new_contig = pyfastaq.sequences.Fasta(new_id, start_seq + bridge_seq + end_seq)
         self.merges.append([new_id, start_contig.id, end_contig.id])
@@ -598,7 +614,7 @@ class Merger:
     def _write_act_files(self, ref_fasta, qry_fasta, coords_file, outprefix):
         '''Writes crunch file and shell script to start up ACT, showing comparison of ref and qry'''
         if self.verbose:
-            print('Making ACT files from', ref_fasta, qry_fasta, coords)
+            print('Making ACT files from', ref_fasta, qry_fasta, coords_file)
         ref_fasta = os.path.relpath(ref_fasta)
         qry_fasta = os.path.relpath(qry_fasta)
         coords_file = os.path.relpath(coords_file)
@@ -640,6 +656,9 @@ class Merger:
             this_log_prefix = '[' + self.log_prefix + ' iterative_merge ' + str(iteration) + ']'
             print(this_log_prefix, '\tUsing nucmer matches from ', nucmer_coords, sep='', file=log_fh)
             self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
+            act_prefix = outprefix + '.iter.' + str(iteration)
+            print(this_log_prefix, '\tYou can view the nucmer matches with ACT using: ./', act_prefix, '.start_act.sh', sep='', file=log_fh)
+            self._write_act_files(genome_fasta, reassembly_fasta, nucmer_coords, act_prefix)
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
             made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs, log_fh, this_log_prefix)
 
@@ -724,20 +743,15 @@ class Merger:
         hits_to_circular_contigs = [x for x in hits if x.qry_name in circular_spades]
         if len(hits_to_circular_contigs) == 0:
             if writing_log_file:
-                print(log_outprefix, '\t', original_contig, ' has no matches to SPAdes circular contigs', sep='', file=log_fh)
+                print(log_outprefix, original_contig, 'No matches to SPAdes circular contigs', sep='\t', file=log_fh)
             return None, None
 
-        if writing_log_file:
-            print(log_outprefix, '\tAll hits to spades circular contig ', hits[0].qry_name, ':', sep='', file=log_fh)
-            for hit in hits_to_circular_contigs:
-                print(log_outprefix, '\t\t', hit, sep='', file=log_fh)
-
         for hit in hits_to_circular_contigs:
-            print(log_outprefix, 'Checking hit:', hit, sep='\t', file=log_fh)
+            print(log_outprefix, original_contig, 'Checking hit:', hit, sep='\t', file=log_fh)
             percent_query_covered = 100 * (hit.hit_length_qry / hit.qry_length)
 
             if self.min_spades_circular_percent <= percent_query_covered:
-                print(log_outprefix, '\t\tHit is long enough. Percent of contig covered by hit is ', percent_query_covered, sep='', file=log_fh)
+                print(log_outprefix, '\t', original_contig, '\t\tHit is long enough. Percent of contig covered by hit is ', percent_query_covered, sep='', file=log_fh)
                 # the spades contig hit is long enough, but now check that
                 # the input contig is covered by hits from this spades contig
                 hit_intervals = [x.ref_coords() for x in hits_to_circular_contigs if x.qry_name == hit.qry_name]
@@ -747,19 +761,21 @@ class Merger:
                     percent_covered = 100 * pyfastaq.intervals.length_sum_from_list(hit_intervals) / hit.ref_length
 
                     if writing_log_file:
-                        print(log_outprefix, '\t\treference bases covered by spades contig:', ', '.join([str(x) for x in hit_intervals]), sep='', file=log_fh)
-                        print(log_outprefix, '\t\t   ... which is ', percent_covered, ' percent of ', hit.ref_length, ' bases', sep='', file=log_fh)
+                        print(log_outprefix, '\t', original_contig, '\t\treference bases covered by spades contig:', ', '.join([str(x) for x in hit_intervals]), sep='', file=log_fh)
+                        print(log_outprefix, '\t', original_contig, '\t\t   ... which is ', percent_covered, ' percent of ', hit.ref_length, ' bases', sep='', file=log_fh)
 
                     if self.min_spades_circular_percent <= percent_covered:
                         if writing_log_file:
-                            print(log_outprefix, '\t\tUsing hit to call ', hit.ref_name, ' as circular (enough bases covered)', sep='', file=log_fh)
+                            print(log_outprefix, original_contig, '\tUsing hit to call as circular (enough bases covered)', sep='\t', file=log_fh)
 
                         return pyfastaq.sequences.Fasta(original_contig, self.reassembly_contigs[hit.qry_name].seq), hit.qry_name
                     elif writing_log_file:
-                        print(log_outprefix, '\t\tNot using hit to call ', hit.ref_name, ' as circular (not enough bases covered)', sep='', file=log_fh)
+                        print(log_outprefix, original_contig, '\tNot using hit to call as circular (not enough bases covered)', sep='\t', file=log_fh)
+            else:
+                print(log_outprefix, original_contig, '\tNot using hit to call as circular (hit too short)', sep='\t', file=log_fh)
 
         if writing_log_file:
-            print(log_outprefix, '\tNo suitable matches to SPAdes circualr contigs for ', original_contig, sep='', file=log_fh)
+            print(log_outprefix, original_contig, 'No suitable matches to SPAdes circular contigs', sep='\t', file=log_fh)
 
         return None, None
 
