@@ -477,6 +477,8 @@ class Merger:
               or longest_start_hit.ref_name == longest_end_hit.ref_name
               or self._hits_have_same_reference(longest_start_hit, longest_end_hit)
             ):
+                if writing_log_file:
+                    print(log_outprefix, '\t', qry_name, ': no potential pairs of hits to merge contigs', sep='', file=log_fh)
                 continue
 
             if writing_log_file:
@@ -602,6 +604,9 @@ class Merger:
             merged.add(end_hit.ref_name)
             made_a_join = True
 
+        if writing_log_file:
+            print(log_outprefix, '\tMade at least one contig join: ', made_a_join, sep='', file=log_fh)
+
         return made_a_join
 
 
@@ -640,19 +645,19 @@ class Merger:
     def _iterative_bridged_contig_pair_merge(self, outprefix):
         '''Iteratively merges contig pairs using bridging contigs from reassembly, until no more can be merged'''
         if self.reads is None:
-            return self.original_fasta, self.reassembly_fasta, None
+            return self.original_fasta, self.reassembly_fasta, None, None
 
         log_file = outprefix + '.iterations.log'
         log_fh = pyfastaq.utils.open_file_write(log_file)
         genome_fasta = self.original_fasta
         reassembly_fasta = self.reassembly_fasta
-        nucmer_coords = outprefix + '.iter.0.coords'
+        nucmer_coords = outprefix + '.iter.1.coords'
         reads_to_map = self.reads
+        act_prefix = None
         made_a_join = True
-        iteration = 0
+        iteration = 1
 
         while made_a_join:
-            iteration += 1
             this_log_prefix = '[' + self.log_prefix + ' iterative_merge ' + str(iteration) + ']'
             print(this_log_prefix, '\tUsing nucmer matches from ', nucmer_coords, sep='', file=log_fh)
             self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
@@ -661,12 +666,10 @@ class Merger:
             self._write_act_files(genome_fasta, reassembly_fasta, nucmer_coords, act_prefix)
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
             made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs, log_fh, this_log_prefix)
+            iteration += 1
 
             if made_a_join:
                 print(this_log_prefix, '\tMade at least one merge. Remapping reads and reassembling',sep='', file=log_fh)
-                if self.verbose:
-                    print('[' + self.log_prefix + '] Contig merges were made. Running new read mapping and assembly')
-
                 nucmer_coords = outprefix + '.iter.' + str(iteration) + '.coords'
                 genome_fasta = outprefix + '.iter.' + str(iteration) + '.merged.fasta'
                 reassembly_fasta = outprefix + '.iter.' + str(iteration) + '.reassembly.fasta'
@@ -701,13 +704,11 @@ class Merger:
                 os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
                 shutil.rmtree(assembler_dir)
                 pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
-            elif iteration == 1:
+            elif iteration <= 2:
                 print(this_log_prefix, '\tNo contig merges were made',sep='', file=log_fh)
-                if self.verbose:
-                    print('[' + self.log_prefix + '] No contig merges were made')
 
         pyfastaq.utils.close(log_fh)
-        return genome_fasta, reassembly_fasta, nucmer_coords
+        return genome_fasta, reassembly_fasta, nucmer_coords, act_prefix + '.start_act.sh'
 
 
     def _contigs_dict_to_file(self, contigs, fname):
@@ -791,14 +792,16 @@ class Merger:
 
     def run(self):
         out_log = os.path.abspath(self.outprefix + '.merge.log')
-        self.original_fasta, self.reassembly_fasta, nucmer_coords_file = self._iterative_bridged_contig_pair_merge(self.outprefix + '.merge')
+        self.original_fasta, self.reassembly_fasta, nucmer_coords_file, act_script = self._iterative_bridged_contig_pair_merge(self.outprefix + '.merge')
         self._write_merge_log(self.outprefix + '.merge.log')
-        nucmer_coords = os.path.abspath(self.outprefix + '.coords')
+        nucmer_circularise_coords = os.path.abspath(self.outprefix + '.circularise.coords')
 
         if nucmer_coords_file is None:
-            self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_coords)
+            self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords)
+            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise.')
         else:
-            os.symlink(nucmer_coords_file, nucmer_coords)
+            os.symlink(nucmer_coords_file, nucmer_circularise_coords)
+            os.symlink(act_script, self.outprefix + '.circularise.start_act.sh')
 
-        nucmer_hits = self._load_nucmer_hits(nucmer_coords)
+        nucmer_hits = self._load_nucmer_hits(nucmer_circularise_coords)
         self._circularise_contigs(nucmer_hits)
