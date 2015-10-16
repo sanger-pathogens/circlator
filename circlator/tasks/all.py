@@ -176,6 +176,8 @@ def run():
         nucmer_min_length=options.merge_min_length,
         nucmer_min_length_for_merges=options.merge_min_length_merge,
         min_spades_circular_percent=options.merge_min_spades_circ_pc,
+        spades_kmers=options.assemble_spades_k,
+        spades_use_first_success=options.assemble_spades_use_first,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
         qry_end_tolerance=options.merge_reassemble_end,

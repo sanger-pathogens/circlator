@@ -21,6 +21,8 @@ class Merger:
           nucmer_min_length_for_merges=4000,
           nucmer_breaklen=500,
           min_spades_circular_percent=95,
+          spades_kmers=None,
+          spades_use_first_success=False,
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
@@ -41,6 +43,8 @@ class Merger:
         self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
         self.nucmer_breaklen = nucmer_breaklen
         self.min_spades_circular_percent = min_spades_circular_percent
+        self.spades_kmers = spades_kmers
+        self.spades_use_first_success = spades_use_first_success
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
@@ -669,7 +673,9 @@ class Merger:
                     reads_prefix + '.fasta',
                     assembler_dir,
                     threads=self.threads,
-                    verbose=self.verbose
+                    verbose=self.verbose,
+                    spades_kmers=self.spades_kmers,
+                    spades_use_first_success=self.spades_use_first_success,
                 )
                 a.run()
                 os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
