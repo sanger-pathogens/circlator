@@ -338,8 +338,14 @@ class Merger:
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer, log_fh=log_fh, log_outprefix=log_outprefix)
         used_spades_contigs = set()
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
+
         called_as_circular_by_spades = self._get_spades_circular_nodes(reassembly_fastg)
-        print(log_outprefix, '\tCalled as circular by spades:', called_as_circular_by_spades, sep='', file=log_fh)
+        if len(called_as_circular_by_spades):
+            circular_string = ','.join(sorted(called_as_circular_by_spades))
+        else:
+            circular_string = 'None'
+        print(log_outprefix, file=log_fh)
+        print(log_outprefix, '\tSPAdes reassembly contigs that are circular: ', circular_string, sep='', file=log_fh)
 
         fate_of_contigs = {
             x: set() for x in [
