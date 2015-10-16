@@ -242,3 +242,6 @@ def run():
         ignore=not_fix_start_file
     )
     fixer.run()
+
+    with open(fixstart_prefix + '.ALL_FINISHED', 'w') as f:
+        pass
