@@ -42,6 +42,7 @@ class StartFixer:
             hit_percent_id=self.min_percent_identity,
             skip=self.ignore,
             rename=False,
+            summary_prefix='[fixstart]',
         )
         break_finder.run()
 
