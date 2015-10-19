@@ -21,8 +21,8 @@ setup(
         'openpyxl',
         'pyfastaq >= 3.10.0',
         'pysam >= 0.8.1',
-        'pymummer>=0.4.0',
-        'bio_assembly_refinement>=0.3.3',
+        'pymummer>=0.6.1',
+        'bio_assembly_refinement>=0.4.0',
     ],
     license='GPLv3',
     classifiers=[
