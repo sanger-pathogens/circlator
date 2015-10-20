@@ -50,8 +50,13 @@
 <li>
 <a href="http://mummer.sourceforge.net/">MUMmer</a> version &gt;= 3.23</li>
 <li>
-<a href="http://bioinf.spbau.ru/spades">SPAdes</a> version &gt;= 3.5.0</li>
+<a href="http://bioinf.spbau.ru/spades">SPAdes</a> version 3.5.0 or 3.6.0 (does not work with 3.6.1)</li>
 </ul>
+
+<p>
+Note that you can use the environment variable $CIRCLATOR_SPADES to specify the name of the SPAdes exectuable.
+If this environment variable is set, then it is used by Circlator. Otherwise, Circlator will look for spades.py in your $PATH.
+</p>
 
 <p>Once the dependencies are installed, install Circlator using pip3:</p>
 
