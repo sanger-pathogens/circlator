@@ -40,6 +40,10 @@ min_versions = {
 }
 
 
+max_versions = {
+    'spades': '3.6.0'
+}
+
 prog_name_to_default = {
     'bwa': 'bwa',
     'nucmer': 'nucmer',
@@ -81,7 +85,11 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         return p
 
     if not p.version_at_least(min_versions[name]):
-        handle_error('Version of ' + name + ' too low. I found ' + p.version() + ', but must be at least ' + min_versions[name], raise_error=raise_error)
+        handle_error('Version of ' + name + ' too low. I found ' + p.version() + ', but must be at least ' + min_versions[name] + '. Found here:\n' + p.full_path, raise_error=raise_error)
+        return p
+
+    if name in max_versions and not p.version_at_most(max_versions[name]):
+        handle_error('Version of ' + name + ' too high. I found ' + p.version() + ', but must be at most ' + max_versions[name] + '. Found here:\n' + p.full_path, raise_error=raise_error)
         return p
 
     if verbose:

@@ -13,6 +13,8 @@ def run():
     parser.add_argument('--min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
     parser.add_argument('--breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
     parser.add_argument('--min_spades_circ_pc', type=float, help='Min percent of contigs needed to be covered by nucmer hits to spades circular contigs [%(default)s]', metavar='FLOAT', default=95)
+    parser.add_argument('--spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,117,107,97,87,77', metavar='k1,k2,k3,...')
+    parser.add_argument('--spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     parser.add_argument('--reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
     parser.add_argument('--threads', type=int, help='Number of threads for remapping/assembly (only applies if --reads is used) [%(default)s]', default=1, metavar='INT')
@@ -33,6 +35,8 @@ def run():
         nucmer_min_length_for_merges=options.min_length_merge,
         nucmer_breaklen=options.breaklen,
         min_spades_circular_percent=options.min_spades_circ_pc,
+        spades_kmers=options.spades_k,
+        spades_use_first_success=options.spades_use_first,
         ref_end_tolerance=options.ref_end,
         qry_end_tolerance=options.reassemble_end,
         threads=options.threads,

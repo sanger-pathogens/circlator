@@ -1,0 +1,6 @@
+merge_test_write_act_files.ref.fa merge_test_write_act_files.qry.fa
+NUCMER
+
+[S1]	[E1]	[S2]	[E2]	[LEN 1]	[LEN 2]	[% IDY]	[LEN R]	[LEN Q]	[FRM]	[TAGS]
+1	500	1	500	500	500	99.60	500	500	1	1	ref1	qry1	[IDENTITY]
+1	500	1	499	500	499	99.40	500	499	1	1	ref2	qry2	[IDENTITY]
