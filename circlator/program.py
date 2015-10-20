@@ -47,6 +47,13 @@ class Program:
         return LooseVersion(v) >= LooseVersion(min_version)
 
 
+    def version_at_most(self, max_version):
+        v = self.version()
+        if v is None:
+            return None
+        return LooseVersion(v) <= LooseVersion(max_version)
+
+
     def exe(self):
         '''Returns exectuable that can be used in system call'''
         return self.path
