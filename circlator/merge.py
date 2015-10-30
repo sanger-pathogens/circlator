@@ -820,7 +820,7 @@ class Merger:
 
         if nucmer_coords_file is None:
             self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords)
-            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise.')
+            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise')
         else:
             os.symlink(nucmer_coords_file, nucmer_circularise_coords)
             os.symlink(act_script, self.outprefix + '.circularise.start_act.sh')
