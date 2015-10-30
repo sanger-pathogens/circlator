@@ -165,7 +165,6 @@ def run():
         merge_reads = filtered_reads
     else:
         merge_reads = None
-        options.merge_opts.extend(['--reads', filtered_reads])
 
     m = circlator.merge.Merger(
         assembly_to_use,
