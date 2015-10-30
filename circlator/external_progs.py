@@ -60,7 +60,7 @@ prog_builders = {
 
 def handle_error(message, raise_error=True):
     if raise_error:
-        raise Error(message + ' Cannot continue')
+        raise Error(message + '\nCannot continue')
     else:
         print(message)
 
@@ -88,9 +88,16 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         handle_error('Version of ' + name + ' too low. I found ' + p.version() + ', but must be at least ' + min_versions[name] + '. Found here:\n' + p.full_path, raise_error=raise_error)
         return p
 
-    if name in max_versions and not p.version_at_most(max_versions[name]):
+    if name != 'spades' and name in max_versions and not p.version_at_most(max_versions[name]):
         handle_error('Version of ' + name + ' too high. I found ' + p.version() + ', but must be at most ' + max_versions[name] + '. Found here:\n' + p.full_path, raise_error=raise_error)
         return p
+
+    if name == 'spades' and not p.version_at_most(max_versions['spades']):
+        print('WARNING: SPAdes version', p.version(), 'found, which is newer than 3.6.0.', file=sys.stderr)
+        print('         Circlator can use this version, but some circularizations may be missed.', file=sys.stderr)
+        print('         We recommend that you use version 3.6.0, which is available for Linux using:', file=sys.stderr)
+        print('         wget http://spades.bioinf.spbau.ru/release3.6.0/SPAdes-3.6.0-Linux.tar.gz', file=sys.stderr)
+
 
     if verbose:
         print('Using', name, 'version', p.version(), 'as', p.full_path)
