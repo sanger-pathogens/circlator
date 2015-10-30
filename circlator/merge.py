@@ -1,4 +1,5 @@
 import os
+import sys
 import copy
 import shutil
 import collections
@@ -339,7 +340,22 @@ class Merger:
         used_spades_contigs = set()
         reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
 
-        called_as_circular_by_spades = self._get_spades_circular_nodes(reassembly_fastg)
+        if os.path.exists(reassembly_fastg):
+            called_as_circular_by_spades = self._get_spades_circular_nodes(reassembly_fastg)
+        else:
+            called_as_circular_by_spades = set()
+            warning_lines = [
+                'WARNING: FASTG reassembly file ' + reassembly_fastg + ' not found. If the reassembly was not made with SPAdes, this is normal (but you miss out on the extra information that SPAdes can output).',
+                'WARNING:  ... If the reassembly was made with SPAdes, then please consider using version 3.6.0 of SPAdes, which does make this file.',
+                'WARNING:  ... SPAdes 3.6.0 can be obtained for Linux like this:',
+                'WARNING:  ... wget http://spades.bioinf.spbau.ru/release3.6.0/SPAdes-3.6.0-Linux.tar.gz',
+            ]
+            for line in warning_lines:
+                print(log_outprefix, line, sep='\t', file=log_fh)
+                print(log_outprefix, line, sep='\t', file=sys.stderr)
+
+            print(log_outprefix, 'WARNING:  ... this message has also been written to the circularise_details.log file.', sep='\t', file=sys.stderr)
+
         if len(called_as_circular_by_spades):
             circular_string = ','.join(sorted(called_as_circular_by_spades))
         else:
@@ -707,7 +723,10 @@ class Merger:
                 )
                 a.run()
                 os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
-                os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
+                contigs_fastg = os.path.join(assembler_dir, 'contigs.fastg')
+                if os.path.exists(contigs_fastg):
+                    os.rename(contigs_fastg, reassembly_fastg)
+
                 shutil.rmtree(assembler_dir)
                 pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
             elif iteration <= 2:
@@ -804,7 +823,7 @@ class Merger:
 
         if nucmer_coords_file is None:
             self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords)
-            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise.')
+            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise')
         else:
             os.symlink(nucmer_coords_file, nucmer_circularise_coords)
             os.symlink(act_script, self.outprefix + '.circularise.start_act.sh')
