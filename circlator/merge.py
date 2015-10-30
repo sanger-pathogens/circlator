@@ -723,7 +723,10 @@ class Merger:
                 )
                 a.run()
                 os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
-                os.rename(os.path.join(assembler_dir, 'contigs.fastg'), reassembly_fastg)
+                contigs_fastg = os.path.join(assembler_dir, 'contigs.fastg')
+                if os.path.exists(contigs_fastg):
+                    os.rename(contigs_fastg, reassembly_fastg)
+
                 shutil.rmtree(assembler_dir)
                 pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
             elif iteration <= 2:
