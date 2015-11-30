@@ -1,5 +1,6 @@
 __all__ = [
     'assemble',
+    'assembly',
     'bamfilter',
     'clean',
     'common',

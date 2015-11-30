@@ -30,12 +30,11 @@ class Merger:
           threads=1,
           log_prefix='merge',
     ):
-        for f in [original_assembly, reassembly]:
-            if not os.path.exists(f):
-                raise Error('File not found:' + f)
+        if not os.path.exists(original_assembly):
+            raise Error('File not found:' + original_assembly)
 
         self.original_fasta = original_assembly
-        self.reassembly_fasta = reassembly
+        self.reassembly = circlator.assembly.Assembly(reassembly)
         self.reads = reads
         self.outprefix = outprefix
         self.nucmer_diagdiff = nucmer_diagdiff
@@ -53,9 +52,8 @@ class Merger:
         self.log_prefix = log_prefix
         self.merges = []
         self.original_contigs = {}
-        self.reassembly_contigs = {}
+        self.reassembly_contigs = self.reassembly.get_contigs()
         pyfastaq.tasks.file_to_dict(self.original_fasta, self.original_contigs)
-        pyfastaq.tasks.file_to_dict(self.reassembly_fasta, self.reassembly_contigs)
 
 
     def _run_nucmer(self, ref, qry, outfile):
@@ -338,23 +336,7 @@ class Merger:
         to_circularise_with_nucmer = self._get_possible_circular_ref_contigs(long_nucmer_hits, log_fh=log_fh, log_outprefix=log_outprefix)
         to_circularise_with_nucmer = self._remove_keys_from_dict_with_nonunique_values(to_circularise_with_nucmer, log_fh=log_fh, log_outprefix=log_outprefix)
         used_spades_contigs = set()
-        reassembly_fastg = self.reassembly_fasta[:-1] + 'g'
-
-        if os.path.exists(reassembly_fastg):
-            called_as_circular_by_spades = self._get_spades_circular_nodes(reassembly_fastg)
-        else:
-            called_as_circular_by_spades = set()
-            warning_lines = [
-                'WARNING: FASTG reassembly file ' + reassembly_fastg + ' not found. If the reassembly was not made with SPAdes, this is normal (but you miss out on the extra information that SPAdes can output).',
-                'WARNING:  ... If the reassembly was made with SPAdes, then please consider using version 3.6.0 of SPAdes, which does make this file.',
-                'WARNING:  ... SPAdes 3.6.0 can be obtained for Linux like this:',
-                'WARNING:  ... wget http://spades.bioinf.spbau.ru/release3.6.0/SPAdes-3.6.0-Linux.tar.gz',
-            ]
-            for line in warning_lines:
-                print(log_outprefix, line, sep='\t', file=log_fh)
-                print(log_outprefix, line, sep='\t', file=sys.stderr)
-
-            print(log_outprefix, 'WARNING:  ... this message has also been written to the circularise_details.log file.', sep='\t', file=sys.stderr)
+        called_as_circular_by_spades = self.reassembly.circular_contigs()
 
         if len(called_as_circular_by_spades):
             circular_string = ','.join(sorted(called_as_circular_by_spades))
@@ -667,12 +649,11 @@ class Merger:
     def _iterative_bridged_contig_pair_merge(self, outprefix):
         '''Iteratively merges contig pairs using bridging contigs from reassembly, until no more can be merged'''
         if self.reads is None:
-            return self.original_fasta, self.reassembly_fasta, None, None
+            return self.original_fasta, self.reassembly, None, None
 
         log_file = outprefix + '.iterations.log'
         log_fh = pyfastaq.utils.open_file_write(log_file)
         genome_fasta = self.original_fasta
-        reassembly_fasta = self.reassembly_fasta
         nucmer_coords = outprefix + '.iter.1.coords'
         reads_to_map = self.reads
         act_prefix = None
@@ -682,10 +663,10 @@ class Merger:
         while made_a_join:
             this_log_prefix = '[' + self.log_prefix + ' iterative_merge ' + str(iteration) + ']'
             print(this_log_prefix, '\tUsing nucmer matches from ', nucmer_coords, sep='', file=log_fh)
-            self._run_nucmer(genome_fasta, reassembly_fasta, nucmer_coords)
+            self._run_nucmer(genome_fasta, self.reassembly.contigs_fasta, nucmer_coords)
             act_prefix = outprefix + '.iter.' + str(iteration)
             print(this_log_prefix, '\tYou can view the nucmer matches with ACT using: ./', act_prefix, '.start_act.sh', sep='', file=log_fh)
-            self._write_act_files(genome_fasta, reassembly_fasta, nucmer_coords, act_prefix)
+            self._write_act_files(genome_fasta, self.reassembly.contigs_fasta, nucmer_coords, act_prefix)
             nucmer_hits_by_ref = self._load_nucmer_hits(nucmer_coords)
             made_a_join = self._merge_all_bridged_contigs(nucmer_hits_by_ref, self.original_contigs, self.reassembly_contigs, log_fh, this_log_prefix)
             iteration += 1
@@ -694,10 +675,7 @@ class Merger:
                 print(this_log_prefix, '\tMade at least one merge. Remapping reads and reassembling',sep='', file=log_fh)
                 nucmer_coords = outprefix + '.iter.' + str(iteration) + '.coords'
                 genome_fasta = outprefix + '.iter.' + str(iteration) + '.merged.fasta'
-                reassembly_fasta = outprefix + '.iter.' + str(iteration) + '.reassembly.fasta'
-                reassembly_fastg = outprefix + '.iter.' + str(iteration) + '.reassembly.fastg'
                 self._contigs_dict_to_file(self.original_contigs, genome_fasta)
-                self._contigs_dict_to_file(self.reassembly_contigs, reassembly_fasta)
                 bam = outprefix + '.iter.' + str(iteration) + '.bam'
 
                 circlator.mapping.bwa_mem(
@@ -722,18 +700,13 @@ class Merger:
                     spades_use_first_success=self.spades_use_first_success,
                 )
                 a.run()
-                os.rename(os.path.join(assembler_dir, 'contigs.fasta'), reassembly_fasta)
-                contigs_fastg = os.path.join(assembler_dir, 'contigs.fastg')
-                if os.path.exists(contigs_fastg):
-                    os.rename(contigs_fastg, reassembly_fastg)
-
-                shutil.rmtree(assembler_dir)
-                pyfastaq.tasks.file_to_dict(reassembly_fasta, self.reassembly_contigs)
+                self.reassembly = circlator.assembly.Assembly(assembler_dir)
+                self.reassembly_contigs = self.reassembly.get_contigs()
             elif iteration <= 2:
                 print(this_log_prefix, '\tNo contig merges were made',sep='', file=log_fh)
 
         pyfastaq.utils.close(log_fh)
-        return genome_fasta, reassembly_fasta, nucmer_coords, act_prefix + '.start_act.sh'
+        return genome_fasta, nucmer_coords, act_prefix + '.start_act.sh'
 
 
     def _contigs_dict_to_file(self, contigs, fname):
@@ -817,13 +790,13 @@ class Merger:
 
     def run(self):
         out_log = os.path.abspath(self.outprefix + '.merge.log')
-        self.original_fasta, self.reassembly_fasta, nucmer_coords_file, act_script = self._iterative_bridged_contig_pair_merge(self.outprefix + '.merge')
+        self.original_fasta, nucmer_coords_file, act_script = self._iterative_bridged_contig_pair_merge(self.outprefix + '.merge')
         self._write_merge_log(self.outprefix + '.merge.log')
         nucmer_circularise_coords = os.path.abspath(self.outprefix + '.circularise.coords')
 
         if nucmer_coords_file is None:
-            self._run_nucmer(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords)
-            self._write_act_files(self.original_fasta, self.reassembly_fasta, nucmer_circularise_coords, self.outprefix + '.circularise')
+            self._run_nucmer(self.original_fasta, self.reassembly.contigs_fasta, nucmer_circularise_coords)
+            self._write_act_files(self.original_fasta, self.reassembly.contigs_fasta, nucmer_circularise_coords, self.outprefix + '.circularise')
         else:
             os.symlink(nucmer_coords_file, nucmer_circularise_coords)
             os.symlink(act_script, self.outprefix + '.circularise.start_act.sh')
