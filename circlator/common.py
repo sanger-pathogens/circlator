@@ -4,7 +4,7 @@ import subprocess
 
 class Error (Exception): pass
 
-version = '1.1.2'
+version = '1.1.3'
 
 def syscall(cmd, allow_fail=False, verbose=False):
     if verbose:
