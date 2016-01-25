@@ -649,7 +649,9 @@ class Merger:
     def _iterative_bridged_contig_pair_merge(self, outprefix):
         '''Iteratively merges contig pairs using bridging contigs from reassembly, until no more can be merged'''
         if self.reads is None:
-            return self.original_fasta, self.reassembly, None, None
+            if self.verbose:
+                print('Skipping iterative contig merging because no reads given (see --reads option)')
+            return self.original_fasta, None, None
 
         log_file = outprefix + '.iterations.log'
         log_fh = pyfastaq.utils.open_file_write(log_file)
