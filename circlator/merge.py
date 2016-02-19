@@ -67,7 +67,7 @@ class Merger:
             diagdiff=self.nucmer_diagdiff,
             maxmatch=True,
             breaklen=self.nucmer_breaklen,
-            simplify=False,
+            simplify=True,
             verbose=self.verbose
         )
         n.run()
