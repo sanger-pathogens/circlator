@@ -83,13 +83,16 @@ def bwa_mem(
 
     if samtools.version_at_least('1.2'):
         outparam = '-o'
+        samout = outfile
+    else:
+        samout = outfile[:-4]
 
     cmd = ' '.join([
         samtools.exe(), 'sort',
         '-@', str(threads),
         '-m', str(thread_mem) + 'M',
         unsorted_bam,
-        outparam,outfile[:-4]
+        outparam,samout
     ])
 
     common.syscall(cmd, verbose=verbose)
