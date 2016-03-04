@@ -108,4 +108,3 @@ def check_all_progs(verbose=False, raise_error=False, filehandle=None):
 
     for prog in sorted(prog_name_to_default):
         make_and_check_prog(prog, verbose=verbose, raise_error=raise_error, filehandle=filehandle)
-

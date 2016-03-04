@@ -16,7 +16,7 @@ index_extensions = [
 
 
 def bwa_index(infile, outprefix=None, bwa='bwa', verbose=False):
-    if outprefix is None: 
+    if outprefix is None:
         outprefix = infile
 
     missing = [not os.path.exists(outprefix + '.' + x) for x in index_extensions]
@@ -60,7 +60,7 @@ def bwa_mem(
         bwa_options,
         '-t', str(threads),
         tmp_index,
-        reads, 
+        reads,
         '|',
         samtools.exe(), 'view',
         '-F 0x0800',
@@ -74,15 +74,24 @@ def bwa_mem(
     bwa_index_clean(tmp_index)
     threads = min(4, threads)
     thread_mem = int(500 / threads)
-    
+
+    # here we have to check for the version of samtools, starting from 1.3 the
+    # -o flag is used for specifying the samtools sort output-file
+    # Starting from 1.2 you can use the -o flag
+
+    outparam = ''
+
+    if p.version_at_least('1.2'):
+        outparam = '-o'
+
     cmd = ' '.join([
         samtools.exe(), 'sort',
         '-@', str(threads),
         '-m', str(thread_mem) + 'M',
         unsorted_bam,
-        outfile[:-4]
+        outparam,outfile[:-4]
     ])
- 
+
     common.syscall(cmd, verbose=verbose)
     os.unlink(unsorted_bam)
 
