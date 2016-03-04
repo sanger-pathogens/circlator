@@ -81,7 +81,7 @@ def bwa_mem(
 
     outparam = ''
 
-    if p.version_at_least('1.2'):
+    if samtools.version_at_least('1.2'):
         outparam = '-o'
 
     cmd = ' '.join([
