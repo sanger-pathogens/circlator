@@ -21,6 +21,22 @@ class TestMapping(unittest.TestCase):
             os.unlink(filename)
 
 
+    def test_bwa_index_clean(self):
+        '''test bwa_index_clean'''
+        files_prefix = 'tmp.test_bwa_index_clean'
+        test_files = [files_prefix + '.' + x for x in ['amb', 'ann', 'bwt', 'pac', 'sa']]
+        for filename in test_files:
+            with open(filename, 'w') as f:
+                pass
+
+            self.assertTrue(os.path.exists(filename))
+
+        mapping.bwa_index_clean(files_prefix)
+
+        for filename in test_files:
+            self.assertFalse(os.path.exists(filename))
+
+
     def test_bwa_mem(self):
         '''test bwa_mem'''
         # FIXME
