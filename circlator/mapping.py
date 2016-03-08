@@ -15,7 +15,10 @@ index_extensions = [
 ]
 
 
-def bwa_index(infile, outprefix=None, bwa='bwa', verbose=False):
+def bwa_index(infile, outprefix=None, bwa=None, verbose=False):
+    if bwa is None:
+        bwa = external_progs.make_and_check_prog('bwa', verbose=verbose)
+
     if outprefix is None:
         outprefix = infile
 
@@ -24,7 +27,7 @@ def bwa_index(infile, outprefix=None, bwa='bwa', verbose=False):
         return
 
     cmd = ' '.join([
-        bwa,  'index',
+        bwa.exe(),  'index',
         '-p', outprefix,
         infile
     ])
@@ -53,7 +56,7 @@ def bwa_mem(
     bwa = external_progs.make_and_check_prog('bwa', verbose=verbose)
     unsorted_bam = outfile + '.tmp.unsorted.bam'
     tmp_index = outfile + '.tmp.bwa_index'
-    bwa_index(ref, outprefix=tmp_index, verbose=verbose, bwa=bwa.exe())
+    bwa_index(ref, outprefix=tmp_index, verbose=verbose, bwa=bwa)
 
     cmd = ' '.join([
         bwa.exe(), 'mem',
