@@ -24,6 +24,7 @@ class Merger:
           min_spades_circular_percent=95,
           spades_kmers=None,
           spades_use_first_success=False,
+          spades_no_careful=False,
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
@@ -45,6 +46,7 @@ class Merger:
         self.min_spades_circular_percent = min_spades_circular_percent
         self.spades_kmers = spades_kmers
         self.spades_use_first_success = spades_use_first_success
+        self.spades_no_careful = spades_no_careful
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
@@ -700,6 +702,7 @@ class Merger:
                     verbose=self.verbose,
                     spades_kmers=self.spades_kmers,
                     spades_use_first_success=self.spades_use_first_success,
+                    spades_no_careful=self.spades_no_careful
                 )
                 a.run()
                 self.reassembly = circlator.assembly.Assembly(assembler_dir)

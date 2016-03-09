@@ -34,6 +34,7 @@ def run():
     assemble_group = parser.add_argument_group('assemble options')
     parser.add_argument('--assemble_spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,117,107,97,87,77', metavar='k1,k2,k3,...')
     parser.add_argument('--assemble_spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
+    parser.add_argument('--assemble_spades_no_careful', action='store_true', help='Run the SPAdes assembly without the --careful option, will not try to fix misassemblies')
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
@@ -145,6 +146,7 @@ def run():
         threads=options.threads,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
+        spades_no_careful=options.assemble_spades_no_careful,
         verbose=options.verbose
     )
     a.run()
@@ -177,6 +179,7 @@ def run():
         min_spades_circular_percent=options.merge_min_spades_circ_pc,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
+        spades_no_careful=options.assemble_spades_no_careful,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
         qry_end_tolerance=options.merge_reassemble_end,
