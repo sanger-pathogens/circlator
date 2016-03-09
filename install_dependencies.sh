@@ -8,13 +8,13 @@ BWA_VERSION=0.7.12
 PRODIGAL_VERSION=2.6.2
 SAMTOOLS_VERSION=1.3
 MUMMER_VERSION=3.23
-SPADES_VERSION=3.5.0
+SPADES_VERSION=3.6.0
 
 BWA_DOWNLOAD_URL="http://downloads.sourceforge.net/project/bio-bwa/bwa-${BWA_VERSION}.tar.bz2"
 PRODIGAL_DOWNLOAD_URL="https://github.com/hyattpd/Prodigal/releases/download/v${PRODIGAL_VERSION}/prodigal.linux"
 SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2"
 MUMMER_DOWNLOAD_URL="http://downloads.sourceforge.net/project/mummer/mummer/${MUMMER_VERSION}/MUMmer${MUMMER_VERSION}.tar.gz"
-SPADES_DOWNLOAD_URL="http://spades.bioinf.spbau.ru/release3.5.0/SPAdes-${SPADES_VERSION}-Linux.tar.gz"
+SPADES_DOWNLOAD_URL="http://spades.bioinf.spbau.ru/release${SPADES_VERSION}/SPAdes-${SPADES_VERSION}-Linux.tar.gz"
 
 
 # Make an install location
