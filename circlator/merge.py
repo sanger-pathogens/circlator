@@ -617,7 +617,8 @@ class Merger:
     def _index_fasta(self, infile):
         fai = infile + '.fai'
         if not os.path.exists(fai):
-            circlator.common.syscall('samtools faidx ' + infile, verbose=self.verbose)
+            samtools = circlator.external_progs.make_and_check_prog('samtools')
+            circlator.common.syscall(samtools.exe() + ' faidx ' + infile, verbose=self.verbose)
 
 
     def _write_act_files(self, ref_fasta, qry_fasta, coords_file, outprefix):
