@@ -13,6 +13,8 @@ class Assembler:
       outdir,
       threads=1,
       spades_kmers=None,
+      careful=True,
+      only_assembler=True,
       verbose=False,
       spades_use_first_success=False,
     ):
@@ -23,6 +25,8 @@ class Assembler:
 
         self.verbose = verbose
         self.threads = threads
+        self.careful = careful
+        self.only_assembler = only_assembler
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
         self.spades_kmers = self._build_spades_kmers(spades_kmers)
         self.spades_use_first_success = spades_use_first_success
@@ -45,17 +49,26 @@ class Assembler:
             raise Error('Error getting list of kmers from:' + str(kmers))
 
 
-    def run_spades_once(self, kmer, outdir):
-        cmd = ' '.join([
+    def _make_spades_command(self, kmer, outdir):
+        cmd = [
             self.spades.exe(),
             '-s', self.reads,
-            '-k', str(kmer),
-            '--careful',
-            '--only-assembler',
-            '-t', str(self.threads),
             '-o', outdir,
-        ])
+            '-t', str(self.threads),
+            '-k', str(kmer),
+        ]
 
+        if self.careful:
+            cmd.append('--careful')
+
+        if self.only_assembler:
+            cmd.append('--only-assembler')
+
+        return ' '.join(cmd)
+
+
+    def run_spades_once(self, kmer, outdir):
+        cmd = self._make_spades_command(kmer, outdir)
         return common.syscall(cmd, verbose=self.verbose, allow_fail=True)
 
 

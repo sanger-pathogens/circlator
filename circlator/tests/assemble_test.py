@@ -38,3 +38,26 @@ class TestAssemble(unittest.TestCase):
         with self.assertRaises(assemble.Error):
             self.assembler._build_spades_kmers('41,spam')
 
+
+    def test_make_spades_command(self):
+        '''test _make_spades_command'''
+        cmd_start = ' '.join([
+            self.assembler.spades.exe(),
+            '-s', os.path.join(data_dir, 'assemble_test.dummy_reads.fa'),
+        ])
+
+        self.assertEqual(cmd_start + ' -o out -t 1 -k 41 --careful --only-assembler', self.assembler._make_spades_command(41, 'out'))
+        self.assertEqual(cmd_start + ' -o out -t 1 -k 43 --careful --only-assembler', self.assembler._make_spades_command(43, 'out'))
+        self.assertEqual(cmd_start + ' -o out2 -t 1 -k 41 --careful --only-assembler', self.assembler._make_spades_command(41, 'out2'))
+
+        self.assembler.careful = False
+        self.assertEqual(cmd_start + ' -o out -t 1 -k 41 --only-assembler', self.assembler._make_spades_command(41, 'out'))
+        self.assembler.careful = True
+
+        self.assembler.only_assembler = False
+        self.assertEqual(cmd_start + ' -o out -t 1 -k 41 --careful', self.assembler._make_spades_command(41, 'out'))
+        self.assembler.only_assembler = True
+
+        self.assembler.threads = 2
+        self.assertEqual(cmd_start + ' -o out -t 2 -k 41 --careful --only-assembler', self.assembler._make_spades_command(41, 'out'))
+
