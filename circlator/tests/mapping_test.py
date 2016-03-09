@@ -1,4 +1,5 @@
 import unittest
+import copy
 import filecmp
 import os
 import pysam
@@ -70,5 +71,18 @@ class TestMapping(unittest.TestCase):
 
     def test_aligned_read_to_read(self):
         '''test aligned_read_to_read'''
-        # FIXME
-        pass
+        infile = os.path.join(data_dir, 'mapping_test_aligned_read_to_read.bam')
+        sam_reader = pysam.Samfile(infile, "rb")
+        aln1, aln2 = [x for x in sam_reader.fetch()]
+        read1_fq = pyfastaq.sequences.Fastq('read1', 'TGTGTAACACTCCACCTCTGGTTCCCAGAGTTCGGTATCCGGCCGATACTTGAGGATAGC', 'IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIGHFEDCBA')
+        read1_fa = pyfastaq.sequences.Fasta('read1', 'TGTGTAACACTCCACCTCTGGTTCCCAGAGTTCGGTATCCGGCCGATACTTGAGGATAGC')
+        self.assertEqual(read1_fq, mapping.aligned_read_to_read(aln1))
+        self.assertEqual(read1_fq, mapping.aligned_read_to_read(aln1, revcomp=False))
+        self.assertEqual(read1_fa, mapping.aligned_read_to_read(aln1, ignore_quality=True))
+
+        read2 = pyfastaq.sequences.Fastq('read2', 'GATCGTCACGAAAGAACCAAGCCGGATCGTGGGAGGGGTACAACTCAGGTGAATTAACGT', 'HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHGFEDC')
+        read2_rev = copy.copy(read2)
+        read2_rev.revcomp()
+        self.assertEqual(read2, mapping.aligned_read_to_read(aln2))
+        self.assertEqual(read2_rev, mapping.aligned_read_to_read(aln2, revcomp=False))
+
