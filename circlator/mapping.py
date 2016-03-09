@@ -15,7 +15,10 @@ index_extensions = [
 ]
 
 
-def bwa_index(infile, outprefix=None, bwa='bwa', verbose=False):
+def bwa_index(infile, outprefix=None, bwa=None, verbose=False):
+    if bwa is None:
+        bwa = external_progs.make_and_check_prog('bwa', verbose=verbose)
+
     if outprefix is None:
         outprefix = infile
 
@@ -24,7 +27,7 @@ def bwa_index(infile, outprefix=None, bwa='bwa', verbose=False):
         return
 
     cmd = ' '.join([
-        bwa,  'index',
+        bwa.exe(),  'index',
         '-p', outprefix,
         infile
     ])
@@ -53,7 +56,7 @@ def bwa_mem(
     bwa = external_progs.make_and_check_prog('bwa', verbose=verbose)
     unsorted_bam = outfile + '.tmp.unsorted.bam'
     tmp_index = outfile + '.tmp.bwa_index'
-    bwa_index(ref, outprefix=tmp_index, verbose=verbose, bwa=bwa.exe())
+    bwa_index(ref, outprefix=tmp_index, verbose=verbose, bwa=bwa)
 
     cmd = ' '.join([
         bwa.exe(), 'mem',
@@ -76,12 +79,13 @@ def bwa_mem(
     thread_mem = int(500 / threads)
 
     # here we have to check for the version of samtools, starting from 1.3 the
-    # -o flag is used for specifying the samtools sort output-file
-    # Starting from 1.2 you can use the -o flag
+    # -o flag is used for specifying the samtools sort output-file.
+    # Starting from 1.2 you can use the -o flag, but can't have
+    # -o out.bam at the end of the call, so use new style from 1.3 onwards.
 
     outparam = ''
 
-    if samtools.version_at_least('1.2'):
+    if samtools.version_at_least('1.3'):
         outparam = '-o'
         samout = outfile
     else:
