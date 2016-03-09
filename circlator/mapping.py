@@ -79,12 +79,13 @@ def bwa_mem(
     thread_mem = int(500 / threads)
 
     # here we have to check for the version of samtools, starting from 1.3 the
-    # -o flag is used for specifying the samtools sort output-file
-    # Starting from 1.2 you can use the -o flag
+    # -o flag is used for specifying the samtools sort output-file.
+    # Starting from 1.2 you can use the -o flag, but can't have
+    # -o out.bam at the end of the call, so use style from 1.3 onwards.
 
     outparam = ''
 
-    if samtools.version_at_least('1.2'):
+    if samtools.version_at_least('1.3'):
         outparam = '-o'
         samout = outfile
     else:
