@@ -81,7 +81,7 @@ def bwa_mem(
     # here we have to check for the version of samtools, starting from 1.3 the
     # -o flag is used for specifying the samtools sort output-file.
     # Starting from 1.2 you can use the -o flag, but can't have
-    # -o out.bam at the end of the call, so use style from 1.3 onwards.
+    # -o out.bam at the end of the call, so use new style from 1.3 onwards.
 
     outparam = ''
 
