@@ -20,7 +20,7 @@ setup(
     install_requires=[
         'openpyxl',
         'pyfastaq >= 3.10.0',
-        'pysam >= 0.8.1',
+        'pysam >= 0.8.1, <= 0.8.3',
         'pymummer>=0.6.1',
         'bio_assembly_refinement>=0.5.0',
     ],
