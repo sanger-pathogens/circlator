@@ -1,6 +1,7 @@
 import unittest
 import filecmp
 import os
+import pysam
 import pyfastaq
 from circlator import mapping
 
@@ -39,8 +40,32 @@ class TestMapping(unittest.TestCase):
 
     def test_bwa_mem(self):
         '''test bwa_mem'''
-        # FIXME
-        pass
+        ref = os.path.join(data_dir, 'mapping_test_bwa_mem.ref.fa')
+        reads = os.path.join(data_dir, 'mapping_test_bwa_mem.reads.fq')
+        outfile = 'tmp.mapping_test_bwa_mem.bam'
+        mapping.bwa_mem(ref, reads, outfile)
+        self.assertTrue(os.path.exists(outfile))
+        self.assertTrue(os.path.exists(outfile + '.bai'))
+
+        expected_reads = [
+            '1:2:49:172',
+            '1:1:113:235',
+            '1:3:205:315',
+            '2:5:27:142',
+            '2:4:101:224',
+            '2:6:214:330',
+        ]
+
+        sam_reader = pysam.Samfile(outfile, "rb")
+        got_reads = []
+
+        for read in sam_reader.fetch():
+            got_reads.append(read.qname)
+            self.assertFalse(read.is_unmapped)
+
+        self.assertEqual(expected_reads, got_reads)
+        os.unlink(outfile)
+        os.unlink(outfile + '.bai')
 
 
     def test_aligned_read_to_read(self):
