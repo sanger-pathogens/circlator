@@ -15,6 +15,7 @@ class Assembler:
       spades_kmers=None,
       verbose=False,
       spades_use_first_success=False,
+      spades_no_careful=False,
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -26,6 +27,7 @@ class Assembler:
         self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
         self.spades_kmers = self._build_spades_kmers(spades_kmers)
         self.spades_use_first_success = spades_use_first_success
+        self.spades_no_careful = spades_no_careful
         self.samtools = external_progs.make_and_check_prog('samtools', verbose=self.verbose)
         self.assembler = 'spades'
 
@@ -45,12 +47,18 @@ class Assembler:
             raise Error('Error getting list of kmers from:' + str(kmers))
 
 
-    def run_spades_once(self, kmer, outdir):
+    def run_spades_once(self, kmer, outdir,spades_no_careful):
+
+        if spades_no_careful:
+            careful = ''
+        else:
+            careful = '--careful'
+
         cmd = ' '.join([
             self.spades.exe(),
             '-s', self.reads,
             '-k', str(kmer),
-            '--careful',
+            careful,
             '--only-assembler',
             '-t', str(self.threads),
             '-o', outdir,
@@ -59,7 +67,7 @@ class Assembler:
         return common.syscall(cmd, verbose=self.verbose, allow_fail=True)
 
 
-    def run_spades(self, stop_at_first_success=False):
+    def run_spades(self, stop_at_first_success=False,spades_no_careful=False):
         '''Runs spades on all kmers. Each a separate run because SPAdes dies if any kmer does
            not work. Chooses the 'best' assembly to be the one with the biggest N50'''
         n50 = {}
@@ -68,7 +76,7 @@ class Assembler:
         for k in self.spades_kmers:
             tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.spades.' + str(k) + '.', dir=os.getcwd())
             kmer_to_dir[k] = tmpdir
-            ok, errs = self.run_spades_once(k, tmpdir)
+            ok, errs = self.run_spades_once(k, tmpdir,spades_no_careful)
             if ok:
                 contigs_fasta = os.path.join(tmpdir, 'contigs.fasta')
                 contigs_fai = contigs_fasta + '.fai'
@@ -104,9 +112,8 @@ class Assembler:
         else:
             raise Error('Error running SPAdes. Output directories are:\n  ' + '\n  '.join(kmer_to_dir.values()) + '\nThe reason why should be in the spades.log file in each directory.')
 
-
     def run(self):
         if self.assembler == 'spades':
-            self.run_spades(stop_at_first_success=self.spades_use_first_success)
+            self.run_spades(stop_at_first_success=self.spades_use_first_success,spades_no_careful=self.spades_no_careful)
         else:
             raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
