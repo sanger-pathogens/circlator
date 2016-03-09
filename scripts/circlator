@@ -14,6 +14,7 @@ tasks = {
     'fixstart': 'Change start position of circular sequences',
     'minimus2': 'Run the minimus2 based circularisation pipeline',
     'get_dnaa': 'Download file of dnaA (or other of user\'s choice) genes',
+    'test': 'Run Circlator on a small test set',
     'version': 'Print version and exit',
 }
 
@@ -29,6 +30,7 @@ ordered_tasks = [
     'minimus2',
     'get_dnaa',
     'progcheck',
+    'test',
     'version'
 ]
 
