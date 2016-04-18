@@ -27,7 +27,7 @@ prog_to_version_cmd = {
     'nucmer': ('--version', re.compile('^NUCmer \(NUCleotide MUMmer\) version ([0-9\.]+)')),
     'prodigal': ('-v', re.compile('^Prodigal V([0-9\.]+):')),
     'samtools': ('', re.compile('^Version: ([0-9\.]+)')),
-    'spades': ('', re.compile('^SPAdes genome assembler v.([0-9\.]+)')),
+    'spades': ('', re.compile('^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
 }
 
 
