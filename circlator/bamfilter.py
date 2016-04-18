@@ -16,6 +16,7 @@ class BamFilter:
              contigs_to_use=None,
              discard_unmapped=False,
              log_prefix='[bamfilter]',
+             verbose=False,
     ):
         self.bam = os.path.abspath(bam)
         if not os.path.exists(self.bam):
@@ -28,6 +29,7 @@ class BamFilter:
         self.contigs_to_use = self._get_contigs_to_use(contigs_to_use)
         self.discard_unmapped = discard_unmapped
         self.min_read_length = min_read_length
+        self.verbose = verbose
 
 
     def _get_ref_lengths(self):
@@ -141,32 +143,48 @@ class BamFilter:
         f_log = pyfastaq.utils.open_file_write(self.log)
         f_fa = pyfastaq.utils.open_file_write(self.reads_fa)
         print(self.log_prefix, '#contig', 'length', 'reads_kept', sep='\t', file=f_log)
+        if self.verbose:
+            print('Getting reads from BAM file', self.bam, flush=True)
 
         for contig in sorted(ref_lengths):
             if len(self.contigs_to_use) > 0 and contig not in self.contigs_to_use:
                 print(self.log_prefix, contig, ref_lengths[contig], 'skipping', sep='\t', file=f_log)
+                if self.verbose:
+                    print('Skipping contig', contig, flush=True)
                 continue
 
             if ref_lengths[contig] <= self.length_cutoff:
                 self._all_reads_from_contig(contig, f_fa)
                 print(self.log_prefix, contig, ref_lengths[contig], 'all', sep='\t', file=f_log)
+                if self.verbose:
+                    print('Getting all reads that map to contig', contig, flush=True)
             else:
                 end_bases_keep = int(0.5 * self.length_cutoff)
                 start = end_bases_keep - 1
                 end = max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
                 self._get_region(contig, 0, start, f_fa, min_length=self.min_read_length)
                 self._get_region(contig, end, ref_lengths[contig], f_fa, min_length=self.min_read_length)
+                coords_string = '1-' + str(start + 1) +  ';' + str(end + 1) + '-' + str(ref_lengths[contig])
                 print(
                     self.log_prefix,
                     contig,
                     ref_lengths[contig],
-                    '1-' + str(start + 1) +  ';' + str(end + 1) + '-' + str(ref_lengths[contig]),
+                    coords_string,
                     sep='\t',
                     file=f_log
                 )
+                if self.verbose:
+                    print('Getting all reads that map to ends of contig ', contig, '. Coords: ', coords_string, sep='', flush=True)
 
         if not self.discard_unmapped:
+            if self.verbose:
+                print('Getting all unmapped reads', sep='', flush=True)
             self._get_all_unmapped_reads(f_fa)
 
         pyfastaq.utils.close(f_fa)
         pyfastaq.utils.close(f_log)
+
+        if self.verbose:
+            print('Finished getting reads.')
+            print('Log file:', self.log)
+            print('Reads file:', self.reads_fa, flush=True)
