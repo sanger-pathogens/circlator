@@ -64,7 +64,11 @@ def run():
     options = parser.parse_args()
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
-    circlator.versions.get_all_versions(sys.stdout)
+    if options.verbose:
+        circlator.versions.get_all_versions(sys.stdout, raise_error=True)
+    else:
+        circlator.versions.get_all_versions(None, raise_error=True)
+
 
     files_to_check = [options.assembly, options.reads]
     if options.b2r_only_contigs:
