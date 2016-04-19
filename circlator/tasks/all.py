@@ -18,6 +18,7 @@ def run():
         usage = 'circlator all [options] <assembly.fasta> <reads.fasta> <output directory>')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
+    parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA file', metavar='reads.fasta')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
@@ -63,7 +64,11 @@ def run():
     options = parser.parse_args()
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
-    circlator.versions.get_all_versions(sys.stdout)
+    if options.verbose:
+        circlator.versions.get_all_versions(sys.stdout, raise_error=True)
+    else:
+        circlator.versions.get_all_versions(None, raise_error=True)
+
 
     files_to_check = [options.assembly, options.reads]
     if options.b2r_only_contigs:
@@ -135,6 +140,7 @@ def run():
         min_read_length=options.b2r_min_read_length,
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
+        verbose=options.verbose,
     )
     bam_filter.run()
 
@@ -248,5 +254,18 @@ def run():
     )
     fixer.run()
 
+    #-------------------------------- summary -------------------------------
+    print_message('{:_^79}'.format(' Summary '), options)
+    number_of_input_contigs = pyfastaq.tasks.count_sequences(original_assembly_renamed)
+    final_number_of_contigs = pyfastaq.tasks.count_sequences(fixstart_fasta)
+    number_circularized = len(contigs_to_keep)
+    print_message('Number of input contigs: ' + str(number_of_input_contigs), options)
+    print_message('Number of contigs after merging: ' + str(final_number_of_contigs), options)
+    print_message(' '.join(['Circularized', str(number_circularized), 'of', str(final_number_of_contigs), 'contig(s)']), options)
+
     with open(fixstart_prefix + '.ALL_FINISHED', 'w') as f:
         pass
+
+    if number_of_input_contigs == final_number_of_contigs and number_circularized == 0:
+        sys.exit(options.unchanged_code)
+

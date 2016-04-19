@@ -7,4 +7,4 @@ def run():
         description = 'Checks all dependencies are found and are correct versions',
         usage = 'circlator progcheck')
     options = parser.parse_args()
-    versions.get_all_versions(sys.stdout)
+    versions.get_all_versions(sys.stdout, raise_error=False)
