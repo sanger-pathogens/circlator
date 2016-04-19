@@ -1,0 +1,30 @@
+import sys
+import bio_assembly_refinement
+import openpyxl
+import pyfastaq
+import pymummer
+import pysam
+from circlator import external_progs, __version__
+from circlator import __version__ as circlator_version
+
+
+def get_all_versions(filehandle):
+    print('Circlator version:', circlator_version, file=filehandle)
+
+    print('\nExternal dependencies:', file=filehandle)
+    external_progs.check_all_progs(verbose=False, raise_error=False, filehandle=filehandle)
+
+    print('\nPython version:', file=filehandle)
+    print(sys.version, file=filehandle)
+
+    print('\nPython dependencies:', file=filehandle)
+    for module in ['bio_assembly_refinement', 'openpyxl', 'pyfastaq', 'pymummer', 'pysam']:
+        try:
+            version = eval(module + '.__version__')
+            path = eval(module + '.__file__')
+        except:
+            version = 'NOT_FOUND'
+            path = 'NOT_FOUND'
+
+        print(module + '\t' + version + '\t' + path, file=filehandle)
+

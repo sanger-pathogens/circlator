@@ -4,8 +4,6 @@ import subprocess
 
 class Error (Exception): pass
 
-version = '1.2.0'
-
 def syscall(cmd, allow_fail=False, verbose=False):
     if verbose:
         print('syscall:', cmd, flush=True)

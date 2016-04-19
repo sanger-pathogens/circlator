@@ -1,6 +1,7 @@
 import re
 import sys
 from circlator import program, common
+from circlator import __version__ as circlator_version
 import shutil
 import pyfastaq
 
@@ -94,17 +95,14 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         return p
 
     if verbose:
-        print('Using', name, 'version', p.version(), 'as', p.full_path)
+        print(name, p.version(), p.full_path, sep='\t')
 
     if filehandle:
-        print('Using', name, 'version', p.version(), 'as', p.full_path, file=filehandle)
+        print(name, p.version(), p.full_path, sep='\t', file=filehandle)
 
     return p
 
 
 def check_all_progs(verbose=False, raise_error=False, filehandle=None):
-    if filehandle is not None:
-        print(sys.argv[0], 'version', common.version, file=filehandle)
-
     for prog in sorted(prog_name_to_default):
         make_and_check_prog(prog, verbose=verbose, raise_error=raise_error, filehandle=filehandle)
