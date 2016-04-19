@@ -248,5 +248,13 @@ def run():
     )
     fixer.run()
 
+    #-------------------------------- summary -------------------------------
+    print_message('{:_^79}'.format(' Summary '), options)
+    number_of_input_contigs = pyfastaq.tasks.count_sequences(original_assembly_renamed)
+    final_number_of_contigs = pyfastaq.tasks.count_sequences(fixstart_fasta)
+    print_message('Number of input contigs: ' + str(number_of_input_contigs), options)
+    print_message('Number of contigs after merging: ' + str(final_number_of_contigs), options)
+    print_message(' '.join(['Circularized', str(len(contigs_to_keep)), 'of', str(final_number_of_contigs), 'contig(s)']), options)
+
     with open(fixstart_prefix + '.ALL_FINISHED', 'w') as f:
         pass
