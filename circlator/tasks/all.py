@@ -140,6 +140,7 @@ def run():
         min_read_length=options.b2r_min_read_length,
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
+        verbose=options.verbose,
     )
     bam_filter.run()
 
