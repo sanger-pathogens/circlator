@@ -39,9 +39,29 @@ class StartFixer:
                 self.ignore = {x.rstrip().split()[0] for x in f}
 
 
-
-    @staticmethod
-    def _max_length_from_fasta_file(infile):
+    @classmethod
+    def _max_length_from_fasta_file(cls, infile):
         freader = pyfastaq.sequences.file_reader(infile)
         return max([len(x) for x in freader])
+
+
+    @classmethod
+    def _write_fasta_plus_circularized_ends(cls, contigs, outfile, end_length):
+        f = pyfastaq.utils.open_file_write(outfile)
+        used_names = set(contigs.keys())
+
+        for contig_name, contig in sorted(contigs.items()):
+            print(contig, file=f)
+
+            if len(contig) >= 2 * end_length:
+                start_coord = end_length - 1
+                end_coord = len(contig) - end_length
+                new_name = contig.id + '__ends'
+                assert new_name not in used_names
+                used_names.add(new_name)
+                new_contig = pyfastaq.sequences.Fasta(new_name, contig[end_coord:] + contig[:start_coord + 1])
+                print(new_contig, file=f)
+
+        pyfastaq.utils.close(f)
+
 

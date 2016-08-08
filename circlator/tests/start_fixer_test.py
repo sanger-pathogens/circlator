@@ -40,3 +40,14 @@ class TestStartFixer(unittest.TestCase):
         infile = os.path.join(data_dir, 'start_fixer_max_length_from_fasta_file.fa')
         self.assertEqual(11, start_fixer.StartFixer._max_length_from_fasta_file(infile))
 
+
+    def test_write_fasta_plus_circularized_ends(self):
+        '''Test _write_fasta_plus_circularized_ends'''
+        infile = os.path.join(data_dir, 'start_fixer_write_fasta_plus_circularized_ends.in.fa')
+        expected = os.path.join(data_dir, 'start_fixer_write_fasta_plus_circularized_ends.out.fa')
+        tmp_out = 'tmp.test_write_fasta_plus_circularized_ends.fa'
+        contigs = {}
+        pyfastaq.tasks.file_to_dict(infile, contigs)
+        start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5)
+        self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
+
