@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import pyfastaq
+import pymummer
 import circlator
 
 class Error (Exception): pass
@@ -46,11 +47,17 @@ class StartFixer:
 
 
     @classmethod
-    def _write_fasta_plus_circularized_ends(cls, contigs, outfile, end_length):
+    def _write_fasta_plus_circularized_ends(cls, contigs, outfile, end_length, ignore=None):
+        if ignore is None:
+            ignore = set()
+
         f = pyfastaq.utils.open_file_write(outfile)
         used_names = set(contigs.keys())
 
         for contig_name, contig in sorted(contigs.items()):
+            if contig_name in ignore:
+                continue
+
             print(contig, file=f)
 
             if len(contig) >= 2 * end_length:
@@ -63,5 +70,4 @@ class StartFixer:
                 print(new_contig, file=f)
 
         pyfastaq.utils.close(f)
-
 
