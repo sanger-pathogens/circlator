@@ -33,3 +33,10 @@ class TestStartFixer(unittest.TestCase):
         ignore_file = os.path.join(data_dir, 'start_fixer_init_ignore_ids')
         sfixer = start_fixer.StartFixer(contigs_fa, 'outprefix', ignore=ignore_file)
         self.assertEqual({'ignore_me1', 'ignore_me2'}, sfixer.ignore)
+
+
+    def test_max_length_from_fasta_file(self):
+        '''Test _max_length_from_fasta_file'''
+        infile = os.path.join(data_dir, 'start_fixer_max_length_from_fasta_file.fa')
+        self.assertEqual(11, start_fixer.StartFixer._max_length_from_fasta_file(infile))
+

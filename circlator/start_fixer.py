@@ -39,3 +39,9 @@ class StartFixer:
                 self.ignore = {x.rstrip().split()[0] for x in f}
 
 
+
+    @staticmethod
+    def _max_length_from_fasta_file(infile):
+        freader = pyfastaq.sequences.file_reader(infile)
+        return max([len(x) for x in freader])
+
