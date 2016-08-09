@@ -14,11 +14,11 @@ __all__ = [
     'common',
     'dnaa',
     'external_progs',
-    'fixstart',
     'mapping',
     'merge',
     'minimus2',
     'program',
+    'start_fixer',
     'tasks',
     'versions',
 ]
