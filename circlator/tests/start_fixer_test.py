@@ -88,7 +88,7 @@ class TestStartFixer(unittest.TestCase):
         circular_from_promer = {'ctg3'}
         got = start_fixer.StartFixer._find_circular_using_prodigal(outprefix, contigs_dict, circular_from_promer, sys.stdout)
         expected = {
-            'ctg1': 'ctg1\tProdigal_v2.60\tCDS\t2429\t2689\t3.3\t-\t0\tID=1_2;partial=00;start_type=ATG;rbs_motif=TAA;rbs_spacer=15bp;gc_cont=0.517;conf=67.99;score=3.28;cscore=-0.50;sscore=3.78;rscore=3.23;uscore=-3.07;tscore=4.12;'
+            'ctg1': 'ctg1\tProdigal_v2.60\tCDS\t841\t2244\t103.8\t+\t0\tID=1_1;partial=00;start_type=ATG;rbs_motif=TAAAA;rbs_spacer=4bp;gc_cont=0.486;conf=100.00;score=103.84;cscore=95.60;sscore=8.24;rscore=4.24;uscore=-0.13;tscore=4.12;'
         }
         self.assertEqual(expected, got)
         os.unlink(outprefix + '.for_prodigal.fa')
