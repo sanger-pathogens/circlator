@@ -56,6 +56,20 @@ class TestStartFixer(unittest.TestCase):
             start_fixer.StartFixer._rename_contigs(contigs_in)
 
 
+    def test_write_renamed_contigs(self):
+        '''Test _write_renamed_contigs'''
+        contigs_dict = {
+            'ctg1': pyfastaq.sequences.Fasta('ctg1', 'ACGT'),
+            'ctg2': pyfastaq.sequences.Fasta('ctg2', 'AAA'),
+        }
+        rename_dict = {'ctg1': 'ctg1', 'ctg2': 'ctg2 foo bar'}
+        tmp_out = 'tmp.test_write_renamed_contigs.fa'
+        start_fixer.StartFixer._write_renamed_contigs(contigs_dict, rename_dict, tmp_out)
+        expected = os.path.join(data_dir, 'start_fixer_write_renamed_contigs.fa')
+        self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
+        os.unlink(tmp_out)
+
+
     def test_max_length_from_fasta_file(self):
         '''Test _max_length_from_fasta_file'''
         infile = os.path.join(data_dir, 'start_fixer_max_length_from_fasta_file.fa')

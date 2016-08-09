@@ -41,8 +41,6 @@ class StartFixer:
             with open(ignore) as f:
                 self.ignore = {x.rstrip().split()[0] for x in f}
 
-        self.contigs_fa_with_ends = self.outprefix + '.contigs_plus_ends.fa'
-
 
     @classmethod
     def _rename_contigs(cls, contigs_dict):
@@ -56,6 +54,17 @@ class StartFixer:
             new_contigs_dict[new_name] = pyfastaq.sequences.Fasta(new_name, contig.seq)
 
         return new_contigs_dict, rename_dict
+
+
+    @classmethod
+    def _write_renamed_contigs(cls, contigs_dict, rename_dict, outfile):
+        f = pyfastaq.utils.open_file_write(outfile)
+
+        for old_name, contig in sorted(contigs_dict.items()):
+            contig.id = rename_dict[old_name]
+            print(contig, file=f)
+
+        pyfastaq.utils.close(f)
 
 
     @classmethod
