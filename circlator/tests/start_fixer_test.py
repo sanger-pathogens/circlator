@@ -170,3 +170,53 @@ class TestStartFixer(unittest.TestCase):
         os.unlink(tmp_outprefix + '.prodigal.gff')
         os.unlink(tmp_outprefix + '.promer')
         os.unlink(tmp_log)
+
+
+    def test_run_ignore_all(self):
+        '''test run when ignoring all sequences'''
+        tmp_prefix = 'tmp.start_fixer.test_run_when_ignoring_all'
+        input_fa = os.path.join(data_dir, 'start_fixer_run_ignore_all.fa')
+        to_ignore = os.path.join(data_dir, 'start_fixer_run_ignore_all.to_ignore')
+        sfixer = start_fixer.StartFixer(input_fa, tmp_prefix, ignore=to_ignore)
+        sfixer.run()
+        expected_fa = os.path.join(data_dir, 'start_fixer_run_ignore_all.expect.fa')
+        self.assertTrue(filecmp.cmp(expected_fa, tmp_prefix + '.fasta'))
+        for suffix in ['detailed.log', 'fasta', 'log', 'promer.contigs_with_ends.fa', 'promer.promer']:
+            try:
+                os.unlink(tmp_prefix + '.' + suffix)
+            except:
+                pass
+
+
+    def test_run_none_for_prodigal(self):
+        '''test run when everthing sorted by promer'''
+        tmp_prefix = 'tmp.start_fixer.test_run_none_for_prodigal'
+        input_ctg = os.path.join(data_dir, 'start_fixer_run_none_for_prodigal.ctg.fa')
+        input_ref = os.path.join(data_dir, 'start_fixer_run_none_for_prodigal.ref.fa')
+        sfixer = start_fixer.StartFixer(input_ctg, tmp_prefix, genes_fa=input_ref)
+        sfixer.run()
+        expected_fa = os.path.join(data_dir, 'start_fixer_run_none_for_prodigal.expect.fa')
+        self.assertTrue(filecmp.cmp(expected_fa, tmp_prefix + '.fasta'))
+        for suffix in ['detailed.log', 'fasta', 'log', 'promer.contigs_with_ends.fa', 'promer.promer']:
+            try:
+                os.unlink(tmp_prefix + '.' + suffix)
+            except:
+                pass
+
+
+    def test_run_bit_of_everything(self):
+        '''test run with promer, prodigal, and ignoring a sequence'''
+        tmp_prefix = 'tmp.start_fixer.test_run_bit_of_everything'
+        input_ctg = os.path.join(data_dir, 'start_fixer_run_bit_of_everything.ctg.fa')
+        input_ref = os.path.join(data_dir, 'start_fixer_run_bit_of_everything.ref.fa')
+        input_ignore = os.path.join(data_dir, 'start_fixer_run_bit_of_everything.ignore')
+        sfixer = start_fixer.StartFixer(input_ctg, tmp_prefix, genes_fa=input_ref, ignore=input_ignore)
+        sfixer.run()
+        expected_fa = os.path.join(data_dir, 'start_fixer_run_bit_of_everything.expect.fa')
+        self.assertTrue(filecmp.cmp(expected_fa, tmp_prefix + '.fasta'))
+
+        for suffix in ['detailed.log', 'fasta', 'log', 'promer.contigs_with_ends.fa', 'promer.promer', 'prodigal.for_prodigal.fa', 'prodigal.prodigal.gff']:
+            try:
+                os.unlink(tmp_prefix + '.' + suffix)
+            except:
+                pass

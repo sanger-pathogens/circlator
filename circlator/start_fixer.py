@@ -34,6 +34,7 @@ class StartFixer:
 
         self.min_percent_identity = min_percent_identity
         self.outprefix = os.path.abspath(outprefix)
+        self.verbose = verbose
 
         if ignore is None:
             self.ignore = set()
@@ -114,6 +115,7 @@ class StartFixer:
         contigs_with_ends = outprefix + '.contigs_with_ends.fa'
         sequences_written = StartFixer._write_fasta_plus_circularized_ends(contigs_dict, contigs_with_ends, end_length, ignore=ignore)
         if sequences_written == 0:
+            print('No sequences to check with promer. Skipping', file=log_fh)
             return {}
 
         prunner = pymummer.nucmer.Runner(
@@ -156,6 +158,7 @@ class StartFixer:
             ignore = set()
 
         if len(contigs_dict) == len(circular_from_promer) + len(ignore):
+            print('No sequences left for which to look for genes using prodigal. Skipping', file=log_fh)
             return {}
 
         prodigal = circlator.external_progs.make_and_check_prog('prodigal')
@@ -279,3 +282,54 @@ class StartFixer:
             assert original_length == len(contig)
 
         pyfastaq.utils.close(log_fh)
+
+
+    def run(self):
+        renamed_contigs, contig_rename_dict = StartFixer._rename_contigs(self.input_assembly)
+        if self.verbose:
+            print('[fixstart] loaded input contigs', flush=True)
+
+        end_extend = StartFixer._max_length_from_fasta_file(self.genes_fa)
+        log_fh = pyfastaq.utils.open_file_write(self.outprefix + '.detailed.log')
+
+        if self.verbose:
+            print('[fixstart] Running promer to look for reference genes', flush=True)
+        circ_with_promer = StartFixer._find_circular_using_promer(
+            self.outprefix + '.promer',
+            self.genes_fa,
+            renamed_contigs,
+            self.min_percent_identity,
+            end_extend,
+            log_fh,
+            ignore=self.ignore
+        )
+
+        if self.verbose:
+            print('[fixstart] Running prodigal on sequences that had no promer match', flush=True)
+        circ_with_prodigal = StartFixer._find_circular_using_prodigal(
+            self.outprefix + '.prodigal',
+            renamed_contigs,
+            circ_with_promer,
+            log_fh,
+            ignore=self.ignore)
+
+        if self.verbose:
+            print('[fixstart] Fixing start positions of contigs', flush=True)
+        StartFixer._rearrange_contigs(
+            renamed_contigs,
+            circ_with_promer,
+            circ_with_prodigal,
+            self.ignore,
+            end_extend,
+            self.outprefix + '.log'
+        )
+
+        pyfastaq.utils.close(log_fh)
+
+        if self.verbose:
+            print('[fixstart] Writing final FASTA file of contigs', flush=True)
+        StartFixer._write_renamed_contigs(
+            renamed_contigs,
+            contig_rename_dict,
+            self.outprefix + '.fasta'
+        )
