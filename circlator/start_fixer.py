@@ -89,7 +89,9 @@ class StartFixer:
             ignore = set()
         promer_out = outprefix + '.promer'
         contigs_with_ends = outprefix + '.contigs_with_ends.fa'
-        StartFixer._write_fasta_plus_circularized_ends(contigs_dict, contigs_with_ends, end_length, ignore=ignore)
+        sequences_written = StartFixer._write_fasta_plus_circularized_ends(contigs_dict, contigs_with_ends, end_length, ignore=ignore)
+        if sequences_written == 0:
+            return {}
 
         prunner = pymummer.nucmer.Runner(
             contigs_with_ends,

@@ -82,6 +82,8 @@ class TestStartFixer(unittest.TestCase):
         self.assertEqual(expected, got)
         os.unlink(tmp_outprefix + '.contigs_with_ends.fa')
         os.unlink(tmp_outprefix + '.promer')
+        got = start_fixer.StartFixer._find_circular_using_promer(tmp_outprefix, ref_genes_fa, contigs_dict, 70, end_extend, sys.stdout, ignore={x for x in contigs_dict})
+        self.assertEqual({}, got)
 
 
     def test_find_circular_using_prodigal(self):
