@@ -100,6 +100,8 @@ class TestStartFixer(unittest.TestCase):
         self.assertEqual(expected, got)
         os.unlink(outprefix + '.for_prodigal.fa')
         os.unlink(outprefix + '.prodigal.gff')
+        got = start_fixer.StartFixer._find_circular_using_prodigal(outprefix, contigs_dict, circular_from_promer, sys.stdout, ignore={'ctg1', 'ctg2'})
+        self.assertEqual({}, got)
 
 
     def test_rearrange_contigs(self):
