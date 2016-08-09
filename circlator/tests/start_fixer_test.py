@@ -94,3 +94,37 @@ class TestStartFixer(unittest.TestCase):
         os.unlink(outprefix + '.for_prodigal.fa')
         os.unlink(outprefix + '.prodigal.gff')
 
+
+    def test_rearrange_contigs(self):
+        '''test _rearrange_contigs'''
+        # try all the combinations of promer and prodigal and ignore. Also whether or not to
+        # reverse complement and DNAA spanning across start/end of contig
+        # promer_ctg1: has sp|P03004|DNAA_ECOLI starting at position 2000 on fwd strand
+        # promer_ctg2: has sp|P03004|DNAA_ECOLI_2 starting at position 3403 on reverse strand (=revcomp of promer_ctg1)
+        # promer_ctg3: has sp|P03004|DNAA_ECOLI starts at 4745, split over end/start of contig
+        # promer_ctg4: has sp|P03004|DNAA_ECOLI starts at 644, split over start/end of contig (=revcomp of promer_ctg3)
+        # ignore_ctg: same as promer_ctg1, but in the ignore set, so should be unchanged
+        # prodigal_ctg1: has a two genes, nearest to middle starts at 4529
+        # prodigal_ctg2: same as ctg1, but reverse complement, gene starts at 4862 on rev strand
+        contigs_infile = os.path.join(data_dir, 'start_fixer_rearrange_contigs.in.fa')
+        ref_genes_fa = os.path.join(data_dir, 'start_fixer_rearrange_contigs.refs.fa')
+        tmp_outprefix = 'tmp.test_rearrange_contigs'
+        tmp_log = tmp_outprefix + '.log'
+        contigs_dict = {}
+        pyfastaq.tasks.file_to_dict(contigs_infile, contigs_dict)
+        to_ignore = {'ignore_ctg'}
+        end_extend = start_fixer.StartFixer._max_length_from_fasta_file(ref_genes_fa)
+        circ_with_promer = start_fixer.StartFixer._find_circular_using_promer(tmp_outprefix, ref_genes_fa, contigs_dict, 70, end_extend, sys.stdout, ignore=to_ignore)
+        circ_with_prodigal = start_fixer.StartFixer._find_circular_using_prodigal(tmp_outprefix, contigs_dict, circ_with_promer, sys.stdout, ignore=to_ignore)
+        start_fixer.StartFixer._rearrange_contigs(contigs_dict, circ_with_promer, circ_with_prodigal, to_ignore, end_extend, tmp_log)
+        expected_log = os.path.join(data_dir, 'start_fixer_rearrange_contigs.expect.log')
+        self.assertTrue(filecmp.cmp(expected_log, tmp_log, shallow=False))
+        expected_dict = {}
+        expected_fa = os.path.join(data_dir, 'start_fixer_rearrange_contigs.expect.fa')
+        pyfastaq.tasks.file_to_dict(expected_fa, expected_dict)
+        self.assertEqual(expected_dict, contigs_dict)
+        os.unlink(tmp_outprefix + '.contigs_with_ends.fa')
+        os.unlink(tmp_outprefix + '.for_prodigal.fa')
+        os.unlink(tmp_outprefix + '.prodigal.gff')
+        os.unlink(tmp_outprefix + '.promer')
+        os.unlink(tmp_log)
