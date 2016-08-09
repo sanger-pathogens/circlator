@@ -22,7 +22,6 @@ setup(
         'pyfastaq >= 3.12.1',
         'pysam >= 0.8.1, <= 0.8.3',
         'pymummer>=0.7.1',
-        'bio_assembly_refinement>=0.5.1',
     ],
     license='GPLv3',
     classifiers=[
