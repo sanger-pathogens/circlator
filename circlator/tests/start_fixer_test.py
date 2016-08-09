@@ -51,11 +51,16 @@ class TestStartFixer(unittest.TestCase):
         tmp_out = 'tmp.test_write_fasta_plus_circularized_ends.fa'
         contigs = {}
         pyfastaq.tasks.file_to_dict(infile, contigs)
-        start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5)
+        got = start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5)
+        self.assertEqual(6, got)
         self.assertTrue(filecmp.cmp(expected, tmp_out, shallow=False))
-        start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5, ignore={'seq1', 'seq4'})
+        got = start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5, ignore={'seq1', 'seq4'})
+        self.assertEqual(3, got)
         self.assertTrue(filecmp.cmp(expected_ignore, tmp_out, shallow=False))
         os.unlink(tmp_out)
+        got = start_fixer.StartFixer._write_fasta_plus_circularized_ends(contigs, tmp_out, 5, ignore={'seq1', 'seq2', 'seq3', 'seq4'})
+        self.assertEqual(0, got)
+        self.assertFalse(os.path.exists(tmp_out))
 
 
     def test_find_circular_using_promer(self):

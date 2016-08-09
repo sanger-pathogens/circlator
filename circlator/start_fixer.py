@@ -55,14 +55,19 @@ class StartFixer:
         if ignore is None:
             ignore = set()
 
+        if len(ignore) == len(contigs):
+            return 0
+
         f = pyfastaq.utils.open_file_write(outfile)
         used_names = set(contigs.keys())
+        seqs_written = 0
 
         for contig_name, contig in sorted(contigs.items()):
             if contig_name in ignore:
                 continue
 
             print(contig, file=f)
+            seqs_written += 1
 
             if len(contig) >= 2 * end_length:
                 start_coord = end_length - 1
@@ -72,8 +77,10 @@ class StartFixer:
                 used_names.add(new_name)
                 new_contig = pyfastaq.sequences.Fasta(new_name, contig[end_coord:] + contig[:start_coord + 1])
                 print(new_contig, file=f)
+                seqs_written += 1
 
         pyfastaq.utils.close(f)
+        return seqs_written
 
 
     @classmethod
@@ -126,7 +133,6 @@ class StartFixer:
         if len(contigs_dict) == len(circular_from_promer) + len(ignore):
             return {}
 
-
         prodigal = circlator.external_progs.make_and_check_prog('prodigal')
         total_contig_length = 0
         prodigal_input_file = outprefix + '.for_prodigal.fa'
@@ -164,6 +170,7 @@ class StartFixer:
             for line in f:
                 if line.startswith('#'):
                     continue
+
                 contig, x, y, start, end, *z = line.rstrip().split('\t')
                 new_inter = pyfastaq.intervals.Interval(int(start), int(end))
                 new_dist = new_inter.distance_to_point(int(len(contigs_dict[contig])/2))
