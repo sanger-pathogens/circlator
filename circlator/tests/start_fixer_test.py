@@ -37,6 +37,25 @@ class TestStartFixer(unittest.TestCase):
         self.assertEqual({'ignore_me1', 'ignore_me2'}, sfixer.ignore)
 
 
+    def test_rename_contigs(self):
+        '''Test _rename_contigs'''
+        contigs_in = {
+            'ctg1': pyfastaq.sequences.Fasta('ctg1', 'ACGT'),
+            'ctg2 foo bar': pyfastaq.sequences.Fasta('ctg2 foo bar', 'AAA'),
+        }
+        expected_contigs = {
+            'ctg1': pyfastaq.sequences.Fasta('ctg1', 'ACGT'),
+            'ctg2': pyfastaq.sequences.Fasta('ctg2', 'AAA'),
+        }
+        expected_names = {'ctg1': 'ctg1', 'ctg2': 'ctg2 foo bar'}
+        got_contigs, got_names = start_fixer.StartFixer._rename_contigs(contigs_in)
+        self.assertEqual(expected_names, got_names)
+        self.assertEqual(expected_contigs, got_contigs)
+        contigs_in['ctg2 abc'] = pyfastaq.sequences.Fasta('ctg2 abc', 'AAA')
+        with self.assertRaises(start_fixer.Error):
+            start_fixer.StartFixer._rename_contigs(contigs_in)
+
+
     def test_max_length_from_fasta_file(self):
         '''Test _max_length_from_fasta_file'''
         infile = os.path.join(data_dir, 'start_fixer_max_length_from_fasta_file.fa')

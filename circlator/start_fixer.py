@@ -45,6 +45,20 @@ class StartFixer:
 
 
     @classmethod
+    def _rename_contigs(cls, contigs_dict):
+        rename_dict = {}
+        new_contigs_dict = {}
+        for old_name, contig in contigs_dict.items():
+            new_name = old_name.split()[0]
+            if new_name in rename_dict:
+                raise Error('Non-unique name "' + new_name + '" in input contigs. Cannot continue')
+            rename_dict[new_name] = old_name
+            new_contigs_dict[new_name] = pyfastaq.sequences.Fasta(new_name, contig.seq)
+
+        return new_contigs_dict, rename_dict
+
+
+    @classmethod
     def _max_length_from_fasta_file(cls, infile):
         freader = pyfastaq.sequences.file_reader(infile)
         return max([len(x) for x in freader])
