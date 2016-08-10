@@ -8,15 +8,6 @@ import pyfastaq
 class Error (Exception): pass
 
 
-# Travis is using python3.4, and actually "python" in travis means
-# python3.4, not python2. SPAdes throws an error about not being
-# compatible with python3.4.
-# This means we need to explicitly run SPAdes with python2.
-class Spades(program.Program):
-    def exe(self):
-        return 'python2 ' + shutil.which(self.path)
-
-
 prog_to_env_var = {
     'samtools': 'CIRCLATOR_SAMTOOLS',
     'spades': 'CIRCLATOR_SPADES',
@@ -37,7 +28,7 @@ min_versions = {
     'nucmer': '3.1',
     'prodigal': '2.6',
     'samtools': '0.1.19',
-    'spades': '3.5.0',
+    'spades': '3.6.2', # this is the first version to support python3
 }
 
 
@@ -55,11 +46,6 @@ prog_name_to_default = {
 }
 
 
-prog_builders = {
-    'spades': Spades
-}
-
-
 def handle_error(message, raise_error=True):
     if raise_error:
         raise Error(message + '\nCannot continue')
@@ -68,8 +54,7 @@ def handle_error(message, raise_error=True):
 
 
 def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
-    builder = prog_builders.get(name, program.Program)
-    p = builder(
+    p = program.Program(
         prog_name_to_default[name],
         prog_to_version_cmd[name][0],
         prog_to_version_cmd[name][1],
@@ -91,8 +76,11 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         return p
 
     if name == 'spades' and p.version() == bad_versions['spades']:
-        handle_error('ERROR! SPAdes version ' + bad_versions['spades'] + ' is incompatible with Circlator. Please update SPAdes to the latest version', raise_error=raise_error)
+        handle_error('ERROR! SPAdes version ' + bad_versions['spades'] + ' is incompatible with Circlator. Please use SPAdes 3.7.1', raise_error=raise_error)
         return p
+
+    if name == 'spades' and not p.version().startswith('3.7.'):
+        print('WARNING: SPAdes version', p.version(), 'is being used. It will work, but better results are usually obtained from Circlator using SPAdes version 3.7.1. Although 3.7.1 is not the latest version, we recommend it for Circlator.', file=sys.stderr)
 
     if verbose:
         print(name, p.version(), p.full_path, sep='\t')
