@@ -125,7 +125,7 @@ class TestStartFixer(unittest.TestCase):
         outprefix = 'tmp.test_find_circular_using_prodigal'
         contigs_dict = {}
         pyfastaq.tasks.file_to_dict(contigs_infile, contigs_dict)
-        circular_from_promer = {'ctg3'}
+        circular_from_promer = {'ctg3': 'foo'}
         got = start_fixer.StartFixer._find_circular_using_prodigal(outprefix, contigs_dict, circular_from_promer, sys.stdout)
         expected = {
             'ctg1': 'ctg1\tProdigal_v2.60\tCDS\t841\t2244\t103.8\t+\t0\tID=1_1;partial=00;start_type=ATG;rbs_motif=TAAAA;rbs_spacer=4bp;gc_cont=0.486;conf=100.00;score=103.84;cscore=95.60;sscore=8.24;rscore=4.24;uscore=-0.13;tscore=4.12;'

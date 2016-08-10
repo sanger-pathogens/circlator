@@ -79,7 +79,7 @@ class StartFixer:
         if ignore is None:
             ignore = set()
 
-        if len(ignore) == len(contigs):
+        if ignore.issuperset(set(contigs.keys())):
             return 0
 
         f = pyfastaq.utils.open_file_write(outfile)
@@ -157,7 +157,9 @@ class StartFixer:
         if ignore is None:
             ignore = set()
 
-        if len(contigs_dict) == len(circular_from_promer) + len(ignore):
+        all_to_ignore = copy.copy(ignore)
+        all_to_ignore.update(set(circular_from_promer.keys()))
+        if all_to_ignore.issuperset(set(contigs_dict.keys())):
             print('No sequences left for which to look for genes using prodigal. Skipping', file=log_fh)
             return {}
 
