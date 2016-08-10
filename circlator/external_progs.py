@@ -76,8 +76,11 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None):
         return p
 
     if name == 'spades' and p.version() == bad_versions['spades']:
-        handle_error('ERROR! SPAdes version ' + bad_versions['spades'] + ' is incompatible with Circlator. Please update SPAdes to the latest version', raise_error=raise_error)
+        handle_error('ERROR! SPAdes version ' + bad_versions['spades'] + ' is incompatible with Circlator. Please use SPAdes 3.7.1', raise_error=raise_error)
         return p
+
+    if name == 'spades' and not p.version().startswith('3.7.'):
+        print('WARNING: SPAdes version', p.version(), 'is being used. It will work, but better results are usually obtained from Circlator using SPAdes version 3.7.1', file=sys.stderr)
 
     if verbose:
         print(name, p.version(), p.full_path, sep='\t')
