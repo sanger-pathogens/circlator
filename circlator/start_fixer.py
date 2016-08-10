@@ -124,7 +124,7 @@ class StartFixer:
             promer_out,
             min_id=min_percent_id,
             promer=True,
-            verbose=True,
+            verbose=False,
             maxmatch=True,
         )
         prunner.run()
