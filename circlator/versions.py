@@ -1,5 +1,4 @@
 import sys
-import bio_assembly_refinement
 import openpyxl
 import pyfastaq
 import pymummer
@@ -22,7 +21,7 @@ def get_all_versions(filehandle, raise_error=True):
 
     found_bad_module = False
 
-    for module in ['bio_assembly_refinement', 'openpyxl', 'pyfastaq', 'pymummer', 'pysam']:
+    for module in ['openpyxl', 'pyfastaq', 'pymummer', 'pysam']:
         try:
             version = eval(module + '.__version__')
             path = eval(module + '.__file__')

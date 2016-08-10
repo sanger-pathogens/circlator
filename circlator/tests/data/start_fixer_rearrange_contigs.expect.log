@@ -1,0 +1,8 @@
+[fixstart]	id	break_point	gene_name	gene_reversed	new_name	skipped
+[fixstart]	ignore_ctg	-	-	-	-	skipped
+[fixstart]	prodigal_ctg1	4529	prodigal	no	-	-
+[fixstart]	prodigal_ctg2	4862	prodigal	yes	-	-
+[fixstart]	promer_ctg1	2000	sp|P03004|DNAA_ECOLI	no	-	-
+[fixstart]	promer_ctg2	3403	sp|P03004|DNAA_ECOLI_2	yes	-	-
+[fixstart]	promer_ctg3	4745	sp|P03004|DNAA_ECOLI	no	-	-
+[fixstart]	promer_ctg4	660	sp|P03004|DNAA_ECOLI	yes	-	-

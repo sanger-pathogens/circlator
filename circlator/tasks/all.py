@@ -245,12 +245,13 @@ def run():
 
     #-------------------------------- fixstart -------------------------------
     print_message('{:_^79}'.format(' Running fixstart '), options)
-    fixer = circlator.fixstart.StartFixer(
+    fixer = circlator.start_fixer.StartFixer(
         clean_fasta,
         fixstart_prefix,
         min_percent_identity=options.fixstart_min_id,
         genes_fa=options.genes_fa,
-        ignore=not_fix_start_file
+        ignore=not_fix_start_file,
+        verbose=options.verbose
     )
     fixer.run()
 
