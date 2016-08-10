@@ -18,6 +18,7 @@ def run():
         options.outprefix,
         min_percent_identity=options.min_id,
         genes_fa=options.genes_fa,
-        ignore=options.ignore
+        ignore=options.ignore,
+        verbose=options.verbose,
     )
     fixer.run()
