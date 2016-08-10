@@ -4,10 +4,6 @@ addons:
     packages:
     - zlib1g-dev
     - libncurses5-dev
-cache:
-  directories:
-  - "build"
-  - "$HOME/.cache/pip"
 python:
   - "3.4"
 sudo: false
