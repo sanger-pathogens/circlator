@@ -177,7 +177,7 @@ class StartFixer:
         if (total_contig_length < 20000):
             # prodigal needs -p meta option for sequences less than 20000
             # annoyingly newer version of prodigal has different -p option!
-            if LooseVersion(prodigal.version()) >= LooseVersion('3.0'):
+            if LooseVersion(prodigal.version) >= LooseVersion('3.0'):
                 p_option = "-p anon"
             else:
                 p_option = "-p meta"
