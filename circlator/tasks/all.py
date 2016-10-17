@@ -59,6 +59,7 @@ def run():
 
     fixstart_group = parser.add_argument_group('fixstart options')
     fixstart_group.add_argument('--genes_fa', help='FASTA file of genes to search for to use as start point. If this option is not used, a built-in set of dnaA genes is used', metavar='FILENAME')
+    fixstart_group.add_argument('--fixstart_mincluster', type=int, help='The -c|mincluster option of promer. If this option is used, it overrides promer\'s default value', metavar='INT')
     fixstart_group.add_argument('--fixstart_min_id', type=float, help='Minimum percent identity of promer match between contigs and gene(s) to use as start point [%(default)s]', default=70, metavar='FLOAT')
 
     options = parser.parse_args()
@@ -249,6 +250,7 @@ def run():
         clean_fasta,
         fixstart_prefix,
         min_percent_identity=options.fixstart_min_id,
+        promer_mincluster=options.fixstart_mincluster,
         genes_fa=options.genes_fa,
         ignore=not_fix_start_file,
         verbose=options.verbose

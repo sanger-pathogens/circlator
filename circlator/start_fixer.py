@@ -14,6 +14,7 @@ class StartFixer:
         input_assembly_fa,
         outprefix,
         min_percent_identity=70,
+        promer_mincluster=None,
         genes_fa=None,
         ignore=None,
         verbose=False,
@@ -33,6 +34,7 @@ class StartFixer:
         pyfastaq.tasks.file_to_dict(input_assembly_fa, self.input_assembly)
 
         self.min_percent_identity = min_percent_identity
+        self.promer_mincluster = promer_mincluster
         self.outprefix = os.path.abspath(outprefix)
         self.verbose = verbose
 
@@ -108,7 +110,7 @@ class StartFixer:
 
 
     @classmethod
-    def _find_circular_using_promer(cls, outprefix, ref_genes_fa, contigs_dict, min_percent_id, end_length, log_fh, ignore=None):
+    def _find_circular_using_promer(cls, outprefix, ref_genes_fa, contigs_dict, min_percent_id, end_length, log_fh, ignore=None, promer_mincluster=None):
         if ignore is None:
             ignore = set()
         promer_out = outprefix + '.promer'
@@ -126,6 +128,7 @@ class StartFixer:
             promer=True,
             verbose=False,
             maxmatch=True,
+            mincluster=promer_mincluster,
         )
         prunner.run()
 
@@ -303,7 +306,8 @@ class StartFixer:
             self.min_percent_identity,
             end_extend,
             log_fh,
-            ignore=self.ignore
+            ignore=self.ignore,
+            promer_mincluster=self.promer_mincluster,
         )
 
         if self.verbose:
