@@ -11,6 +11,7 @@ class BamFilter:
              self,
              bam,
              outprefix,
+             fastq_out=False,
              length_cutoff=100000,
              min_read_length=250,
              contigs_to_use=None,
@@ -22,8 +23,9 @@ class BamFilter:
         if not os.path.exists(self.bam):
             raise Error('File not found:' + self.bam)
 
+        self.fastq_out = fastq_out
         self.length_cutoff = length_cutoff
-        self.reads_fa = os.path.abspath(outprefix + '.fasta')
+        self.reads_outfile = os.path.abspath(outprefix + ('.fastq' if self.fastq_out else '.fasta'))
         self.log = os.path.abspath(outprefix + '.log')
         self.log_prefix = log_prefix
         self.contigs_to_use = self._get_contigs_to_use(contigs_to_use)
@@ -69,7 +71,7 @@ class BamFilter:
         '''Gets all reads from contig called "contig" and writes to fout'''
         sam_reader = pysam.Samfile(self.bam, "rb")
         for read in sam_reader.fetch(contig):
-            print(mapping.aligned_read_to_read(read, ignore_quality=True), file=fout)
+            print(mapping.aligned_read_to_read(read, ignore_quality=not self.fastq_out), file=fout)
 
 
     def _get_all_unmapped_reads(self, fout):
@@ -77,7 +79,7 @@ class BamFilter:
         sam_reader = pysam.Samfile(self.bam, "rb")
         for read in sam_reader.fetch(until_eof=True):
             if read.is_unmapped:
-                print(mapping.aligned_read_to_read(read, ignore_quality=True), file=fout)
+                print(mapping.aligned_read_to_read(read, ignore_quality=not self.fastq_out), file=fout)
 
 
     def _break_reads(self, contig, position, fout, min_read_length=250):
@@ -88,15 +90,15 @@ class BamFilter:
             if read.pos < position < read.reference_end - 1:
                 split_point = position - read.pos
                 if split_point - 1 >= min_read_length:
-                    sequence = mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=True).subseq(0, split_point)
+                    sequence = mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=not self.fastq_out).subseq(0, split_point)
                     sequence.id += '.left'
                     seqs.append(sequence)
                 if read.query_length - split_point >= min_read_length:
-                    sequence = mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=True).subseq(split_point, read.query_length)
+                    sequence = mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=not self.fastq_out).subseq(split_point, read.query_length)
                     sequence.id += '.right'
                     seqs.append(sequence)
             else:
-                seqs.append(mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=True))
+                seqs.append(mapping.aligned_read_to_read(read, revcomp=False, ignore_quality=not self.fastq_out))
 
             for seq in seqs:
                 if read.is_reverse:
@@ -111,7 +113,7 @@ class BamFilter:
         for read in sam_reader.fetch(contig):
             read_interval = pyfastaq.intervals.Interval(read.pos, read.reference_end - 1)
             if not read_interval.intersects(exclude_interval):
-                print(mapping.aligned_read_to_read(read, ignore_quality=True), file=fout)
+                print(mapping.aligned_read_to_read(read, ignore_quality=not self.fastq_out), file=fout)
 
 
     def _get_region(self, contig, start, end, fout, min_length=250):
@@ -120,15 +122,17 @@ class BamFilter:
         trimming_end = (start == 0)
         for read in sam_reader.fetch(contig, start, end):
             read_interval = pyfastaq.intervals.Interval(read.pos, read.reference_end - 1)
-            seq = mapping.aligned_read_to_read(read, ignore_quality=True, revcomp=False)
+            seq = mapping.aligned_read_to_read(read, ignore_quality=not self.fastq_out, revcomp=False)
 
             if trimming_end:
                 bases_off_start = 0
                 bases_off_end = max(0, read.reference_end - 1 - end)
-                seq.seq = seq.seq[:read.query_alignment_end - bases_off_end]
+                #seq.seq = seq.seq[:read.query_alignment_end - bases_off_end]
+                seq = seq.subseq(0, read.query_alignment_end - bases_off_end)
             else:
                 bases_off_start = max(0, start - read.pos + 1)
-                seq.seq = seq.seq[bases_off_start  + read.query_alignment_start:]
+                #seq.seq = seq.seq[bases_off_start  + read.query_alignment_start:]
+                seq = seq.subseq(bases_off_start  + read.query_alignment_start, len(seq))
 
             if read.is_reverse:
                 seq.revcomp()
@@ -141,7 +145,7 @@ class BamFilter:
         ref_lengths = self._get_ref_lengths()
         assert len(ref_lengths) > 0
         f_log = pyfastaq.utils.open_file_write(self.log)
-        f_fa = pyfastaq.utils.open_file_write(self.reads_fa)
+        f_fa = pyfastaq.utils.open_file_write(self.reads_outfile)
         print(self.log_prefix, '#contig', 'length', 'reads_kept', sep='\t', file=f_log)
         if self.verbose:
             print('Getting reads from BAM file', self.bam, flush=True)
@@ -187,4 +191,4 @@ class BamFilter:
         if self.verbose:
             print('Finished getting reads.')
             print('Log file:', self.log)
-            print('Reads file:', self.reads_fa, flush=True)
+            print('Reads file:', self.reads_outfile, flush=True)

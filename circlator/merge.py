@@ -694,12 +694,12 @@ class Merger:
                 )
 
                 reads_prefix = outprefix + '.iter.' + str(iteration) + '.reads'
-                reads_to_map =  reads_prefix + '.fasta'
-                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix)
+                reads_to_map =  reads_prefix + ('.fasta' if self.spades_only_assembler else '.fastq')
+                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix, fastq_out=not self.spades_only_assembler)
                 bam_filter.run()
                 assembler_dir = outprefix + '.iter.' + str(iteration) + '.assembly'
                 a = circlator.assemble.Assembler(
-                    reads_prefix + '.fasta',
+                    reads_prefix + ('.fasta' if self.spades_only_assembler else '.fastq'),
                     assembler_dir,
                     threads=self.threads,
                     careful=self.spades_careful,
