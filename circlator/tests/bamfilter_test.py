@@ -119,11 +119,11 @@ class TestBamfilter(unittest.TestCase):
         os.unlink(tmp)
 
 
-    def test_run_keep_unmapped(self):
-        '''test run keep unmapped'''
+    def test_run_keep_unmapped_no_quals(self):
+        '''test run keep unmapped bam has no quality scores'''
         outprefix = 'tmp.bamfilter_run'
         b = bamfilter.BamFilter(
-            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            os.path.join(data_dir, 'bamfilter_test_run_no_qual.bam'),
             outprefix,
             length_cutoff=600,
             min_read_length=100,
@@ -131,16 +131,48 @@ class TestBamfilter(unittest.TestCase):
         )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
-        os.unlink(outprefix + '.fasta')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
+        os.unlink(outprefix + '.reads')
+        os.unlink(outprefix + '.log')
+
+        b.fastq_out = True
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
+        os.unlink(outprefix + '.reads')
         os.unlink(outprefix + '.log')
 
 
-    def test_run_discard_unmapped(self):
-        '''test run keep unmapped'''
+    def test_run_keep_unmapped_with_quals(self):
+        '''test run keep unmapped bam has quality scores'''
         outprefix = 'tmp.bamfilter_run'
         b = bamfilter.BamFilter(
-            os.path.join(data_dir, 'bamfilter_test_run.bam'),
+            os.path.join(data_dir, 'bamfilter_test_run_with_qual.bam'),
+            outprefix,
+            fastq_out=False,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'}
+        )
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
+        os.unlink(outprefix + '.reads')
+        os.unlink(outprefix + '.log')
+
+        b.fastq_out = True
+        b.run()
+        expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fq')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
+        os.unlink(outprefix + '.reads')
+        os.unlink(outprefix + '.log')
+
+
+    def test_run_discard_unmapped_no_quals(self):
+        '''test run keep unmapped bam has no quality scores'''
+        outprefix = 'tmp.bamfilter_run'
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run_no_qual.bam'),
             outprefix,
             length_cutoff=600,
             min_read_length=100,
@@ -149,7 +181,7 @@ class TestBamfilter(unittest.TestCase):
         )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_discard_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
-        os.unlink(outprefix + '.fasta')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
+        os.unlink(outprefix + '.reads')
         os.unlink(outprefix + '.log')
 
