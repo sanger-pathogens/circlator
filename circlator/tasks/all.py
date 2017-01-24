@@ -103,7 +103,7 @@ def run():
     original_assembly_renamed = '00.input_assembly.fasta'
     bam = '01.mapreads.bam'
     filtered_reads_prefix = '02.bam2reads'
-    filtered_reads =  filtered_reads_prefix + '.fasta'
+    filtered_reads =  filtered_reads_prefix + ('.fastq' if options.assemble_not_only_assembler else '.fasta')
     assembly_dir = '03.assemble'
     reassembly = os.path.join(assembly_dir, 'contigs.fasta')
     merge_prefix = '04.merge'
@@ -137,6 +137,7 @@ def run():
     bam_filter = circlator.bamfilter.BamFilter(
         bam,
         filtered_reads_prefix,
+        fastq_out=options.assemble_not_only_assembler,
         length_cutoff=options.b2r_length_cutoff,
         min_read_length=options.b2r_min_read_length,
         contigs_to_use=options.b2r_only_contigs,
