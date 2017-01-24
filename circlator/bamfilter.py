@@ -25,7 +25,7 @@ class BamFilter:
 
         self.fastq_out = fastq_out
         self.length_cutoff = length_cutoff
-        self.reads_outfile = os.path.abspath(outprefix + '.reads')
+        self.reads_outfile = os.path.abspath(outprefix + ('.fastq' if self.fastq_out else '.fasta'))
         self.log = os.path.abspath(outprefix + '.log')
         self.log_prefix = log_prefix
         self.contigs_to_use = self._get_contigs_to_use(contigs_to_use)

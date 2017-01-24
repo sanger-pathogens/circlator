@@ -131,15 +131,22 @@ class TestBamfilter(unittest.TestCase):
         )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
-        os.unlink(outprefix + '.reads')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
         os.unlink(outprefix + '.log')
 
-        b.fastq_out = True
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run_no_qual.bam'),
+            outprefix,
+            fastq_out=True,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'}
+        )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
-        os.unlink(outprefix + '.reads')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fastq', shallow=False))
+        os.unlink(outprefix + '.fastq')
         os.unlink(outprefix + '.log')
 
 
@@ -156,15 +163,22 @@ class TestBamfilter(unittest.TestCase):
         )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
-        os.unlink(outprefix + '.reads')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
         os.unlink(outprefix + '.log')
 
-        b.fastq_out = True
+        b = bamfilter.BamFilter(
+            os.path.join(data_dir, 'bamfilter_test_run_with_qual.bam'),
+            outprefix,
+            fastq_out=True,
+            length_cutoff=600,
+            min_read_length=100,
+            contigs_to_use={'contig1', 'contig3', 'contig4'}
+        )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_keep_unmapped.out.reads.fq')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
-        os.unlink(outprefix + '.reads')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fastq', shallow=False))
+        os.unlink(outprefix + '.fastq')
         os.unlink(outprefix + '.log')
 
 
@@ -181,7 +195,7 @@ class TestBamfilter(unittest.TestCase):
         )
         b.run()
         expected = os.path.join(data_dir, 'bamfilter_test_run_discard_unmapped.out.reads.fa')
-        self.assertTrue(filecmp.cmp(expected, outprefix + '.reads', shallow=False))
-        os.unlink(outprefix + '.reads')
+        self.assertTrue(filecmp.cmp(expected, outprefix + '.fasta', shallow=False))
+        os.unlink(outprefix + '.fasta')
         os.unlink(outprefix + '.log')
 
