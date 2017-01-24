@@ -15,12 +15,12 @@ def print_message(m, opts):
 def run():
     parser = argparse.ArgumentParser(
         description = 'Run mapreads, bam2reads, assemble, merge, clean, fixstart',
-        usage = 'circlator all [options] <assembly.fasta> <reads.fasta> <output directory>')
+        usage = 'circlator all [options] <assembly.fasta> <reads.fasta/q> <output directory>')
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
-    parser.add_argument('reads', help='Name of corrected reads FASTA file', metavar='reads.fasta')
+    parser.add_argument('reads', help='Name of corrected reads FASTA or FASTQ file', metavar='reads.fasta/q')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
 
     mapreads_group = parser.add_argument_group('mapreads options')
@@ -36,7 +36,7 @@ def run():
     parser.add_argument('--assemble_spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,117,107,97,87,77', metavar='k1,k2,k3,...')
     parser.add_argument('--assemble_spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
-    parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default)')
+    parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default). Important: with this option, the input reads must be in FASTQ format, otherwise SPAdes will crash because it needs quality scores to correct the reads.')
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
