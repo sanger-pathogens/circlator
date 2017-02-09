@@ -17,6 +17,9 @@ class Assembler:
       only_assembler=True,
       verbose=False,
       spades_use_first_success=False,
+      useCanu=False,
+      genomeSize=100000,
+      dataType='pacbio-raw',
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -24,14 +27,24 @@ class Assembler:
             raise Error('Reads file not found:' + self.reads)
 
         self.verbose = verbose
-        self.threads = threads
-        self.careful = careful
-        self.only_assembler = only_assembler
-        self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
-        self.spades_kmers = self._build_spades_kmers(spades_kmers)
-        self.spades_use_first_success = spades_use_first_success
         self.samtools = external_progs.make_and_check_prog('samtools', verbose=self.verbose)
-        self.assembler = 'spades'
+        if(not useCanu):
+            self.useCanu=False
+            self.assembler = 'spades'
+            self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
+            self.spades_kmers = self._build_spades_kmers(spades_kmers)
+            self.spades_use_first_success = spades_use_first_success
+            self.careful = careful
+            self.only_assembler = only_assembler
+            self.threads = threads
+        else:
+            self.useCanu=True
+            self.assembler = 'canu'
+            self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose)
+            self.genomeSize=genomeSize 
+            #self.genomeSize=self.length_cutoff
+            self.dataType=dataType
+        
 
 
     def _build_spades_kmers(self, kmers):
@@ -64,6 +77,19 @@ class Assembler:
         if self.only_assembler:
             cmd.append('--only-assembler')
 
+        return ' '.join(cmd)
+    
+    
+    def _make_canu_command(self, outdir, outName):
+        cmd = [
+            self.canu.exe(),
+            '-d', outdir,
+            '-p', outName,
+            'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
+            '-'+self.dataType,
+            self.reads,
+            'gnuplotTested=true',
+        ]
         return ' '.join(cmd)
 
 
@@ -116,10 +142,50 @@ class Assembler:
                     shutil.rmtree(directory)
         else:
             raise Error('Error running SPAdes. Output directories are:\n  ' + '\n  '.join(kmer_to_dir.values()) + '\nThe reason why should be in the spades.log file in each directory.')
+            
+            
+    def run_canu(self):
+        '''Runs canu instead of spades'''
+        n50 = 0
+        #tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.canu.', dir=os.getcwd())
+        #cmd = self._make_canu_command(tmpdir,tmpdir+'canu')
+        cmd = self._make_canu_command(self.outdir,'canu')
+        ok, errs = common.syscall(cmd, verbose=self.verbose, allow_fail=False)
+        if ok:
+            file=open(os.path.join(self.outdir, 'canu.contigs.fasta'))
+            newFile=open(os.path.join(self.outdir, 'contigs.fasta'),'w')
+            line=file.readline()
+            while line!='':
+                if len(line)>0 and line[0]=='>':
+                    linelist=line.split()
+                    line2=linelist[0].replace('tig00','NODE_')+'_length_'
+                    line2+=linelist[1].split('=')[1]+'_cov_'
+                    line2+=linelist[3].split('=')[1]+'_ID_'
+                    line2+=linelist[0].replace('tig00','')+'\n'
+                    #line2=line.split()[0].replace('tig00','NODE_')
+                    newFile.write(line2)
+                else:
+                    newFile.write(line)
+                line=file.readline()
+            file.close()
+            newFile.close()
+            contigs_fasta = os.path.join(self.outdir, 'contigs.fasta')
+            contigs_fai = contigs_fasta + '.fai'
+            common.syscall(self.samtools.exe() + ' faidx ' + contigs_fasta, verbose=self.verbose)
+            stats = pyfastaq.tasks.stats_from_fai(contigs_fai)
+            if stats['N50'] != 0:
+                n50 = stats['N50']
+
+            #if self.verbose:
+            #    print('[assemble]\tN50 '+str(n50[0]))
+        else:
+            raise Error('Error running Canu.')
 
 
     def run(self):
         if self.assembler == 'spades':
             self.run_spades(stop_at_first_success=self.spades_use_first_success)
+        elif self.assembler == 'canu':
+            self.run_canu()
         else:
             raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
