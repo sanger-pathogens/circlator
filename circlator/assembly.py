@@ -4,9 +4,10 @@ import pyfastaq
 class Error (Exception): pass
 
 class Assembly:
-    def __init__(self, path):
+    def __init__(self, path, useCanu=False):
         '''path can be a directory or a filename. If directory, assumes the name of a SPAdes
            output directory. If a file, assumes it is a fasta file of contigs'''
+        self.useCanu=useCanu
         if not os.path.exists(path):
             raise Error('Input path to Assembly.__init__ not found: ' + path)
         elif os.path.isdir(path):
@@ -44,9 +45,9 @@ class Assembly:
         self.contigs_paths = self._file_exists(os.path.join(self.spades_dir, 'contigs.paths'))
         self.assembly_graph_fastg = self._file_exists(os.path.join(self.spades_dir, 'assembly_graph.fastg'))
 
-        if None == self.contigs_fastg == self.contigs_paths == self.assembly_graph_fastg or \
+        if self.useCanu==False and ( None == self.contigs_fastg == self.contigs_paths == self.assembly_graph_fastg or \
            ( self.contigs_fastg is None and (None in {self.contigs_paths, self.assembly_graph_fastg}) ) or \
-           ( self.contigs_fastg is not None and (self.contigs_paths is not None or self.assembly_graph_fastg is not None) ):
+           ( self.contigs_fastg is not None and (self.contigs_paths is not None or self.assembly_graph_fastg is not None) )):
             error_message = '\n'.join([
                  'Error finding SPAdes graph files in the directory ' + self.spades_dir,
                  'Expected either:',
@@ -145,9 +146,9 @@ class Assembly:
 
     def circular_contigs(self):
         '''Returns a set of the contig names that are circular'''
-        if self.contigs_fastg is not None:
+        if (not self.useCanu) and (self.contigs_fastg is not None):
             return self._circular_contigs_from_spades_before_3_6_1(self.contigs_fastg)
-        elif None not in [self.contigs_paths, self.assembly_graph_fastg]:
+        elif (not self.useCanu) and (None not in [self.contigs_paths, self.assembly_graph_fastg]):
             return self._circular_contigs_from_spades_after_3_6_1(self.assembly_graph_fastg, self.contigs_paths)
         else:
             return set()

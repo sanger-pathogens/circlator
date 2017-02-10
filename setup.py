@@ -7,11 +7,11 @@ from setuptools import setup, find_packages
 
 setup(
     name='circlator',
-    version='1.4.1',
+    version='1.4.2',
     description='circlator: a tool to circularise genome assemblies',
     packages = find_packages(),
     package_data={'circlator': ['data/*']},
-    author='Martin Hunt, Nishadi De Silva',
+    author='Martin Hunt, Nishadi De Silva, (this small edit is from Nicola De Maio) ',
     author_email='path-help@sanger.ac.uk',
     url='https://github.com/sanger-pathogens/circlator',
     scripts=glob.glob('scripts/*'),
