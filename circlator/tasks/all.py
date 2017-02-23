@@ -145,6 +145,7 @@ def run():
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
         verbose=options.verbose,
+        useCanu=options.useCanu,
     )
     bam_filter.run()
 

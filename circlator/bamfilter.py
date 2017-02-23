@@ -18,6 +18,7 @@ class BamFilter:
              discard_unmapped=False,
              log_prefix='[bamfilter]',
              verbose=False,
+             useCanu=False
     ):
         self.bam = os.path.abspath(bam)
         if not os.path.exists(self.bam):
@@ -32,6 +33,8 @@ class BamFilter:
         self.discard_unmapped = discard_unmapped
         self.min_read_length = min_read_length
         self.verbose = verbose
+        self.useCanu = useCanu
+
 
 
     def _get_ref_lengths(self):
@@ -158,10 +161,31 @@ class BamFilter:
                 continue
 
             if ref_lengths[contig] <= self.length_cutoff:
-                self._all_reads_from_contig(contig, f_fa)
-                print(self.log_prefix, contig, ref_lengths[contig], 'all', sep='\t', file=f_log)
-                if self.verbose:
-                    print('Getting all reads that map to contig', contig, flush=True)
+                #NEW version: even for small contigs, split them in two halves, and split the reads mapping through the middle point of the contig in two, so that each piece maps to only one half.
+                if self.useCanu:
+                    end_bases_keep = int(0.5 * ref_lengths[contig])
+                    start = end_bases_keep - 1
+                    end = end_bases_keep #max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
+                    self._get_region(contig, 0, start, f_fa, min_length=self.min_read_length)
+                    self._get_region(contig, end, ref_lengths[contig], f_fa, min_length=self.min_read_length)
+                    coords_string = '1-' + str(start + 1) +  ';' + str(end + 1) + '-' + str(ref_lengths[contig])
+                    print(
+                        self.log_prefix,
+                        contig,
+                        ref_lengths[contig],
+                        coords_string,
+                        sep='\t',
+                        file=f_log
+                    )
+                    if self.verbose:
+                        print('Getting all reads that map to ends of contig ', contig, '. Coords: ', coords_string, sep='', flush=True)
+                else:
+                    #OLD version, do not split reads so that SPAdes attempts to circulrize.
+                    self._all_reads_from_contig(contig, f_fa)
+                    print(self.log_prefix, contig, ref_lengths[contig], 'all', sep='\t', file=f_log)
+                    if self.verbose:
+                        print('Getting all reads that map to contig', contig, flush=True)
+                    
             else:
                 end_bases_keep = int(0.5 * self.length_cutoff)
                 start = end_bases_keep - 1
