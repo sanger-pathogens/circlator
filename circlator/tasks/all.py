@@ -39,6 +39,7 @@ def run():
     parser.add_argument('--assemble_spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
     parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default). Important: with this option, the input reads must be in FASTQ format, otherwise SPAdes will crash because it needs quality scores to correct the reads.')
+    assemble_group.add_argument('--CanuCorrectedErrorRate', type=float, help='Canu parameter correctedErrorRate [%(default)s]', metavar='FLOAT', default=0.045)
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
@@ -158,6 +159,7 @@ def run():
         threads=options.threads,
         careful=not options.assemble_not_careful,
         only_assembler=not options.assemble_not_only_assembler,
+        CanuError=options.CanuCorrectedErrorRate,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
         useCanu=options.useCanu,
@@ -192,6 +194,7 @@ def run():
         nucmer_min_id=options.merge_min_id,
         nucmer_min_length=options.merge_min_length,
         nucmer_min_length_for_merges=options.merge_min_length_merge,
+        CanuError=options.CanuCorrectedErrorRate,
         min_spades_circular_percent=options.merge_min_spades_circ_pc,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
