@@ -717,7 +717,7 @@ class Merger:
                     careful=self.spades_careful,
                     only_assembler=self.spades_only_assembler,
                     verbose=self.verbose,
-                    canuError=self.canuError,
+                    CanuError=self.CanuError,
                     spades_kmers=self.spades_kmers,
                     spades_use_first_success=self.spades_use_first_success,
                     useCanu=self.useCanu,
