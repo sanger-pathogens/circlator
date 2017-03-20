@@ -12,6 +12,7 @@ class Assembler:
       reads,
       outdir,
       threads=1,
+      CanuError=0.045,
       spades_kmers=None,
       careful=True,
       only_assembler=True,
@@ -38,6 +39,7 @@ class Assembler:
             self.only_assembler = only_assembler
             self.threads = threads
         else:
+            self.CanuError=CanuError
             self.useCanu=True
             self.assembler = 'canu'
             self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose)
@@ -86,6 +88,7 @@ class Assembler:
             '-d', outdir,
             '-p', outName,
             'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
+            'correctedErrorRate='+str(float(self.CanuError)),
             '-'+self.dataType,
             self.reads,
             'gnuplotTested=true',

@@ -12,6 +12,7 @@ def run():
     parser.add_argument('--min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
     parser.add_argument('--min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
     parser.add_argument('--breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
+    parser.add_argument('--CanuCorrectedErrorRate', type=float, help='Canu parameter correctedErrorRate [%(default)s]', metavar='FLOAT', default=0.045)
     parser.add_argument('--min_spades_circ_pc', type=float, help='Min percent of contigs needed to be covered by nucmer hits to spades circular contigs [%(default)s]', metavar='FLOAT', default=95)
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
     parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default)')
@@ -39,6 +40,7 @@ def run():
         nucmer_min_length=options.min_length,
         nucmer_min_length_for_merges=options.min_length_merge,
         nucmer_breaklen=options.breaklen,
+        CanuError=options.CanuCorrectedErrorRate,
         min_spades_circular_percent=options.min_spades_circ_pc,
         spades_careful=not options.assemble_not_careful,
         spades_only_assembler=not options.assemble_not_only_assembler,
