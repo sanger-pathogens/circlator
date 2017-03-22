@@ -79,7 +79,7 @@ class Assembler:
         return ' '.join(cmd)
     
 
-    def _make_canu_command(self, outdir, outName):
+    def _make_canu_command(self, outdir, out_name):
         cmd = [
             self.canu.exe(),
             '-useGrid=false',
@@ -87,7 +87,7 @@ class Assembler:
             '-assemble',
             'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
             '-d', outdir,
-            '-p', outName,
+            '-p', out_name,
             '-'+self.data_type,
             self.reads,
         ]
