@@ -85,6 +85,7 @@ class Assembler:
             self.canu.exe(),
             '-d', outdir,
             '-p', outName,
+            '-useGrid=false',
             '-assemble',
             'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
             '-'+self.data_type,
