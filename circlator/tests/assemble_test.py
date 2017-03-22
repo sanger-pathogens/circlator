@@ -61,3 +61,23 @@ class TestAssemble(unittest.TestCase):
         self.assembler.threads = 2
         self.assertEqual(cmd_start + ' -o out -t 2 -k 41 --careful --only-assembler', self.assembler._make_spades_command(41, 'out'))
 
+
+    def test_make_canu_command(self):
+        '''test _make_canu_command'''
+        tmp_assemble_dir = 'tmp.assemble_test'
+        assembler = assemble.Assembler(
+            os.path.join(data_dir, 'assemble_test.dummy_reads.fa'),
+            tmp_assemble_dir,
+            assembler='canu'
+        )
+
+        cmd_start = ' '.join([
+            assembler.canu.exe(),
+            '-useGrid=false',
+            'gnuplotTested=true',
+            '-assemble',
+            'genomeSize=0.1m',
+        ])
+
+        reads = os.path.join(data_dir, 'assemble_test.dummy_reads.fa')
+        self.assertEqual(cmd_start + ' -d out -p outname -pacbio-corrected ' + reads, assembler._make_canu_command('out', 'outname'))

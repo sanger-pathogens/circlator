@@ -17,9 +17,9 @@ class Assembler:
       only_assembler=True,
       verbose=False,
       spades_use_first_success=False,
-      useCanu=False,
+      assembler='spades',
       genomeSize=100000,
-      data_type='pacbio-raw',
+      data_type='pacbio-corrected',
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -28,22 +28,21 @@ class Assembler:
 
         self.verbose = verbose
         self.samtools = external_progs.make_and_check_prog('samtools', verbose=self.verbose)
-        if(not useCanu):
-            self.useCanu=False
-            self.assembler = 'spades'
+        self.threads = threads
+        self.assembler = assembler
+
+        if self.assembler == 'spades':
             self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
             self.spades_kmers = self._build_spades_kmers(spades_kmers)
             self.spades_use_first_success = spades_use_first_success
             self.careful = careful
             self.only_assembler = only_assembler
-            self.threads = threads
-        else:
-            self.useCanu=True
-            self.assembler = 'canu'
+        elif self.assembler == 'canu':
             self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose)
             self.genomeSize=genomeSize 
-            #self.genomeSize=self.length_cutoff
             self.data_type = data_type
+        else:
+            raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
         
 
 
@@ -83,14 +82,14 @@ class Assembler:
     def _make_canu_command(self, outdir, outName):
         cmd = [
             self.canu.exe(),
-            '-d', outdir,
-            '-p', outName,
             '-useGrid=false',
+            'gnuplotTested=true',
             '-assemble',
             'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
+            '-d', outdir,
+            '-p', outName,
             '-'+self.data_type,
             self.reads,
-            'gnuplotTested=true',
         ]
         return ' '.join(cmd)
 
