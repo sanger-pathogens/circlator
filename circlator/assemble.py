@@ -19,7 +19,7 @@ class Assembler:
       spades_use_first_success=False,
       useCanu=False,
       genomeSize=100000,
-      dataType='pacbio-raw',
+      data_type='pacbio-raw',
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -43,7 +43,7 @@ class Assembler:
             self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose)
             self.genomeSize=genomeSize 
             #self.genomeSize=self.length_cutoff
-            self.dataType=dataType
+            self.data_type = data_type
         
 
 
@@ -87,7 +87,7 @@ class Assembler:
             '-p', outName,
             '-assemble',
             'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
-            '-'+self.dataType,
+            '-'+self.data_type,
             self.reads,
             'gnuplotTested=true',
         ]

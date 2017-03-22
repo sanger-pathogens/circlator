@@ -28,7 +28,7 @@ class Merger:
           spades_only_assembler=True,
           useCanu=False,
           length_cutoff=100000,
-          dataType='pacbio-raw',
+          data_type='pacbio-raw',
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
@@ -54,7 +54,7 @@ class Merger:
         self.spades_only_assembler = spades_only_assembler
         self.useCanu = useCanu
         self.length_cutoff=length_cutoff
-        self.dataType=dataType
+        self.data_type=data_type
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
@@ -719,7 +719,7 @@ class Merger:
                     spades_use_first_success=self.spades_use_first_success,
                     useCanu=self.useCanu,
                     genomeSize=self.length_cutoff,
-                    dataType=self.dataType
+                    data_type=self.data_type
                 )
                 a.run()
                 self.reassembly = circlator.assembly.Assembly(assembler_dir,useCanu=self.useCanu)
