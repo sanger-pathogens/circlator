@@ -19,7 +19,7 @@ def run():
     parser.add_argument('--spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,117,107,97,87,77', metavar='k1,k2,k3,...')
     parser.add_argument('--spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--useCanu', action='store_true', help='Use Canu to assemble instead of SPAdes.')
-    parser.add_argument('--dataType', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-raw')
+    parser.add_argument('--data_type', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-corrected')
     parser.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
     parser.add_argument('--ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     parser.add_argument('--reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
@@ -48,7 +48,7 @@ def run():
         spades_use_first_success=options.spades_use_first,
         useCanu=options.useCanu,
         length_cutoff=options.b2r_length_cutoff,
-        dataType=options.dataType,
+        data_type=options.data_type,
         ref_end_tolerance=options.ref_end,
         qry_end_tolerance=options.reassemble_end,
         threads=options.threads,

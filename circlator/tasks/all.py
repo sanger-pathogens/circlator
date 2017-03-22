@@ -20,7 +20,7 @@ def run():
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
     parser.add_argument('--useCanu', action='store_true', help='Use Canu to assemble instead of SPAdes.')
-    parser.add_argument('--data_type', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-raw')
+    parser.add_argument('--data_type', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-corrected')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA or FASTQ file', metavar='reads.fasta/q')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')

@@ -28,7 +28,7 @@ class Merger:
           spades_only_assembler=True,
           useCanu=False,
           length_cutoff=100000,
-          data_type='pacbio-raw',
+          data_type='pacbio-corrected',
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
