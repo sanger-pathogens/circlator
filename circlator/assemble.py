@@ -18,7 +18,7 @@ class Assembler:
       verbose=False,
       spades_use_first_success=False,
       assembler='spades',
-      genomeSize=100000,
+      genomeSize=100000, # only matters for Canu if correcting reads (which we're not)
       data_type='pacbio-corrected',
     ):
         self.outdir = os.path.abspath(outdir)
