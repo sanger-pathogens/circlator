@@ -81,3 +81,6 @@ class TestAssemble(unittest.TestCase):
 
         reads = os.path.join(data_dir, 'assemble_test.dummy_reads.fa')
         self.assertEqual(cmd_start + ' -d out -p outname -pacbio-corrected ' + reads, assembler._make_canu_command('out', 'outname'))
+        self.assertEqual(cmd_start + ' -d out2 -p outname2 -pacbio-corrected ' + reads, assembler._make_canu_command('out2', 'outname2'))
+        assembler.data_type = 'pacbio-raw'
+        self.assertEqual(cmd_start + ' -d out -p outname -pacbio-raw ' + reads, assembler._make_canu_command('out', 'outname'))
