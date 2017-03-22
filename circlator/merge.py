@@ -21,7 +21,6 @@ class Merger:
           nucmer_min_length=500,
           nucmer_min_length_for_merges=4000,
           nucmer_breaklen=500,
-          CanuError=0.045,
           min_spades_circular_percent=95,
           spades_kmers=None,
           spades_use_first_success=False,
@@ -48,7 +47,6 @@ class Merger:
         self.nucmer_min_length = nucmer_min_length
         self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
         self.nucmer_breaklen = nucmer_breaklen
-        self.CanuError = CanuError
         self.min_spades_circular_percent = min_spades_circular_percent
         self.spades_kmers = spades_kmers
         self.spades_use_first_success = spades_use_first_success
@@ -717,7 +715,6 @@ class Merger:
                     careful=self.spades_careful,
                     only_assembler=self.spades_only_assembler,
                     verbose=self.verbose,
-                    CanuError=self.CanuError,
                     spades_kmers=self.spades_kmers,
                     spades_use_first_success=self.spades_use_first_success,
                     useCanu=self.useCanu,
