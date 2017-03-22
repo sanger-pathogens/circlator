@@ -147,7 +147,6 @@ class Assembler:
             
     def run_canu(self):
         '''Runs canu instead of spades'''
-        n50 = 0
         #tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.canu.', dir=os.getcwd())
         #cmd = self._make_canu_command(tmpdir,tmpdir+'canu')
         cmd = self._make_canu_command(self.outdir,'canu')
@@ -174,11 +173,6 @@ class Assembler:
             contigs_fai = contigs_fasta + '.fai'
             common.syscall(self.samtools.exe() + ' faidx ' + contigs_fasta, verbose=self.verbose)
             stats = pyfastaq.tasks.stats_from_fai(contigs_fai)
-            if stats['N50'] != 0:
-                n50 = stats['N50']
-
-            #if self.verbose:
-            #    print('[assemble]\tN50 '+str(n50[0]))
         else:
             raise Error('Error running Canu.')
 
