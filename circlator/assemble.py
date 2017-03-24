@@ -143,8 +143,19 @@ class Assembler:
                     shutil.rmtree(directory)
         else:
             raise Error('Error running SPAdes. Output directories are:\n  ' + '\n  '.join(kmer_to_dir.values()) + '\nThe reason why should be in the spades.log file in each directory.')
-            
-            
+
+
+    @classmethod
+    def _rename_canu_contigs(cls, infile, outfile):
+        with open (infile) as f_in:
+            with open(outfile, 'w') as f_out:
+                for line in f_in:
+                    if line.startswith('>'):
+                        print(line.split()[0], file=f_out)
+                    else:
+                        print(line, end='', file=f_out)
+
+
     def run_canu(self):
         '''Runs canu instead of spades'''
         #tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.canu.', dir=os.getcwd())

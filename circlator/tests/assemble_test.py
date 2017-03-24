@@ -84,3 +84,13 @@ class TestAssemble(unittest.TestCase):
         self.assertEqual(cmd_start + ' -d out2 -p outname2 -pacbio-corrected ' + reads, assembler._make_canu_command('out2', 'outname2'))
         assembler.data_type = 'pacbio-raw'
         self.assertEqual(cmd_start + ' -d out -p outname -pacbio-raw ' + reads, assembler._make_canu_command('out', 'outname'))
+
+
+    def test_rename_canu_contigs(self):
+        '''test _rename_canu_contigs'''
+        infile = os.path.join(data_dir, 'assemble_test_rename_canu_contigs.in.fa')
+        tmpfile = 'tmp.assemble_test_rename_canu_contigs.out.fa'
+        expected = os.path.join(data_dir, 'assemble_test_rename_canu_contigs.expect.fa')
+        assemble.Assembler._rename_canu_contigs(infile, tmpfile)
+        self.assertTrue(filecmp.cmp(expected, tmpfile, shallow=False))
+        os.unlink(tmpfile)
