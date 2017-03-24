@@ -158,34 +158,17 @@ class Assembler:
 
     def run_canu(self):
         '''Runs canu instead of spades'''
-        #tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.canu.', dir=os.getcwd())
-        #cmd = self._make_canu_command(tmpdir,tmpdir+'canu')
         cmd = self._make_canu_command(self.outdir,'canu')
         ok, errs = common.syscall(cmd, verbose=self.verbose, allow_fail=False)
-        if ok:
-            file=open(os.path.join(self.outdir, 'canu.contigs.fasta'))
-            newFile=open(os.path.join(self.outdir, 'contigs.fasta'),'w')
-            line=file.readline()
-            while line!='':
-                if len(line)>0 and line[0]=='>':
-                    linelist=line.split()
-                    line2=linelist[0].replace('tig00','NODE_')+'_length_'
-                    line2+=linelist[1].split('=')[1]+'_cov_'
-                    line2+=linelist[3].split('=')[1]+'_ID_'
-                    line2+=linelist[0].replace('tig00','')+'\n'
-                    #line2=line.split()[0].replace('tig00','NODE_')
-                    newFile.write(line2)
-                else:
-                    newFile.write(line)
-                line=file.readline()
-            file.close()
-            newFile.close()
-            contigs_fasta = os.path.join(self.outdir, 'contigs.fasta')
-            contigs_fai = contigs_fasta + '.fai'
-            common.syscall(self.samtools.exe() + ' faidx ' + contigs_fasta, verbose=self.verbose)
-            stats = pyfastaq.tasks.stats_from_fai(contigs_fai)
-        else:
+        if not ok:
             raise Error('Error running Canu.')
+
+        original_contigs = os.path.join(self.outdir, 'canu.contigs.fasta')
+        renamed_contigs = os.path.join(self.outdir, 'contigs.fasta')
+        Assembler._rename_canu_contigs(original_contigs, renamed_contigs)
+        original_gfa = os.path.join(self.outdir, 'canu.contigs.gfa')
+        renamed_gfa = os.path.join(self.outdir, 'contigs.gfa')
+        os.rename(original_gfa, renamed_gfa)
 
 
     def run(self):
