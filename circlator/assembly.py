@@ -4,17 +4,19 @@ import pyfastaq
 class Error (Exception): pass
 
 class Assembly:
-    def __init__(self, path, useCanu=False):
+    def __init__(self, path, assembler):
         '''path can be a directory or a filename. If directory, assumes the name of a SPAdes
+           or Canu (with files contigs.fasta and contigs.gfa files)
            output directory. If a file, assumes it is a fasta file of contigs'''
-        self.useCanu=useCanu
+        self.assembler = assembler
+
         if not os.path.exists(path):
             raise Error('Input path to Assembly.__init__ not found: ' + path)
         elif os.path.isdir(path):
-            self.spades_dir = os.path.abspath(path)
+            self.assembler_dir = os.path.abspath(path)
         else:
             self.contigs_fasta = os.path.abspath(path)
-            self.spades_dir = None
+            self.assembler_dir = None
 
         self._set_filenames()
 
@@ -32,30 +34,37 @@ class Assembly:
         self.contigs_paths = None
         self.assembly_graph_fastg = None
 
-        if self.spades_dir is None:
+        if self.assembler_dir is None:
             return
 
-        contigs_fasta = os.path.join(self.spades_dir, 'contigs.fasta')
-        self.contigs_fasta = self._file_exists(os.path.join(contigs_fasta))
+        contigs_fasta = os.path.join(self.assembler_dir, 'contigs.fasta')
+        self.contigs_fasta = self._file_exists(contigs_fasta)
 
         if self.contigs_fasta is None:
-            raise Error('Error finding SPAdes contigs file: ' + contigs_fasta)
+            raise Error('Error finding contigs file: ' + contigs_fasta)
 
-        self.contigs_fastg = self._file_exists(os.path.join(self.spades_dir, 'contigs.fastg'))
-        self.contigs_paths = self._file_exists(os.path.join(self.spades_dir, 'contigs.paths'))
-        self.assembly_graph_fastg = self._file_exists(os.path.join(self.spades_dir, 'assembly_graph.fastg'))
+        self.contigs_gfa = self._file_exists(os.path.join(self.assembler_dir, 'contigs.gfa'))
+        self.contigs_fastg = self._file_exists(os.path.join(self.assembler_dir, 'contigs.fastg'))
+        self.contigs_paths = self._file_exists(os.path.join(self.assembler_dir, 'contigs.paths'))
+        self.assembly_graph_fastg = self._file_exists(os.path.join(self.assembler_dir, 'assembly_graph.fastg'))
 
-        if self.useCanu==False and ( None == self.contigs_fastg == self.contigs_paths == self.assembly_graph_fastg or \
-           ( self.contigs_fastg is None and (None in {self.contigs_paths, self.assembly_graph_fastg}) ) or \
-           ( self.contigs_fastg is not None and (self.contigs_paths is not None or self.assembly_graph_fastg is not None) )):
-            error_message = '\n'.join([
-                 'Error finding SPAdes graph files in the directory ' + self.spades_dir,
-                 'Expected either:',
-                 '    contigs.fastg (SPAdes <3.6.1)',
-                 'or:',
-                 '    contigs.paths and assembly_graph.fastg (SPAdes >3.6.1)'
-            ])
-            raise Error(error_message)
+        if self.assembler == 'spades':
+            if None == self.contigs_fastg == self.contigs_paths == self.assembly_graph_fastg or \
+               ( self.contigs_fastg is None and (None in {self.contigs_paths, self.assembly_graph_fastg}) ) or \
+               ( self.contigs_fastg is not None and (self.contigs_paths is not None or self.assembly_graph_fastg is not None) ):
+                error_message = '\n'.join([
+                     'Error finding SPAdes graph files in the directory ' + self.assembler_dir,
+                     'Expected either:',
+                     '    contigs.fastg (SPAdes <3.6.1)',
+                     'or:',
+                     '    contigs.paths and assembly_graph.fastg (SPAdes >3.6.1)'
+                ])
+                raise Error(error_message)
+        elif self.assembler == 'canu':
+            if self.contigs_fasta is None or self.contigs_gfa is None:
+                raise Error('Error finding canu contigs fasta and/or gfa file')
+        else:
+            raise Error('Assembler "' + self.assembler + '" not recognised. Cannot continue')
 
 
     def get_contigs(self):
@@ -146,9 +155,14 @@ class Assembly:
 
     def circular_contigs(self):
         '''Returns a set of the contig names that are circular'''
-        if (not self.useCanu) and (self.contigs_fastg is not None):
-            return self._circular_contigs_from_spades_before_3_6_1(self.contigs_fastg)
-        elif (not self.useCanu) and (None not in [self.contigs_paths, self.assembly_graph_fastg]):
-            return self._circular_contigs_from_spades_after_3_6_1(self.assembly_graph_fastg, self.contigs_paths)
+        if self.assembler == 'spades':
+            if self.contigs_fastg is not None:
+                return self._circular_contigs_from_spades_before_3_6_1(self.contigs_fastg)
+            elif None not in [self.contigs_paths, self.assembly_graph_fastg]:
+                return self._circular_contigs_from_spades_after_3_6_1(self.assembly_graph_fastg, self.contigs_paths)
+            else:
+                return set()
+        elif self.assembler == 'canu':
+            return set() # FIXME
         else:
             return set()

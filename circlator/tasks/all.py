@@ -19,8 +19,8 @@ def run():
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
-    parser.add_argument('--useCanu', action='store_true', help='Use Canu to assemble instead of SPAdes.')
-    parser.add_argument('--data_type', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-corrected')
+    parser.add_argument('--assembler', choices=circlator.common.allowed_assemblers, help='Assembler to use for reassemblies [%(default)s]', default='spades')
+    parser.add_argument('--data_type', choices=circlator.common.allowed_data_types, help='String representing one of the 4 type of data analysed (only used for Canu) [%(default)s]', default='pacbio-corrected')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA or FASTQ file', metavar='reads.fasta/q')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
@@ -39,7 +39,6 @@ def run():
     parser.add_argument('--assemble_spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
     parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default). Important: with this option, the input reads must be in FASTQ format, otherwise SPAdes will crash because it needs quality scores to correct the reads.')
-    assemble_group.add_argument('--CanuCorrectedErrorRate', type=float, help='Canu parameter correctedErrorRate [%(default)s]', metavar='FLOAT', default=0.045)
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
@@ -146,7 +145,7 @@ def run():
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
         verbose=options.verbose,
-        useCanu=options.useCanu,
+        split_all_reads=(options.assembler == 'canu'),
     )
     bam_filter.run()
 
@@ -161,7 +160,7 @@ def run():
         only_assembler=not options.assemble_not_only_assembler,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
-        useCanu=options.useCanu,
+        assembler=options.assembler,
         genomeSize=options.b2r_length_cutoff,
         data_type=options.data_type,
         verbose=options.verbose
@@ -198,7 +197,7 @@ def run():
         spades_use_first_success=options.assemble_spades_use_first,
         spades_careful=not options.assemble_not_careful,
         spades_only_assembler=not options.assemble_not_only_assembler,
-        useCanu=options.useCanu,
+        assembler=options.assembler,
         length_cutoff=options.b2r_length_cutoff,
         data_type=options.data_type,
         nucmer_breaklen=options.merge_breaklen,

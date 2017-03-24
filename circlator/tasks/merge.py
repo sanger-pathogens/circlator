@@ -12,14 +12,13 @@ def run():
     parser.add_argument('--min_length', type=int, help='Minimum length of hit for nucmer to report [%(default)s]', metavar='INT', default=500)
     parser.add_argument('--min_length_merge', type=int, help='Minimum length of nucmer hit to use when merging [%(default)s]', metavar='INT', default=4000)
     parser.add_argument('--breaklen', type=int, help='breaklen option used by nucmer [%(default)s]', metavar='INT', default=500)
-    parser.add_argument('--CanuCorrectedErrorRate', type=float, help='Canu parameter correctedErrorRate [%(default)s]', metavar='FLOAT', default=0.045)
     parser.add_argument('--min_spades_circ_pc', type=float, help='Min percent of contigs needed to be covered by nucmer hits to spades circular contigs [%(default)s]', metavar='FLOAT', default=95)
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
     parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default)')
     parser.add_argument('--spades_k', help='Comma separated list of kmers to use when running SPAdes. Max kmer is 127 and each kmer should be an odd integer [%(default)s]', default='127,117,107,97,87,77', metavar='k1,k2,k3,...')
     parser.add_argument('--spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
-    parser.add_argument('--useCanu', action='store_true', help='Use Canu to assemble instead of SPAdes.')
-    parser.add_argument('--data_type', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-corrected')
+    parser.add_argument('--assembler', choices=circlator.common.allowed_assemblers, help='Assembler to use for reassemblies [%(default)s]', default='spades')
+    parser.add_argument('--data_type', choices=circlator.common.allowed_data_types, help='String representing one of the 4 type of data analysed (only used for Canu) [%(default)s]', default='pacbio-corrected')
     parser.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
     parser.add_argument('--ref_end', type=int, help='max distance allowed between nucmer hit and end of input assembly contig [%(default)s]', metavar='INT', default=15000)
     parser.add_argument('--reassemble_end', type=int, help='max distance allowed between nucmer hit and end of reassembly contig [%(default)s]', metavar='INT', default=1000)
@@ -40,13 +39,12 @@ def run():
         nucmer_min_length=options.min_length,
         nucmer_min_length_for_merges=options.min_length_merge,
         nucmer_breaklen=options.breaklen,
-        CanuError=options.CanuCorrectedErrorRate,
         min_spades_circular_percent=options.min_spades_circ_pc,
         spades_careful=not options.assemble_not_careful,
         spades_only_assembler=not options.assemble_not_only_assembler,
         spades_kmers=options.spades_k,
         spades_use_first_success=options.spades_use_first,
-        useCanu=options.useCanu,
+        assembler=options.assembler,
         length_cutoff=options.b2r_length_cutoff,
         data_type=options.data_type,
         ref_end_tolerance=options.ref_end,

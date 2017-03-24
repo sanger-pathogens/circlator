@@ -18,7 +18,7 @@ class BamFilter:
              discard_unmapped=False,
              log_prefix='[bamfilter]',
              verbose=False,
-             useCanu=False
+             split_all_reads=False,
     ):
         self.bam = os.path.abspath(bam)
         if not os.path.exists(self.bam):
@@ -33,7 +33,7 @@ class BamFilter:
         self.discard_unmapped = discard_unmapped
         self.min_read_length = min_read_length
         self.verbose = verbose
-        self.useCanu = useCanu
+        self.split_all_reads = split_all_reads
 
 
 
@@ -162,7 +162,7 @@ class BamFilter:
 
             if ref_lengths[contig] <= self.length_cutoff:
                 #NEW version: even for small contigs, split them in two halves, and split the reads mapping through the middle point of the contig in two, so that each piece maps to only one half.
-                if self.useCanu:
+                if self.split_all_reads:
                     end_bases_keep = int(0.5 * ref_lengths[contig])
                     start = end_bases_keep - 1
                     end = end_bases_keep #max(end_bases_keep - 1, ref_lengths[contig] - end_bases_keep)
