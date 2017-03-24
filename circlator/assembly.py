@@ -30,6 +30,7 @@ class Assembly:
 
 
     def _set_filenames(self):
+        self.contigs_gfa = None
         self.contigs_fastg = None
         self.contigs_paths = None
         self.assembly_graph_fastg = None
@@ -183,6 +184,6 @@ class Assembly:
             else:
                 return set()
         elif self.assembler == 'canu':
-            return set() # FIXME
+            return self._circular_contigs_from_canu_gfa(self.contigs_gfa)
         else:
             return set()
