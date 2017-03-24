@@ -15,7 +15,6 @@ def run():
     parser.add_argument('--spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--assembler', choices=circlator.common.allowed_assemblers, help='Assembler to use for reassemblies [%(default)s]', default='spades')
     parser.add_argument('--data_type', choices=circlator.common.allowed_data_types, help='String representing one of the 4 type of data analysed (only used for Canu) [%(default)s]', default='pacbio-corrected')
-    parser.add_argument('--b2r_length_cutoff', type=int, help='All reads mapped to contigs shorter than this will be kept [%(default)s]', default=100000, metavar='INT')
     parser.add_argument('reads', help='Name of input reads FASTA file', metavar='in.reads.fasta')
     parser.add_argument('out_dir', help='Output directory (must not already exist)')
     options = parser.parse_args()
