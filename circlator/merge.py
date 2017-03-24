@@ -28,6 +28,7 @@ class Merger:
           spades_only_assembler=True,
           assembler='spades',
           length_cutoff=100000,
+          split_all_reads=False,
           data_type='pacbio-corrected',
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
@@ -54,6 +55,7 @@ class Merger:
         self.spades_careful = spades_careful
         self.spades_only_assembler = spades_only_assembler
         self.length_cutoff=length_cutoff
+        self.split_all_reads=split_all_reads
         self.data_type=data_type
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
@@ -701,7 +703,7 @@ class Merger:
 
                 reads_prefix = outprefix + '.iter.' + str(iteration) + '.reads'
                 reads_to_map =  reads_prefix + ('.fasta' if self.spades_only_assembler else '.fastq')
-                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix, fastq_out=not self.spades_only_assembler, split_all_reads=(self.assembler=='canu'))
+                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix, fastq_out=not self.spades_only_assembler, split_all_reads=self.split_all_reads)
                 bam_filter.run()
                 assembler_dir = outprefix + '.iter.' + str(iteration) + '.assembly'
                 a = circlator.assemble.Assembler(

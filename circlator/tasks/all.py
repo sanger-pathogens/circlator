@@ -20,6 +20,7 @@ def run():
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
     parser.add_argument('--assembler', choices=circlator.common.allowed_assemblers, help='Assembler to use for reassemblies [%(default)s]', default='spades')
+    parser.add_argument('--split_all_reads', action='store_true', help='By default, reads mapped to shorter contigs are left unchanged. This option splits them into two, broken at the middle of the contig to try to force circularization. May help if the assembler does not detect circular contigs (eg canu)')
     parser.add_argument('--data_type', choices=circlator.common.allowed_data_types, help='String representing one of the 4 type of data analysed (only used for Canu) [%(default)s]', default='pacbio-corrected')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA or FASTQ file', metavar='reads.fasta/q')
@@ -145,7 +146,7 @@ def run():
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
         verbose=options.verbose,
-        split_all_reads=(options.assembler == 'canu'),
+        split_all_reads=options.split_all_reads,
     )
     bam_filter.run()
 
@@ -199,6 +200,7 @@ def run():
         spades_only_assembler=not options.assemble_not_only_assembler,
         assembler=options.assembler,
         length_cutoff=options.b2r_length_cutoff,
+        split_all_reads=options.split_all_reads,
         data_type=options.data_type,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
