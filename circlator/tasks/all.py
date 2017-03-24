@@ -187,7 +187,7 @@ def run():
 
     m = circlator.merge.Merger(
         assembly_to_use,
-        reassembly,
+        assembly_dir,
         merge_prefix,
         nucmer_diagdiff=options.merge_diagdiff,
         nucmer_min_id=options.merge_min_id,
