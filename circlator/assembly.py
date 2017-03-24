@@ -153,6 +153,26 @@ class Assembly:
         return circular_nodes
 
 
+    @staticmethod
+    def _circular_contigs_from_canu_gfa(gfa_file):
+        self_matches = {}
+        other_matches = set()
+
+        with open(gfa_file) as f:
+            for line in f:
+                if line.startswith('L\t'):
+                    L, node1, dir1, node2, dir2, cigar, tags = line.rstrip().split('\t')
+                    if node1 == node2:
+                        if dir1 == dir2:
+                            if node1 not in self_matches:
+                                self_matches[node1] = set()
+                            self_matches[node1].add(dir1)
+                    else:
+                        other_matches.update({node1, node2})
+
+        return {x for x in self_matches if self_matches[x] == {'+', '-'} and x not in other_matches}
+
+
     def circular_contigs(self):
         '''Returns a set of the contig names that are circular'''
         if self.assembler == 'spades':

@@ -128,6 +128,14 @@ class TestAssembly(unittest.TestCase):
         self.assertEqual(expected, got)
 
 
+    def test_circular_contigs_from_canu_gfa(self):
+        '''Test _circular_contigs_from_canu_gfa'''
+        infile = os.path.join(data_dir, 'assembly_test_circular_contigs_from_canu.gfa')
+        got = assembly.Assembly._circular_contigs_from_canu_gfa(infile)
+        expected = {'tig00000042'}
+        self.assertEqual(expected, got)
+
+
     def test_circular_contigs_spades_pre_3_6_1(self):
         '''Test circular_contigs with spades pre 3.6.1'''
         a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_spades_pre_3_6_1'), 'spades')
