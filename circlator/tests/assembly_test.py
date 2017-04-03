@@ -14,20 +14,20 @@ class TestAssembly(unittest.TestCase):
     def test_init_file_not_dir(self):
         '''Test _init_file_not_dir'''
         contigs_fasta = os.path.join(data_dir, 'assembly_test_init_contigs.fasta')
-        a = assembly.Assembly(contigs_fasta)
+        a = assembly.Assembly(contigs_fasta, 'spades')
         self.assertEqual(a.contigs_fasta, contigs_fasta)
         self.assertIsNone(a.contigs_fastg)
         self.assertIsNone(a.assembly_graph_fastg)
-        self.assertIsNone(a.spades_dir)
+        self.assertIsNone(a.assembler_dir)
 
 
     def test_init_pre_3_6_1_ok(self):
         '''Test _init_pre_3_6_1_ok'''
         test_dir = os.path.join(data_dir, 'assembly_test_init_spades_pre_3_6_1_ok')
-        a = assembly.Assembly(test_dir)
+        a = assembly.Assembly(test_dir, 'spades')
         self.assertEqual(a.contigs_fasta, os.path.join(test_dir, 'contigs.fasta'))
         self.assertEqual(a.contigs_fastg, os.path.join(test_dir, 'contigs.fastg'))
-        self.assertEqual(a.spades_dir, test_dir)
+        self.assertEqual(a.assembler_dir, test_dir)
         self.assertIsNone(a.assembly_graph_fastg)
         self.assertIsNone(a.contigs_paths)
 
@@ -35,8 +35,8 @@ class TestAssembly(unittest.TestCase):
     def test_init_post_3_6_1_ok(self):
         '''Test _init_post_3_6_1_ok'''
         test_dir = os.path.join(data_dir, 'assembly_test_init_spades_post_3_6_1_ok')
-        a = assembly.Assembly(test_dir)
-        self.assertEqual(a.spades_dir, test_dir)
+        a = assembly.Assembly(test_dir, 'spades')
+        self.assertEqual(a.assembler_dir, test_dir)
         self.assertEqual(a.contigs_fasta, os.path.join(test_dir, 'contigs.fasta'))
         self.assertEqual(a.assembly_graph_fastg, os.path.join(test_dir, 'assembly_graph.fastg'))
         self.assertEqual(a.contigs_paths, os.path.join(test_dir, 'contigs.paths'))
@@ -55,12 +55,12 @@ class TestAssembly(unittest.TestCase):
 
         for test_dir in test_dirs:
             with self.assertRaises(assembly.Error):
-                a = assembly.Assembly(os.path.join(data_dir, test_dir))
+                a = assembly.Assembly(os.path.join(data_dir, test_dir), 'spades')
 
 
     def test_get_contigs(self):
         '''Test get_contigs'''
-        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_get_contigs.fasta'))
+        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_get_contigs.fasta'), 'spades')
         expected = {
             'contig1': pyfastaq.sequences.Fasta('contig1', 'ACGT'),
             'contig2': pyfastaq.sequences.Fasta('contig2', 'AAAA'),
@@ -128,9 +128,17 @@ class TestAssembly(unittest.TestCase):
         self.assertEqual(expected, got)
 
 
+    def test_circular_contigs_from_canu_gfa(self):
+        '''Test _circular_contigs_from_canu_gfa'''
+        infile = os.path.join(data_dir, 'assembly_test_circular_contigs_from_canu.gfa')
+        got = assembly.Assembly._circular_contigs_from_canu_gfa(infile)
+        expected = {'tig00000042'}
+        self.assertEqual(expected, got)
+
+
     def test_circular_contigs_spades_pre_3_6_1(self):
         '''Test circular_contigs with spades pre 3.6.1'''
-        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_spades_pre_3_6_1'))
+        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_spades_pre_3_6_1'), 'spades')
         got = a.circular_contigs()
         expected = {'NODE_1_length_5_cov_42.42_ID_1'}
         self.assertEqual(expected, got)
@@ -138,7 +146,7 @@ class TestAssembly(unittest.TestCase):
 
     def test_circular_contigs_spades_post_3_6_1(self):
         '''Test circular_contigs with spades post 3.6.1'''
-        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_spades_post_3_6_1'))
+        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_spades_post_3_6_1'), 'spades')
         got = a.circular_contigs()
         expected = {
             'NODE_5_length_8134_cov_20.6513_ID_2269',
@@ -151,7 +159,7 @@ class TestAssembly(unittest.TestCase):
 
     def test_circular_contigs_just_fasta(self):
         '''Test circular_contigs when input is just fasta'''
-        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_only_contigs.fasta'))
+        a = assembly.Assembly(os.path.join(data_dir, 'assembly_test_circular_contigs_only_contigs.fasta'), 'spades')
         got = a.circular_contigs()
         expected = set()
         self.assertEqual(expected, got)

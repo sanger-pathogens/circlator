@@ -12,15 +12,14 @@ class Assembler:
       reads,
       outdir,
       threads=1,
-      CanuError=0.045,
       spades_kmers=None,
       careful=True,
       only_assembler=True,
       verbose=False,
       spades_use_first_success=False,
-      useCanu=False,
-      genomeSize=100000,
-      dataType='pacbio-raw',
+      assembler='spades',
+      genomeSize=100000, # only matters for Canu if correcting reads (which we're not)
+      data_type='pacbio-corrected',
     ):
         self.outdir = os.path.abspath(outdir)
         self.reads = os.path.abspath(reads)
@@ -29,24 +28,22 @@ class Assembler:
 
         self.verbose = verbose
         self.samtools = external_progs.make_and_check_prog('samtools', verbose=self.verbose)
-        if(not useCanu):
-            self.useCanu=False
-            self.assembler = 'spades'
-            self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose)
+        self.threads = threads
+        self.assembler = assembler
+
+        if self.assembler == 'spades':
+            self.spades = external_progs.make_and_check_prog('spades', verbose=self.verbose, required=True)
             self.spades_kmers = self._build_spades_kmers(spades_kmers)
             self.spades_use_first_success = spades_use_first_success
             self.careful = careful
             self.only_assembler = only_assembler
-            self.threads = threads
+        elif self.assembler == 'canu':
+            self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose, required=True)
+            self.genomeSize=genomeSize
+            self.data_type = data_type
         else:
-            self.CanuError=CanuError
-            self.useCanu=True
-            self.assembler = 'canu'
-            self.canu = external_progs.make_and_check_prog('canu', verbose=self.verbose)
-            self.genomeSize=genomeSize 
-            #self.genomeSize=self.length_cutoff
-            self.dataType=dataType
-        
+            raise Error('Unknown assembler: "' + self.assembler + '". cannot continue')
+
 
 
     def _build_spades_kmers(self, kmers):
@@ -80,18 +77,19 @@ class Assembler:
             cmd.append('--only-assembler')
 
         return ' '.join(cmd)
-    
-    
-    def _make_canu_command(self, outdir, outName):
+
+
+    def _make_canu_command(self, outdir, out_name):
         cmd = [
             self.canu.exe(),
-            '-d', outdir,
-            '-p', outName,
-            'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
-            'correctedErrorRate='+str(float(self.CanuError)),
-            '-'+self.dataType,
-            self.reads,
+            '-useGrid=false',
             'gnuplotTested=true',
+            '-assemble',
+            'genomeSize='+str(float(self.genomeSize)/1000000)+'m',
+            '-d', outdir,
+            '-p', out_name,
+            '-'+self.data_type,
+            self.reads,
         ]
         return ' '.join(cmd)
 
@@ -145,44 +143,32 @@ class Assembler:
                     shutil.rmtree(directory)
         else:
             raise Error('Error running SPAdes. Output directories are:\n  ' + '\n  '.join(kmer_to_dir.values()) + '\nThe reason why should be in the spades.log file in each directory.')
-            
-            
+
+
+    @classmethod
+    def _rename_canu_contigs(cls, infile, outfile):
+        with open (infile) as f_in:
+            with open(outfile, 'w') as f_out:
+                for line in f_in:
+                    if line.startswith('>'):
+                        print(line.split()[0], file=f_out)
+                    else:
+                        print(line, end='', file=f_out)
+
+
     def run_canu(self):
         '''Runs canu instead of spades'''
-        n50 = 0
-        #tmpdir = tempfile.mkdtemp(prefix=self.outdir + '.tmp.canu.', dir=os.getcwd())
-        #cmd = self._make_canu_command(tmpdir,tmpdir+'canu')
         cmd = self._make_canu_command(self.outdir,'canu')
         ok, errs = common.syscall(cmd, verbose=self.verbose, allow_fail=False)
-        if ok:
-            file=open(os.path.join(self.outdir, 'canu.contigs.fasta'))
-            newFile=open(os.path.join(self.outdir, 'contigs.fasta'),'w')
-            line=file.readline()
-            while line!='':
-                if len(line)>0 and line[0]=='>':
-                    linelist=line.split()
-                    line2=linelist[0].replace('tig00','NODE_')+'_length_'
-                    line2+=linelist[1].split('=')[1]+'_cov_'
-                    line2+=linelist[3].split('=')[1]+'_ID_'
-                    line2+=linelist[0].replace('tig00','')+'\n'
-                    #line2=line.split()[0].replace('tig00','NODE_')
-                    newFile.write(line2)
-                else:
-                    newFile.write(line)
-                line=file.readline()
-            file.close()
-            newFile.close()
-            contigs_fasta = os.path.join(self.outdir, 'contigs.fasta')
-            contigs_fai = contigs_fasta + '.fai'
-            common.syscall(self.samtools.exe() + ' faidx ' + contigs_fasta, verbose=self.verbose)
-            stats = pyfastaq.tasks.stats_from_fai(contigs_fai)
-            if stats['N50'] != 0:
-                n50 = stats['N50']
-
-            #if self.verbose:
-            #    print('[assemble]\tN50 '+str(n50[0]))
-        else:
+        if not ok:
             raise Error('Error running Canu.')
+
+        original_contigs = os.path.join(self.outdir, 'canu.contigs.fasta')
+        renamed_contigs = os.path.join(self.outdir, 'contigs.fasta')
+        Assembler._rename_canu_contigs(original_contigs, renamed_contigs)
+        original_gfa = os.path.join(self.outdir, 'canu.contigs.gfa')
+        renamed_gfa = os.path.join(self.outdir, 'contigs.gfa')
+        os.rename(original_gfa, renamed_gfa)
 
 
     def run(self):

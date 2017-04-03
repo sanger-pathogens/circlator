@@ -5,12 +5,14 @@ set -x
 start_dir=$(pwd)
 
 BWA_VERSION=0.7.12
+CANU_VERSION=1.4
 PRODIGAL_VERSION=2.6.2
 SAMTOOLS_VERSION=1.3
 MUMMER_VERSION=3.23
 SPADES_VERSION=3.7.1
 
 BWA_DOWNLOAD_URL="http://downloads.sourceforge.net/project/bio-bwa/bwa-${BWA_VERSION}.tar.bz2"
+CANU_DOWNLOAD_URL="https://github.com/marbl/canu/releases/download/v${CANU_VERSION}/canu-${CANU_VERSION}.Linux-amd64.tar.xz"
 PRODIGAL_DOWNLOAD_URL="https://github.com/hyattpd/Prodigal/releases/download/v${PRODIGAL_VERSION}/prodigal.linux"
 SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2"
 MUMMER_DOWNLOAD_URL="http://downloads.sourceforge.net/project/mummer/mummer/${MUMMER_VERSION}/MUMmer${MUMMER_VERSION}.tar.gz"
@@ -44,6 +46,13 @@ bwa_dir=$build_dir/"bwa-${BWA_VERSION}"
 tar -xjf bwa-${BWA_VERSION}.tar.bz2
 cd $bwa_dir
 make
+
+
+# ------------- canu -------------------
+cd $build_dir
+download $CANU_DOWNLOAD_URL "canu-${CANU_VERSION}.tar.xz"
+tar -xf canu-${CANU_VERSION}.tar.xz
+canu_dir=$build_dir/canu-${CANU_VERSION}/Linux-amd64/bin/
 
 
 # --------------- prodigal -----------------
@@ -92,6 +101,7 @@ update_path () {
 }
 
 update_path ${bwa_dir}
+update_path ${canu_dir}
 update_path ${prodigal_dir}
 update_path ${mummer_dir}
 update_path ${samtools_dir}

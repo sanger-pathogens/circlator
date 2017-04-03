@@ -21,15 +21,15 @@ class Merger:
           nucmer_min_length=500,
           nucmer_min_length_for_merges=4000,
           nucmer_breaklen=500,
-          CanuError=0.045,
           min_spades_circular_percent=95,
           spades_kmers=None,
           spades_use_first_success=False,
           spades_careful=True,
           spades_only_assembler=True,
-          useCanu=False,
+          assembler='spades',
           length_cutoff=100000,
-          dataType='pacbio-raw',
+          split_all_reads=False,
+          data_type='pacbio-corrected',
           ref_end_tolerance=15000,
           qry_end_tolerance=1000,
           verbose=False,
@@ -39,8 +39,9 @@ class Merger:
         if not os.path.exists(original_assembly):
             raise Error('File not found:' + original_assembly)
 
+        self.assembler = assembler
         self.original_fasta = original_assembly
-        self.reassembly = circlator.assembly.Assembly(reassembly)
+        self.reassembly = circlator.assembly.Assembly(reassembly, assembler=self.assembler)
         self.reads = reads
         self.outprefix = outprefix
         self.nucmer_diagdiff = nucmer_diagdiff
@@ -48,15 +49,14 @@ class Merger:
         self.nucmer_min_length = nucmer_min_length
         self.nucmer_min_length_for_merges = nucmer_min_length_for_merges
         self.nucmer_breaklen = nucmer_breaklen
-        self.CanuError = CanuError
         self.min_spades_circular_percent = min_spades_circular_percent
         self.spades_kmers = spades_kmers
         self.spades_use_first_success = spades_use_first_success
         self.spades_careful = spades_careful
         self.spades_only_assembler = spades_only_assembler
-        self.useCanu = useCanu
         self.length_cutoff=length_cutoff
-        self.dataType=dataType
+        self.split_all_reads=split_all_reads
+        self.data_type=data_type
         self.ref_end_tolerance = ref_end_tolerance
         self.qry_end_tolerance = qry_end_tolerance
         self.verbose = verbose
@@ -339,10 +339,6 @@ class Merger:
 
 
     def _circularise_contigs(self, nucmer_hits):
-        if self.useCanu==False:
-            assemS='SPAdes'
-        else:
-            assemS='Canu'
         log_fh = pyfastaq.utils.open_file_write(self.outprefix + '.circularise_details.log')
         log_outprefix = '[merge circularise_details]'
 
@@ -359,7 +355,7 @@ class Merger:
         else:
             circular_string = 'None'
         print(log_outprefix, file=log_fh)
-        print(log_outprefix, '\t'+assemS+' reassembly contigs that are circular: ', circular_string, sep='', file=log_fh)
+        print(log_outprefix, '\t', self.assembler, ' reassembly contigs that are circular: ', circular_string, sep='', file=log_fh)
 
         fate_of_contigs = {
             x: set() for x in [
@@ -377,12 +373,12 @@ class Merger:
                 new_contig, spades_contig = self._make_new_contig_from_nucmer_and_spades(ref_name, nucmer_hits[ref_name], called_as_circular_by_spades, log_fh=log_fh, log_outprefix=log_outprefix)
 
                 if new_contig is None:
-                    print(log_outprefix, ref_name, 'Could not circularize using matches to '+assemS+' circular contigs', sep='\t', file=log_fh)
+                    print(log_outprefix, ref_name, 'Could not circularize using matches to ' + self.assembler + ' circular contigs', sep='\t', file=log_fh)
 
                     if ref_name in to_circularise_with_nucmer:
                         start_hit, end_hit = to_circularise_with_nucmer[ref_name]
                         assert start_hit.ref_name == end_hit.ref_name == ref_name
-                        print(log_outprefix, ref_name, 'Circularizing using this pair of nucmer matches to '+assemS+' contig:', sep='\t', file=log_fh)
+                        print(log_outprefix, ref_name, 'Circularizing using this pair of nucmer matches to ' + self.assembler + ' contig:', sep='\t', file=log_fh)
                         print(log_outprefix, '\t', ref_name, '\t\t', start_hit, sep='', file=log_fh)
                         print(log_outprefix, '\t', ref_name, '\t\t', end_hit, sep='', file=log_fh)
                         new_contig = self._make_circularised_contig(start_hit, end_hit)
@@ -398,7 +394,7 @@ class Merger:
                     else:
                         self.original_contigs[new_contig.id] = new_contig
                         fate_of_contigs['circl_using_spades'].add(ref_name)
-                        print(log_outprefix, ref_name, 'Circularized using matches to '+assemS+' circular contigs', sep='\t', file=log_fh)
+                        print(log_outprefix, ref_name, 'Circularized using matches to ' + self.assembler + ' circular contigs', sep='\t', file=log_fh)
                         used_spades_contigs.add(spades_contig)
             else:
                 print(log_outprefix, ref_name, 'Cannot circularize: no nucmer hits', sep='\t', file=log_fh)
@@ -707,7 +703,7 @@ class Merger:
 
                 reads_prefix = outprefix + '.iter.' + str(iteration) + '.reads'
                 reads_to_map =  reads_prefix + ('.fasta' if self.spades_only_assembler else '.fastq')
-                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix, fastq_out=not self.spades_only_assembler)
+                bam_filter = circlator.bamfilter.BamFilter(bam, reads_prefix, fastq_out=not self.spades_only_assembler, split_all_reads=self.split_all_reads)
                 bam_filter.run()
                 assembler_dir = outprefix + '.iter.' + str(iteration) + '.assembly'
                 a = circlator.assemble.Assembler(
@@ -717,15 +713,14 @@ class Merger:
                     careful=self.spades_careful,
                     only_assembler=self.spades_only_assembler,
                     verbose=self.verbose,
-                    CanuError=self.CanuError,
                     spades_kmers=self.spades_kmers,
                     spades_use_first_success=self.spades_use_first_success,
-                    useCanu=self.useCanu,
+                    assembler=self.assembler,
                     genomeSize=self.length_cutoff,
-                    dataType=self.dataType
+                    data_type=self.data_type
                 )
                 a.run()
-                self.reassembly = circlator.assembly.Assembly(assembler_dir,useCanu=self.useCanu)
+                self.reassembly = circlator.assembly.Assembly(assembler_dir, assembler=self.assembler)
                 self.reassembly_contigs = self.reassembly.get_contigs()
             elif iteration <= 2:
                 print(this_log_prefix, '\tNo contig merges were made',sep='', file=log_fh)

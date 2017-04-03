@@ -1,0 +1,8 @@
+>tig00000001 len=5 reads=42 covStat=42.42 gappedBases=no class=contig suggestRepeat=no suggestCircular=no
+ACGTA
+>tig00000042 len=42 reads=42 covStat=42.424242 gappedBases=no class=contig suggestRepeat=no suggestCircular=no
+TGAGTGATGA
+TGAGTGATGA
+TGAGTGATGA
+TGAGTGATGA
+TT

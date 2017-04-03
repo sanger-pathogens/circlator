@@ -19,8 +19,9 @@ def run():
     parser.add_argument('--threads', type=int, help='Number of threads [%(default)s]', default=1, metavar='INT')
     parser.add_argument('--verbose', action='store_true', help='Be verbose')
     parser.add_argument('--unchanged_code', type=int, help='Code to return when the input assembly is not changed [%(default)s]', default=0, metavar='INT')
-    parser.add_argument('--useCanu', action='store_true', help='Use Canu to assemble instead of SPAdes.')
-    parser.add_argument('--dataType', help='String representing one of the 4 type of data analysed (only used for Canu): pacbio-raw, pacbio-corrected, nanopore-raw, nanopore-corrected.',default='pacbio-raw')
+    parser.add_argument('--assembler', choices=circlator.common.allowed_assemblers, help='Assembler to use for reassemblies [%(default)s]', default='spades')
+    parser.add_argument('--split_all_reads', action='store_true', help='By default, reads mapped to shorter contigs are left unchanged. This option splits them into two, broken at the middle of the contig to try to force circularization. May help if the assembler does not detect circular contigs (eg canu)')
+    parser.add_argument('--data_type', choices=circlator.common.allowed_data_types, help='String representing one of the 4 type of data analysed (only used for Canu) [%(default)s]', default='pacbio-corrected')
     parser.add_argument('assembly', help='Name of original assembly', metavar='assembly.fasta')
     parser.add_argument('reads', help='Name of corrected reads FASTA or FASTQ file', metavar='reads.fasta/q')
     parser.add_argument('outdir', help='Name of output directory (must not already exist)', metavar='output directory')
@@ -39,7 +40,6 @@ def run():
     parser.add_argument('--assemble_spades_use_first', action='store_true', help='Use the first successful SPAdes assembly. Default is to try all kmers and use the assembly with the largest N50')
     parser.add_argument('--assemble_not_careful', action='store_true', help='Do not use the --careful option with SPAdes (used by default)')
     parser.add_argument('--assemble_not_only_assembler', action='store_true', help='Do not use the --assemble-only option with SPAdes (used by default). Important: with this option, the input reads must be in FASTQ format, otherwise SPAdes will crash because it needs quality scores to correct the reads.')
-    assemble_group.add_argument('--CanuCorrectedErrorRate', type=float, help='Canu parameter correctedErrorRate [%(default)s]', metavar='FLOAT', default=0.045)
 
     merge_group = parser.add_argument_group('merge options')
     merge_group.add_argument('--merge_diagdiff', type=int, help='Nucmer diagdiff option [%(default)s]', metavar='INT', default=25)
@@ -69,9 +69,9 @@ def run():
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
     if options.verbose:
-        circlator.versions.get_all_versions(sys.stdout, raise_error=True)
+        circlator.versions.get_all_versions(sys.stdout, raise_error=True, assembler=options.assembler)
     else:
-        circlator.versions.get_all_versions(None, raise_error=True)
+        circlator.versions.get_all_versions(None, raise_error=True, assembler=options.assembler)
 
 
     files_to_check = [options.assembly, options.reads]
@@ -146,7 +146,7 @@ def run():
         contigs_to_use=options.b2r_only_contigs,
         discard_unmapped=options.b2r_discard_unmapped,
         verbose=options.verbose,
-        useCanu=options.useCanu,
+        split_all_reads=options.split_all_reads,
     )
     bam_filter.run()
 
@@ -159,12 +159,11 @@ def run():
         threads=options.threads,
         careful=not options.assemble_not_careful,
         only_assembler=not options.assemble_not_only_assembler,
-        CanuError=options.CanuCorrectedErrorRate,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
-        useCanu=options.useCanu,
+        assembler=options.assembler,
         genomeSize=options.b2r_length_cutoff,
-        dataType=options.dataType,
+        data_type=options.data_type,
         verbose=options.verbose
     )
     a.run()
@@ -188,21 +187,21 @@ def run():
 
     m = circlator.merge.Merger(
         assembly_to_use,
-        reassembly,
+        assembly_dir,
         merge_prefix,
         nucmer_diagdiff=options.merge_diagdiff,
         nucmer_min_id=options.merge_min_id,
         nucmer_min_length=options.merge_min_length,
         nucmer_min_length_for_merges=options.merge_min_length_merge,
-        CanuError=options.CanuCorrectedErrorRate,
         min_spades_circular_percent=options.merge_min_spades_circ_pc,
         spades_kmers=options.assemble_spades_k,
         spades_use_first_success=options.assemble_spades_use_first,
         spades_careful=not options.assemble_not_careful,
         spades_only_assembler=not options.assemble_not_only_assembler,
-        useCanu=options.useCanu,
+        assembler=options.assembler,
         length_cutoff=options.b2r_length_cutoff,
-        dataType=options.dataType,
+        split_all_reads=options.split_all_reads,
+        data_type=options.data_type,
         nucmer_breaklen=options.merge_breaklen,
         ref_end_tolerance=options.merge_ref_end,
         qry_end_tolerance=options.merge_reassemble_end,
