@@ -49,7 +49,7 @@ make
 
 
 # ------------- canu -------------------
-download $CANU_VERSION "canu-${CANU_VERSION}.tar.xz"
+download $CANU_DOWNLOAD_URL "canu-${CANU_VERSION}.tar.xz"
 tar -xf canu-${CANU_VERSION}.tar.xz
 canu_dir=$build_dir/canu-${CANU_VERSION}/Linux-amd64/bin/
 
