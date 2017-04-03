@@ -69,9 +69,9 @@ def run():
 
     print_message('{:_^79}'.format(' Checking external programs '), options)
     if options.verbose:
-        circlator.versions.get_all_versions(sys.stdout, raise_error=True)
+        circlator.versions.get_all_versions(sys.stdout, raise_error=True, assembler=options.assembler)
     else:
-        circlator.versions.get_all_versions(None, raise_error=True)
+        circlator.versions.get_all_versions(None, raise_error=True, assembler=options.assembler)
 
 
     files_to_check = [options.assembly, options.reads]
