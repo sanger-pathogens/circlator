@@ -49,6 +49,7 @@ prog_name_to_default = {
     'canu': 'canu',
 }
 
+not_required = {'spades', 'canu'}
 
 def handle_error(message, raise_error=True):
     if raise_error:
@@ -57,7 +58,7 @@ def handle_error(message, raise_error=True):
         print(message)
 
 
-def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None, debug=False):
+def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None, debug=False, required=False):
     p = program.Program(
         prog_name_to_default[name],
         prog_to_version_cmd[name][0],
@@ -67,7 +68,11 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None, 
     )
 
     if not p.in_path():
-        handle_error("Didn't find " + name + " in path. Looked for:" + p.path, raise_error=raise_error)
+        if required:
+            die = True
+        else:
+            die = raise_error and (name not in not_required)
+        handle_error("WARNING: Didn't find " + name + " in path. Looked for:" + p.path, raise_error=die)
         return p
 
     version = p.version
@@ -96,8 +101,8 @@ def make_and_check_prog(name, verbose=False, raise_error=True, filehandle=None, 
     return p
 
 
-def check_all_progs(verbose=False, raise_error=False, filehandle=None, debug=False):
+def check_all_progs(verbose=False, raise_error=False, filehandle=None, debug=False, assembler=None):
     for prog in sorted(prog_name_to_default):
         if debug:
             print('__________ checking', prog, '____________', flush=True)
-        make_and_check_prog(prog, verbose=verbose, raise_error=raise_error, filehandle=filehandle, debug=debug)
+        make_and_check_prog(prog, verbose=verbose, raise_error=raise_error, filehandle=filehandle, debug=debug, required=prog==assembler)
