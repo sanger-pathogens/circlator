@@ -162,7 +162,7 @@ class Assembly:
         with open(gfa_file) as f:
             for line in f:
                 if line.startswith('L\t'):
-                    L, node1, dir1, node2, dir2, cigar, tags = line.rstrip().split('\t')
+                    L, node1, dir1, node2, dir2, *the_rest = line.rstrip().split('\t')
                     if node1 == node2:
                         if dir1 == dir2:
                             if node1 not in self_matches:
