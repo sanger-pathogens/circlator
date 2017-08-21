@@ -21,7 +21,7 @@ prog_to_version_cmd = {
     'prodigal': ('-v', re.compile('^Prodigal V([0-9\.]+):')),
     'samtools': ('', re.compile('^Version: ([0-9\.]+)')),
     'spades': ('', re.compile('^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
-    'canu': ('-version', re.compile('^Canu.*v.?([0-9][0-9\.]+)')),
+    'canu': ('-version', re.compile('^Canu \D*([\d][\d\.]+)')),
 }
 
 

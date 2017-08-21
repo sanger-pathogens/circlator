@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='circlator',
-    version='1.5.1',
+    version='1.5.2',
     description='circlator: a tool to circularise genome assemblies',
     packages = find_packages(),
     package_data={'circlator': ['data/*']},
