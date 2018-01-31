@@ -51,6 +51,9 @@ Contact: Heng Li <lh3@sanger.ac.uk>
 nucmer
 NUCmer (NUCleotide MUMmer) version 3.1
         """ ))
+        self.assertEqual('4.0.0', self.check_regex_version_extraction('nucmer', """
+4.0.0beta1
+        """ ))
     
     def test_samtools_version(self):
         '''Test samtools version'''

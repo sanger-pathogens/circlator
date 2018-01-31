@@ -15,7 +15,7 @@ prog_to_env_var = {
 
 prog_to_version_cmd = {
     'bwa': ('', re.compile(r'^Version: ([0-9\.]+)')),
-    'nucmer': ('--version', re.compile(r'version ([0-9\.]+)')),
+    'nucmer': ('--version', re.compile(r'([0-9\.]+)')),
     'prodigal': ('-v', re.compile(r'^Prodigal V([0-9\.]+):')),
     'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
     'spades': ('-v', re.compile(r'v.?([0-9][0-9\.]+)')),
