@@ -7,23 +7,20 @@ import pyfastaq
 
 class Error (Exception): pass
 
-
 prog_to_env_var = {
     'samtools': 'CIRCLATOR_SAMTOOLS',
     'spades': 'CIRCLATOR_SPADES',
     'canu': 'CIRCLATOR_CANU',
 }
 
-
 prog_to_version_cmd = {
-    'bwa': ('', re.compile('^Version: ([0-9\.]+)')),
-    'nucmer': ('--version', re.compile('^(?:NUCmer \(NUCleotide MUMmer\) version )?([0-9\.]+).*')),
-    'prodigal': ('-v', re.compile('^Prodigal V([0-9\.]+):')),
-    'samtools': ('', re.compile('^Version: ([0-9\.]+)')),
-    'spades': ('', re.compile('^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
-    'canu': ('-version', re.compile('^Canu \D*([\d][\d\.]+)')),
+    'bwa': ('', re.compile(r'^Version: ([0-9\.]+)')),
+    'nucmer': ('--version', re.compile(r'version ([0-9\.]+)')),
+    'prodigal': ('-v', re.compile(r'^Prodigal V([0-9\.]+):')),
+    'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
+    'spades': ('-v', re.compile(r'v.?([0-9][0-9\.]+)')),
+    'canu': ('-version', re.compile(r'^Canu \D*([\d][\d\.]+)')),
 }
-
 
 min_versions = {
     'bwa': '0.7.12',
