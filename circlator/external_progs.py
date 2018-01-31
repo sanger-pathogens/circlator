@@ -14,12 +14,12 @@ prog_to_env_var = {
 }
 
 prog_to_version_cmd = {
-    'bwa': ('', re.compile('^Version: ([0-9\.]+)')),
-    'nucmer': ('--version', re.compile('version ([0-9\.]+)')),
-    'prodigal': ('-v', re.compile('^Prodigal V([0-9\.]+):')),
-    'samtools': ('', re.compile('Version: (\d+\.\d+[\.\d]*)')),
-    'spades': ('', re.compile('^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
-    'canu': ('-version', re.compile('^Canu \D*([\d][\d\.]+)')),
+    'bwa': ('', re.compile(r'^Version: ([0-9\.]+)')),
+    'nucmer': ('--version', re.compile(r'version ([0-9\.]+)')),
+    'prodigal': ('-v', re.compile(r'^Prodigal V([0-9\.]+):')),
+    'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
+    'spades': ('', re.compile(r'^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
+    'canu': ('-version', re.compile(r'^Canu \D*([\d][\d\.]+)')),
 }
 
 min_versions = {
