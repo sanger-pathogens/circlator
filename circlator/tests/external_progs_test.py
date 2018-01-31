@@ -12,10 +12,10 @@ Canu 1.6
     def test_spades_version(self):
             '''Test spades version'''
             self.assertEqual('3.11.0', self.check_regex_version_extraction('spades', """
-SPAdes genome assembler v3.11.0
+SPAdes v3.11.0
             """ ))
             self.assertEqual('3.7.1', self.check_regex_version_extraction('spades', """
-SPAdes genome assembler v3.7.1
+SPAdes v3.7.1
             """ ))
             self.assertEqual('3.5.0', self.check_regex_version_extraction('spades', """
 SPAdes genome assembler v.3.5.0
@@ -55,9 +55,10 @@ NUCmer (NUCleotide MUMmer) version 3.1
     def test_samtools_version(self):
         '''Test samtools version'''
         self.assertEqual('1.6', self.check_regex_version_extraction('samtools', """
-samtools 1.6
-Using htslib 1.6
-Copyright (C) 2017 Genome Research Ltd.""" ))
+
+Program: samtools (Tools for alignments in the SAM format)
+Version: 1.6 (using htslib 1.6)
+""" ))
 
     def test_samtools_original_version(self):
         '''Test samtools original version'''

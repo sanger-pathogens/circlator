@@ -18,7 +18,7 @@ prog_to_version_cmd = {
     'nucmer': ('--version', re.compile(r'version ([0-9\.]+)')),
     'prodigal': ('-v', re.compile(r'^Prodigal V([0-9\.]+):')),
     'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
-    'spades': ('', re.compile(r'^SPAdes genome assembler v.?([0-9][0-9\.]+)')),
+    'spades': ('-v', re.compile(r'v.?([0-9][0-9\.]+)')),
     'canu': ('-version', re.compile(r'^Canu \D*([\d][\d\.]+)')),
 }
 
