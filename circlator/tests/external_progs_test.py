@@ -9,6 +9,18 @@ class TestExternalProgs(unittest.TestCase):
 Canu 1.6
             """ ))
     
+    def test_spades_version(self):
+            '''Test spades version'''
+            self.assertEqual('3.11.0', self.check_regex_version_extraction('spades', """
+SPAdes v3.11.0
+            """ ))
+            self.assertEqual('3.7.1', self.check_regex_version_extraction('spades', """
+SPAdes v3.7.1
+            """ ))
+            self.assertEqual('3.5.0', self.check_regex_version_extraction('spades', """
+SPAdes genome assembler v.3.5.0
+            """ ))
+    
     def test_prodigal_version(self):
             '''Test prodigal version'''
             self.assertEqual('2.60', self.check_regex_version_extraction('prodigal', """
