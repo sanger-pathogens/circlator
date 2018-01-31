@@ -156,7 +156,22 @@ class TestClean(unittest.TestCase):
 
         got = cleaner._expand_containing_using_transitivity(dict_in)
         self.assertEqual(expected, got)
+		
+		
 
+    def test_infinite_recursion(self):
+        '''test _infinite_recursion'''
+        cleaner = clean.Cleaner('infile', 'outprefix')
+        dict_in = {
+            'a': {'b'},
+            'b': {'c'},
+            'c': {'a', 'b'},
+        }
+
+        expected = {'a': {'b', 'c'}, 'b': {'a', 'c'}, 'c': {'a', 'b'}}
+
+        got = cleaner._expand_containing_using_transitivity(dict_in)
+        self.assertEqual(expected, got)
 
     def test_collapse_list_of_sets(self):
         '''test _collapse_list_of_sets'''

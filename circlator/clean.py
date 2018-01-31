@@ -128,18 +128,23 @@ class Cleaner:
         return containing
 
 
-    def _get_all_containing(self, containing_contigs, name, exclude=None):
+    def _get_all_containing(self, containing_contigs, name, exclude=None, max_depth=10):
         '''containing_contigs is a dict:
              key=contig name. Value = set of contigs that contain the key.
            Returns alls contigs called "name" that contain that contig'''
         contains_name = set()
+		
+        # failsafe to prevent infinite recursion
+        if max_depth < 0:
+            return contains_name
+		
         if name in containing_contigs:
             for containing_contig in containing_contigs[name]:
                 # if we have a contains b and b contains a, then this stops infinite recursion
                 if containing_contig==exclude:
                     continue
                 contains_name.add(containing_contig)
-                new_names = self._get_all_containing(containing_contigs, containing_contig, exclude=name)
+                new_names = self._get_all_containing(containing_contigs, containing_contig, exclude=name,max_depth=max_depth-1)
                 new_names.discard(name)
                 contains_name.update(new_names)
         return contains_name
