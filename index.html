@@ -82,6 +82,16 @@ or clone the repository. Then run the tests:</p>
 <pre><code>python3 setup.py install
 </code></pre>
 
+<h3>Using Docker</h3>
+<p>Circlator can be run in a Docker container. First install Docker, then install circlator: </p>
+
+<pre><code>docker pull sangerpathogens/circlator
+</pre></code>
+<p>To use it you would use a command such as this (substituting in your directories), where your files are assumed to be stored in /home/ubuntu/data: </p>
+
+<pre><code>docker run --rm -it -v /home/ubuntu/data:/data sangerpathogens/circlator circlator all /data/assembly.fasta /data/reads /data/output_directory 
+</pre></code>
+
 
 <h3>Verify the dependencies are installed</h3>
 <p>Check that Circlator can find the dependencies, and that the versions are high enough, by running</p>
