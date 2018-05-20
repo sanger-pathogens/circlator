@@ -4,7 +4,7 @@ import subprocess
 
 class Error (Exception): pass
 
-allowed_assemblers = ['canu', 'spades'] 
+allowed_assemblers = ['canu', 'spades', 'racon']
 allowed_data_types = ['pacbio-raw', 'pacbio-corrected', 'nanopore-raw', 'nanopore-corrected']
 
 def syscall(cmd, allow_fail=False, verbose=False):
