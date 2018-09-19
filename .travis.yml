@@ -5,9 +5,13 @@ addons:
     - zlib1g-dev
     - libncurses5-dev
 python:
-  - "3.4"
+  - 3.4
 sudo: false
 install:
-  - "source ./install_dependencies.sh"
+  - source ./install_dependencies.sh
+before_script:
+  - pip install codecov
 script:
-  - "python setup.py test"
+  - coverage run setup.py test
+after_success:
+  - codecov
