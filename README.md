@@ -1,6 +1,9 @@
 # Circlator
 A tool to circularize genome assemblies.
 
+PLEASE NOTE: we currently do not have the resources to provide support for Circlator, so please do not expect a reply if you flag any issue. Apologies for the inconvenience.
+
+[![Unmaintained](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)  
 [![Build Status](https://travis-ci.org/sanger-pathogens/circlator.svg?branch=master)](https://travis-ci.org/sanger-pathogens/circlator)   
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-brightgreen.svg)](https://github.com/sanger-pathogens/circlator/blob/master/LICENSE)   
 [![status](https://img.shields.io/badge/GenomeBiology-10.1186-brightgreen.svg)](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-015-0849-0)  
@@ -59,6 +62,8 @@ Circlator is free software, licensed under [GPLv3](https://github.com/sanger-pat
 
 ## Feedback/Issues
 Please report any issues to the [issues page](https://github.com/sanger-pathogens/circlator/issues) or email circlator-help@sanger.ac.uk.
+
+PLEASE NOTE: we currently do not have the resources to provide support for Circlator, so please do not expect a reply if you flag any issue. Apologies for the inconvenience.
 
 ## Citation
 If you use this software please cite:
