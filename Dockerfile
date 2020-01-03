@@ -27,12 +27,12 @@ RUN   cd ${BUILD_DIR}/build && \
       cp src/Align/find-tandem.cc src/Align/find-tandem.cc.original && \
       echo '#include <getopt.h>' | cat - src/Align/find-tandem.cc.original > src/Align/find-tandem.cc && \
       make && make install && make clean
-      
+
 ENV   PATH="${BUILD_DIR}/build/amos-3.1.0/bin:${PATH}"
 RUN   export PATH
 RUN   ln -s ${BUILD_DIR}/build/MUMmer3.23/show-coords /usr/local/bin
 
-RUN   circlator progcheck
+RUN   circlator progcheck && circlator test /tmp/circlator-test && rm -r /tmp/circlator-test
 
 CMD   echo "Usage:  docker run -v \`pwd\`:/var/data -it <IMAGE_NAME> bash" && \
       echo "" && \
