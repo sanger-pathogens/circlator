@@ -6,11 +6,20 @@ ENV   BUILD_DIR=/opt/circlator
 
 # Install the dependancies
 RUN   apt-get update && \
-      apt-get -y upgrade && \
-      apt-get install -y   git wget unzip bzip2 xz-utils make g++ zlib1g-dev libncurses5-dev libbz2-dev \
-                           liblzma-dev libcurl4-openssl-dev libpng-dev libssl-dev libboost-all-dev \
-                           libstatistics-descriptive-perl libxml-parser-perl libdbi-perl \
-                           python python3 python3-pip
+      apt-get --yes upgrade && \
+      apt-get install --yes apt-utils && \
+      apt-get install --yes   git wget unzip bzip2 xz-utils make g++ zlib1g-dev libncurses5-dev libbz2-dev \
+                              liblzma-dev libcurl4-openssl-dev libpng-dev libssl-dev libboost-all-dev \
+                              libstatistics-descriptive-perl libxml-parser-perl libdbi-perl \
+                              python python3 python3-pip
+
+RUN   apt-get install -y locales && \
+      sed -i -e 's/# \(en_GB\.UTF-8 .*\)/\1/' /etc/locale.gen && \
+      touch /usr/share/locale/locale.alias && \
+      locale-gen
+ENV   LANG     en_GB.UTF-8
+ENV   LANGUAGE en_GB:en
+ENV   LC_ALL   en_GB.UTF-8
 
 RUN   mkdir -p ${BUILD_DIR}
 COPY  . ${BUILD_DIR}
