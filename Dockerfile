@@ -43,6 +43,12 @@ RUN   ln -s ${BUILD_DIR}/build/MUMmer3.23/show-coords /usr/local/bin
 
 RUN   circlator progcheck && circlator test /tmp/circlator-test && rm -r /tmp/circlator-test
 
+RUN   TEST_DATA_DIR=`ls -d /usr/local/lib/python3.?/dist-packages/circlator* | head -1`/circlator/data; \
+      if [ -f ${TEST_DATA_DIR}/test_contigs.fa ]; \
+         then  chmod a+rX ${TEST_DATA_DIR}/*; \
+         else  echo "Could not find test data directory ${TEST_DATA_DIR}" && exit 255; \
+      fi
+
 CMD   echo "Usage:  docker run -v \`pwd\`:/var/data -it <IMAGE_NAME> bash" && \
       echo "" && \
       echo "This will place you in a shell with your current working directory accessible as /var/data." && \
