@@ -11,6 +11,7 @@ prog_to_env_var = {
     'samtools': 'CIRCLATOR_SAMTOOLS',
     'spades': 'CIRCLATOR_SPADES',
     'canu': 'CIRCLATOR_CANU',
+    'racon': 'CIRCLATOR_RACON',
 }
 
 prog_to_version_cmd = {
@@ -20,6 +21,9 @@ prog_to_version_cmd = {
     'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
     'spades': ('-v', re.compile(r'v.?([0-9][0-9\.]+)')),
     'canu': ('-version', re.compile(r'^Canu \D*([\d][\d\.]+)')),
+    'minimap2': ('-V', re.compile(r'([0-9\.]+)')),
+    'miniasm': ('-V', re.compile(r'([0-9\.]+)')),
+    'racon': ('--version', re.compile(r'v.?([0-9][0-9\.]+)')),
 }
 
 min_versions = {
@@ -27,8 +31,11 @@ min_versions = {
     'nucmer': '3.1',
     'prodigal': '2.6',
     'samtools': '0.1.19',
-    'spades': '3.6.2', # this is the first version to support python3
+    'spades': '3.11.1', # this is the first version to support python3
     'canu': '0.0',
+    'minimap2': '2.10',
+    'miniasm': '0.2',
+    'racon': '1.2.1',
 }
 
 
@@ -44,9 +51,12 @@ prog_name_to_default = {
     'spades': 'spades.py',
     'samtools': 'samtools',
     'canu': 'canu',
+    'minimap2':'minimap2',
+    'miniasm': 'miniasm',
+    'racon': 'racon'
 }
 
-not_required = {'spades', 'canu'}
+not_required = {'spades', 'canu','racon'}
 
 def handle_error(message, raise_error=True):
     if raise_error:

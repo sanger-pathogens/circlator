@@ -9,7 +9,11 @@ CANU_VERSION=1.4
 PRODIGAL_VERSION=2.6.2
 SAMTOOLS_VERSION=1.3
 MUMMER_VERSION=3.23
-SPADES_VERSION=3.7.1
+SPADES_VERSION=3.11.1
+
+MINIMAP2_VERSION=2.10
+MINIASM_VERSION=55cf0189e2f7d5bda5868396cebe066eec0a9547
+RACON_VERSION=1.3.0
 
 BWA_DOWNLOAD_URL="http://downloads.sourceforge.net/project/bio-bwa/bwa-${BWA_VERSION}.tar.bz2"
 CANU_DOWNLOAD_URL="https://github.com/marbl/canu/releases/download/v${CANU_VERSION}/canu-${CANU_VERSION}.Linux-amd64.tar.xz"
@@ -17,7 +21,9 @@ PRODIGAL_DOWNLOAD_URL="https://github.com/hyattpd/Prodigal/releases/download/v${
 SAMTOOLS_DOWNLOAD_URL="https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2"
 MUMMER_DOWNLOAD_URL="http://downloads.sourceforge.net/project/mummer/mummer/${MUMMER_VERSION}/MUMmer${MUMMER_VERSION}.tar.gz"
 SPADES_DOWNLOAD_URL="http://spades.bioinf.spbau.ru/release${SPADES_VERSION}/SPAdes-${SPADES_VERSION}-Linux.tar.gz"
-
+MINIMAP2_DOWNLOAD_URL="https://github.com/lh3/minimap2/archive/v${MINIMAP2_VERSION}.tar.gz"
+MINIASM_DOWNLOAD_URL="https://github.com/lh3/miniasm/archive/${MINIASM_VERSION}.tar.gz"
+RACON_DOWNLOAD_URL="https://github.com/isovic/racon/releases/download/${RACON_VERSION}/racon-v${RACON_VERSION}.tar.gz"
 
 # Make an install location
 if [ ! -d 'build' ]; then
@@ -91,6 +97,36 @@ spades_dir="$build_dir/SPAdes-${SPADES_VERSION}-Linux/bin"
 tar -zxf SPAdes-${SPADES_VERSION}-Linux.tar.gz
 
 
+# --------------- minimap2 -----------------
+cd $build_dir
+download $MINIMAP2_DOWNLOAD_URL "${MINIMAP2_VERSION}.tar.gz"
+minimap2_dir="$build_dir/minimap2-${MINIMAP2_VERSION}/"
+tar -zxf ${MINIMAP2_VERSION}.tar.gz
+cd $minimap2_dir
+make
+
+
+# --------------- miniasm -----------------
+cd $build_dir
+download $MINIASM_DOWNLOAD_URL "${MINIASM_VERSION}.tar.gz"
+miniasm_dir="$build_dir/miniasm-${MINIASM_VERSION}"
+tar -zxf ${MINIASM_VERSION}.tar.gz
+cd $miniasm_dir
+make
+
+# --------------- racon -----------------
+cd $build_dir
+download $RACON_DOWNLOAD_URL "racon-v${RACON_VERSION}.tar.gz"
+racon_dir="$build_dir/racon-v${RACON_VERSION}"
+tar -zxf racon-v${RACON_VERSION}.tar.gz
+cd $racon_dir
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+racon_dir="$build_dir/racon-v${RACON_VERSION}/build/bin"
+
+
 cd $start_dir
 
 update_path () {
@@ -106,4 +142,8 @@ update_path ${prodigal_dir}
 update_path ${mummer_dir}
 update_path ${samtools_dir}
 update_path ${spades_dir}
+update_path ${minimap2_dir}
+update_path ${miniasm_dir}
+update_path ${racon_dir}
+
 

@@ -64,6 +64,9 @@ class Assembly:
         elif self.assembler == 'canu':
             if self.contigs_fasta is None or self.contigs_gfa is None:
                 raise Error('Error finding canu contigs fasta and/or gfa file')
+        elif self.assembler == 'racon':
+            if self.contigs_fasta is None or self.contigs_gfa is None:
+                raise Error('Error finding canu contigs fasta and/or gfa file')
         else:
             raise Error('Assembler "' + self.assembler + '" not recognised. Cannot continue')
 
@@ -184,6 +187,8 @@ class Assembly:
             else:
                 return set()
         elif self.assembler == 'canu':
+            return self._circular_contigs_from_canu_gfa(self.contigs_gfa)
+        elif self.assembler == 'racon':
             return self._circular_contigs_from_canu_gfa(self.contigs_gfa)
         else:
             return set()
