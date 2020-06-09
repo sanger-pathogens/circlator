@@ -61,7 +61,7 @@ For more information on how to use Circlator, please see the [Circlator wiki pag
 Circlator is free software, licensed under [GPLv3](https://github.com/sanger-pathogens/circlator/blob/master/LICENSE).
 
 ## Feedback/Issues
-Please report any issues to the [issues page](https://github.com/sanger-pathogens/circlator/issues) or email circlator-help@sanger.ac.uk.
+Please report any issues to the [issues page](https://github.com/sanger-pathogens/circlator/issues).
 
 PLEASE NOTE: we currently do not have the resources to provide support for Circlator, so please do not expect a reply if you flag any issue. Apologies for the inconvenience.
 
