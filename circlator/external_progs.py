@@ -19,7 +19,7 @@ prog_to_version_cmd = {
     'prodigal': ('-v', re.compile(r'^Prodigal V([0-9\.]+):')),
     'samtools': ('', re.compile(r'Version: (\d+\.\d+[\.\d]*)')),
     'spades': ('-v', re.compile(r'v.?([0-9][0-9\.]+)')),
-    'canu': ('-version', re.compile(r'^Canu \D*([\d][\d\.]+)')),
+    'canu': ('-version', re.compile(r'^[Cc]anu \D*([\d][\d\.]+)')),
 }
 
 min_versions = {
