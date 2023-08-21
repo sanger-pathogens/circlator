@@ -15,8 +15,7 @@ setup(
     author_email='path-help@sanger.ac.uk',
     url='https://github.com/sanger-pathogens/circlator',
     scripts=glob.glob('scripts/*'),
-    test_suite='nose.collector',
-    tests_require=['nose >= 1.3'],
+    tests_require=['pytest'],
     install_requires=[
         'openpyxl == 2.6.4',
         'pyfastaq >= 3.12.1',
