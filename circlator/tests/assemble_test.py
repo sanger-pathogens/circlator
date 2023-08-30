@@ -9,7 +9,7 @@ modules_dir = os.path.dirname(os.path.abspath(assemble.__file__))
 data_dir = os.path.join(modules_dir, 'tests', 'data')
 
 
-class TestAssemble(unittest.TestCase):
+class TestAssembleSpades(unittest.TestCase):
     def setUp(self):
         self.tmp_assemble_dir = 'tmp.assemble_test'
         self.assembler = assemble.Assembler(
@@ -60,6 +60,11 @@ class TestAssemble(unittest.TestCase):
 
         self.assembler.threads = 2
         self.assertEqual(cmd_start + ' -o out -t 2 -k 41 --careful --only-assembler', self.assembler._make_spades_command(41, 'out'))
+
+
+class TestAssembleCanu(unittest.TestCase):
+    def setUp(self):
+        self.tmp_assemble_dir = 'tmp.assemble_test'
 
 
     def test_make_canu_command(self):
