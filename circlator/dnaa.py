@@ -23,7 +23,7 @@ class UniprotDownloader:
 
 
     def _get_uniprot_url(self):
-        return 'http://www.uniprot.org/uniprot/?sort=score&desc=&compress=no&query=' + self.uniprot_search + '&force=no&format=fasta'
+        return 'https://rest.uniprot.org/uniprotkb/stream?format=fasta&compress=no&query=' + self.uniprot_search + '&force=no'
 
 
     def _download_from_uniprot(self, outfile):
