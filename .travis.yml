@@ -5,13 +5,16 @@ addons:
     - zlib1g-dev
     - libncurses5-dev
 python:
-  - 3.4
+  - 3.8
+  - 2.12
 sudo: false
 install:
-  - source ./install_dependencies.sh
+  - source scripts/install_dependencies.sh
 before_script:
-  - pip install codecov
+  - pip install pytest pytest-cov
 script:
-  - coverage run setup.py test
+  - "pip install ."
+  - pytest --cov=circlator tests/
 after_success:
-  - codecov
+  - coverage report
+  - coverage xml
