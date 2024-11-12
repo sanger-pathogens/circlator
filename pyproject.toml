@@ -1,0 +1,77 @@
+# Build system configuration
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+# Project metadata
+[project]
+name = "circlator"
+description = "circlator: a tool to circularise genome assemblies"
+readme="README.md"
+requires-python = ">=3.8"
+license = { text = "GPLv3" }
+authors = [
+    { name = "Martin Hunt", email = "path-help@sanger.ac.uk" },
+    { name = "Andrew J. Page", email = "path-help@sanger.ac.uk"},
+    { name = "Nicola De Maio", email = "nicola.de.maio.85@gmail.com"},
+]
+
+# The classifiers for the project.
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)"
+]
+
+# The dependencies required to install the package.
+dependencies = ['openpyxl == 2.6.4',
+                'pyfastaq >= 3.12.1',
+                'pysam >= 0.8.1',
+                'pymummer>=0.9.0',]
+
+# Dynamic versioning
+dynamic = ["version"]
+
+# Project URLs
+[project.urls]
+homepage = "https://github.com/sanger-pathogens/circlator"
+documentation = "https://github.com/sanger-pathogens/circlator"
+repository = "https://github.com/sanger-pathogens/circlator"
+
+# Command-line script entry point
+[project.scripts]
+fastaq="circlator.app_circlator:main"
+
+# Hatch build configuration
+[tool.hatch.build]
+source = "src"
+
+# Exclude files and directories from the build
+exclude = [
+    "environment.yml",
+    "env_osx64.yml",
+]
+
+# TODO: Not sure how to include data files in the package
+#include = [
+#    "src/circlator/data/*"
+#]
+
+# Hatch versioning configuration
+[tool.hatch.version]
+source = "vcs"
+
+# Version control system (VCS) versioning
+[tool.hatch.version.vcs]
+tag-pattern = "v*"  # Git tags starting with 'v' will be used for versioning
+fallback-version = "0.0.0"
+
+# Version file location for VCS
+[tool.hatch.build.hooks.vcs]
+version-file = "src/circlator/_version.py"
+
+# Optional dependencies for testing
+[project.optional-dependencies]
+tests = ["pytest"]
+

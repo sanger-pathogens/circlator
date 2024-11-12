@@ -5,8 +5,7 @@ import shutil
 import pyfastaq
 from circlator import minimus2
 
-modules_dir = os.path.dirname(os.path.abspath(minimus2.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data')
+data_dir = "tests/data"
 
 # It's likely that some people will not want to run the minimus2 pipeline at
 # all, and just use the circlator pipeline. So we check if amos is installed

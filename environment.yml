@@ -1,0 +1,23 @@
+name: circlator
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python 3.12
+  - bioconda::mummer4
+  - 'pyfastaq >= 3.12.1'
+  - 'openpyxl == 2.6.4'
+  - 'pysam >= 0.8.1'
+  - 'pymummer>=0.9.0'
+  - pip
+  - pip:
+      - hatch
+      - pytest
+
+
+#BWA_VERSION=0.7.12
+#CANU_VERSION=1.4
+#PRODIGAL_VERSION=2.6.2
+#SAMTOOLS_VERSION=1.3
+#MUMMER_VERSION=3.23
+#SPADES_VERSION=3.7.1
