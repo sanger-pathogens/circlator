@@ -39,6 +39,10 @@ homepage = "https://github.com/sanger-pathogens/circlator"
 documentation = "https://github.com/sanger-pathogens/circlator"
 repository = "https://github.com/sanger-pathogens/circlator"
 
+# Command-line script entry point
+[project.scripts]
+fastaq="circlator.app_circlator:main"
+
 # Hatch build configuration
 [tool.hatch.build]
 source = "src"
@@ -48,6 +52,11 @@ exclude = [
     "environment.yml",
     "env_osx64.yml",
 ]
+
+# TODO: Not sure how to include data files in the package
+#include = [
+#    "src/circlator/data/*"
+#]
 
 # Hatch versioning configuration
 [tool.hatch.version]
@@ -65,3 +74,4 @@ version-file = "src/circlator/_version.py"
 # Optional dependencies for testing
 [project.optional-dependencies]
 tests = ["pytest"]
+

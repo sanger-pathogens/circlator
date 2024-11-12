@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import sys
 
@@ -45,14 +43,18 @@ def print_usage_and_exit():
         print('{{0: <{}}}'.format(max_task_length).format(task), tasks[task], sep=' ', file=sys.stderr)
     sys.exit(0)
 
-if len(sys.argv) == 1 or sys.argv[1] in ['-h', '-help', '--help']:
-    print_usage_and_exit()
+def main():
+    if len(sys.argv) == 1 or sys.argv[1] in ['-h', '-help', '--help']:
+        print_usage_and_exit()
 
-task = sys.argv.pop(1)
+    task = sys.argv.pop(1)
 
-if task not in tasks:
-    print('Task "' + task + '" not recognised. Cannot continue.\n', file=sys.stderr)
-    print_usage_and_exit()
+    if task not in tasks:
+        print('Task "' + task + '" not recognised. Cannot continue.\n', file=sys.stderr)
+        print_usage_and_exit()
 
-exec('import circlator.tasks.' + task)
-exec('circlator.tasks.' + task + '.run()')
+    exec('import circlator.tasks.' + task)
+    exec('circlator.tasks.' + task + '.run()')
+
+if __name__ == "__main__":
+    main()
