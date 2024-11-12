@@ -4,8 +4,7 @@ import os
 import pyfastaq
 from circlator import dnaa
 
-modules_dir = os.path.dirname(os.path.abspath(dnaa.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data')
+data_dir = "tests/data"
 
 
 class TestDnaa(unittest.TestCase):

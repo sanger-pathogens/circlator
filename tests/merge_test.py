@@ -7,8 +7,7 @@ import pymummer
 import pyfastaq
 from circlator import merge
 
-modules_dir = os.path.dirname(os.path.abspath(merge.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data')
+data_dir = "tests/data"
 
 
 class TestMerge(unittest.TestCase):

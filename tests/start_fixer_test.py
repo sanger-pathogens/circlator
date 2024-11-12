@@ -8,8 +8,7 @@ import pyfastaq
 import pymummer
 from circlator import start_fixer
 
-modules_dir = os.path.dirname(os.path.abspath(start_fixer.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data')
+data_dir = "tests/data"
 
 
 class TestStartFixer(unittest.TestCase):

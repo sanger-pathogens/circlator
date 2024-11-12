@@ -4,8 +4,7 @@ import os
 import pymummer
 from circlator import clean
 
-modules_dir = os.path.dirname(os.path.abspath(clean.__file__))
-data_dir = os.path.join(modules_dir, 'tests', 'data')
+data_dir = "tests/data"
 
 
 class TestClean(unittest.TestCase):
